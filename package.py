@@ -10,8 +10,8 @@ ROOT=Path(__file__).resolve().parent
 
 def package(build,examples=()):
     builds=list(dict.fromkeys([build,*examples]));manifests=[]
-    files=[ROOT/f for f in ('studio.py','package.py','Start Module Studio.cmd','Start AI Player.cmd','Start Solo Studio.cmd','Start-SoloStudio.ps1','README.md','PLAYTEST.md','VALIDATION.md','ROLE-WEAVER-LICENSE.txt')]
-    for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','tests'):
+    files=[ROOT/f for f in ('.gitignore','.gitattributes','studio.py','package.py','Start Module Studio.cmd','Start AI Player.cmd','Start Solo Studio.cmd','Start-SoloStudio.ps1','README.md','PLAYTEST.md','VALIDATION.md','AI-NPC-PORT-PLAN.md','ROLE-WEAVER-LICENSE.txt')]
+    for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','tests','examples'):
         files += [f for f in (ROOT/name).rglob('*') if f.is_file() and '__pycache__' not in f.parts and f.suffix!='.pyc']
     for ident in builds:
         if len(ident)!=20 or any(c not in '0123456789abcdef' for c in ident):raise ValueError('Invalid build ID')

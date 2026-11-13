@@ -18,7 +18,7 @@ The first dependency is shared story progression. The AI now receives exact elig
 
 Native NWScript rechecks the NPC, proximity, line of sight, combat, possession and exact objective state before applying the selected action. It calls the same AQStart/AQAdvance functions as menu dialogue, so journal updates, prerequisites, endings and one-time rewards are shared. Late replies cannot apply an earlier choice after menu progress changes. The transport already rejects stale sessions, changed focus and expired replies. This still needs the user's in-game playtest; compilation alone is not engine verification.
 
-Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwstudio/adventure_builder.py. Tests: tests/test_story_actions.py plus the optional-AI native exporter test. The rest of the capabilities below remain to be ported.
+Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwstudio/adventure_builder.py. Tests: tests/test_story_actions.py plus the optional-AI native exporter test. Version 0.3 also implements natural follow-up Talk, unambiguous full-name/alias addressing, explicit end/cancellation, and native merchant stock, exact prices, haggling and confirmed purchases through either menu or AI. See rwstudio/merchants.py, rwstudio/runtime_ai.py, authoring_scripts/aw_merchant.nss and tests/test_merchants.py. In-game merchant and quest verification is pending. The remaining capabilities below are still planned.
 
 ## Feature map
 
@@ -30,7 +30,7 @@ Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwst
 | Familiars | companions.py, companion_templates.py, companion_preferences.py; docs/COMPANIONS.md | Port personality templates, ownership, follow/stay, preferences, inventory recovery and saved identity. Attach to the actual summoned familiar rather than a replacement. |
 | Summons | Upstream familiar documentation explicitly excludes generic spell summons | Add separate discovery, ownership and dismissal/expiry handling. No commands or replies may reach a later summon through an old object reference. |
 | Companion awareness and errands | companion_hearing.py, companion_inventory.py, companion_visits.py | Optional public listening, bounded inventory tasks, visits, reporting back and cancellation. Preserve the game's combat/order scripts and owner-only control. |
-| Merchants | merchants.py, merchant_admin.py; docs/MERCHANTS_AND_LEADING.md | Native finite stock, real customer prices, shops via chat or menus, configured haggling, saved offers and exact transaction receipts. The current Solo item catalogue must expand to actual merchandise. |
+| Merchants | merchants.py, merchant_admin.py; docs/MERCHANTS_AND_LEADING.md | Implemented in 0.3 for eight stock goods, finite quantities, exact prices, chat/menu access, game-rolled haggling and native purchase receipts. Uses a native NUI goods panel; no buyback or restocking. In-game acceptance remains pending. |
 | Inventory and barter | inventory.py; docs/INVENTORY_TASKS.md | Real item ownership, inspect/take/deposit/give/fetch/help, permitted chests, explicitly confirmed gifts/barter, plot-item protection and native inventory presentation. Adapt NWNX-dependent inspection to EE APIs and supported native UI. |
 | Payments | interactions.py; docs/PAYMENTS_AND_NPC_COMBAT.md | Exact recipient, purpose, bounded amount and explicit player confirmation. Speech is never proof of payment. |
 | Patrols | patrol.py; docs/PATROL_PREVIEW.md | Author-defined waypoints, route order, waits, loop/ping-pong policy, interruptions and pathfinding status. Patrol movement itself needs no LLM call. |
@@ -61,7 +61,7 @@ Start a quest through AI, continue through menu dialogue, choose a branch throug
 
 Generate multiple creatures from the same encounter blueprint. Address each separately, test unique histories, enable/disable conversation in the creator, and verify no replies after death/despawn. Reload an earlier save and check that future knowledge disappears. Natural-address routing must never choose arbitrarily between ambiguous actors.
 
-### 3. Native merchants and familiar/summon adapters
+### 3. Native merchants and familiar/summon adapters — merchants implemented in 0.3, companion adapters pending
 
 Ship a merchant/familiar/summon test area. Buy via menu and chat, check finite stock and actual charged prices, test repeated haggles, cancel an exchange, dismiss/resummon, cancel an errand, and recover inventory safely. Test familiar and summon ownership independently. No AI reply may invent payment, stock, delivery or ownership.
 

@@ -19,6 +19,7 @@ from .provider import Provider
 from .bridge import Bridge
 from .builder import ROOT, build_project, install_build
 from . import authoring
+from .merchants import CATALOG as GOODS, defaults as merchant_defaults
 
 def defaults():
     bundled=ROOT/'vendor/nwnsc/nwnsc.exe'
@@ -36,7 +37,11 @@ def database_path(user_dir):
 class Application:
     def __init__(self,data):
         self.store=Store(Path(data).resolve());self.config=defaults();self.lock=threading.RLock();self.token=secrets.token_urlsafe(32)
-        if not any(p['schema_version']==2 for p in self.store.list()):self.store.save(authoring.seed())
+        if not any(p['schema_version']==2 for p in self.store.list()):
+            self.store.save(authoring.seed())
+            for example_file in sorted((ROOT/'examples').glob('*.rwproject.json')):
+                document=json.loads(example_file.read_text(encoding='utf-8-sig'))
+                self.store.save(document.get('project',document))
         config=self.store.root/'settings.json'
         if config.is_file():self.config.update({k:v for k,v in json.loads(config.read_text(encoding='utf-8')).items() if k in self.config})
         self.provider=Provider(self.config['model']);self.bridge=Bridge(database_path(self.config['user_dir']),self.store,self.provider)
@@ -48,7 +53,7 @@ class Application:
                 'key_available':bool(os.environ.get('OPENAI_API_KEY')),'usage':self.provider.usage,
                 'bridge':self.bridge.status(),'receipts':self.bridge.receipts(),
                 'catalog':{'creatures':list(CREATURES),'furnishings':list(DECOR),'appearances':list(APPEARANCES)},
-                'authoring_catalog':{'creatures':list(authoring.CREATURES),'furnishings':list(authoring.DECOR),'appearances':list(authoring.APPEARANCES),'area_types':authoring.AREA_TYPES}}
+                'authoring_catalog':{'creatures':list(authoring.CREATURES),'furnishings':list(authoring.DECOR),'appearances':list(authoring.APPEARANCES),'area_types':authoring.AREA_TYPES,'merchandise':GOODS,'merchant_defaults':merchant_defaults()}}
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')

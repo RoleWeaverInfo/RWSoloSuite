@@ -2,6 +2,7 @@
 import copy
 import re
 from .content import _obj, array, enum, S, I, B, schema_check
+from .merchants import SCHEMA as MERCHANT_SCHEMA, defaults as merchant_defaults, validate as validate_merchant
 
 AREA_TYPES={'castle':'Castle interior','dungeon':'Stone dungeon','cave':'Cave / mine','forest':'Forest / wilderness'}
 SIDES=('north','east','south','west')
@@ -11,7 +12,7 @@ APPEARANCES={'innkeeper':233,'woman':255,'man':267}
 ITEM_BASES={'quest_token':'nw_it_msmlmisc05','healing_potion':'nw_it_mpotion001'}
 ROOM_SCHEMA=_obj({'id':S,'name':S,'x':I,'y':I,'width':I,'height':I,'description':S,'purpose':S})
 AREA_SCHEMA=_obj({'id':S,'name':S,'type':enum(*AREA_TYPES),'width':I,'height':I,'room_count':I,'description':S,'lighting':enum('warm','cold','dark','daylight'),'rooms':array(ROOM_SCHEMA)})
-NPC_SCHEMA=_obj({**{k:S for k in ('id','name','alias','role','room','personality','knowledge','secret','reveal_after','motivation','game_notes','greeting')},'appearance':enum(*APPEARANCES),'ai_enabled':B,'dialogue':array(_obj({'topic':S,'text':S,'after_quest':S}))})
+NPC_SCHEMA=_obj({**{k:S for k in ('id','name','alias','role','room','personality','knowledge','secret','reveal_after','motivation','game_notes','greeting')},'appearance':enum(*APPEARANCES),'ai_enabled':B,'dialogue':array(_obj({'topic':S,'text':S,'after_quest':S})),'merchant':MERCHANT_SCHEMA})
 ENCOUNTER_SCHEMA=_obj({**{k:S for k in ('id','name','room','description','after_quest','prompt','success','failure')},'kind':enum('combat','ambush','puzzle','treasure','story'),'creature':enum(*CREATURES),'count':I,'maximum':I,'scale':B,'options':array(S),'answer':I,'gold':I,'xp':I})
 STEP_SCHEMA=_obj({**{k:S for k in ('id','name','description','target','next')},'kind':enum('talk','visit','retrieve','defeat','interact','choice'),'consume':B,'choices':array(_obj({'label':S,'next':S,'text':S}))})
 QUEST_SCHEMA=_obj({**{k:S for k in ('id','name','description','start_npc','completion')},'optional':B,'requires':array(S),'gold':I,'xp':I,'steps':array(STEP_SCHEMA)})
@@ -43,7 +44,7 @@ def room(ident,name,x=2,y=2,width=3,height=3,description=''):
 
 def npc(ident,name,room_id):
     return dict(id=ident,name=name,alias=ident,role='Supporting character',room=room_id,appearance='man',ai_enabled=True,
-                personality='',knowledge='',secret='',reveal_after='',motivation='',game_notes='',greeting='Greetings, traveler.',dialogue=[])
+                personality='',knowledge='',secret='',reveal_after='',motivation='',game_notes='',greeting='Greetings, traveler.',dialogue=[],merchant=merchant_defaults())
 
 def encounter(ident,name,room_id,kind='combat'):
     return dict(id=ident,name=name,room=room_id,kind=kind,description='',creature='goblin',count=1,maximum=3,scale=False,after_quest='',prompt='',options=[],answer=0,success='',failure='',gold=0,xp=0)
@@ -55,12 +56,12 @@ def quest(ident,name,steps=None):
     return dict(id=ident,name=name,description='',start_npc='',completion='The task is complete.',optional=False,requires=[],gold=0,xp=100,steps=steps or [])
 
 def blank(ident='my_adventure',title='My adventure'):
-    return dict(schema_version=2,id=ident,module_name=ident[:16],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=False,
+    return dict(schema_version=2,id=ident,module_name=ident[:16],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=True,
                 areas=[dict(id='starting_area',name='Starting area',type='castle',width=12,height=12,room_count=1,description='',lighting='warm',rooms=[room('arrival','Arrival')])],connections=[],npcs=[],encounters=[],items=[],furnishings=[],quests=[])
 
 def seed():
     p=blank('silent_bell','The Silent Bell')
-    p.update(module_name='rw_silent_bell',summary='Recover the abbey bell’s stolen clapper, learn why it was silenced, and decide its fate.',
+    p.update(module_name='rw_silent_bell',ai_conversations=False,summary='Recover the abbey bell’s stolen clapper, learn why it was silenced, and decide its fate.',
       story='The abbey bell once soothed restless dead. Its keeper secretly removed the clapper after hearing a voice demand a living sacrifice. A frightened scout saw the keeper hide it in the old vault. The player must clear the road, investigate the vault, solve its inscription, and choose to restore the bell or seal it away. Both choices conclude the story. The abbey keeper is remorseful, not a combat boss.',
       opening='At dusk, the abbey bell is silent. The road has become dangerous. Elder Ilyra waits in the guest hall, seeking someone willing to learn the truth.',
       ending='Your decision settles the fate of the Silent Bell. The abbey and its travelers can begin again. Your adventure is complete; you may keep exploring or save your game.',start_room='guest_hall')
@@ -90,7 +91,12 @@ def seed():
     return p
 
 def validate(p,complete=False):
-    schema_check(p,SCHEMA);p=copy.deepcopy(p)
+    p=copy.deepcopy(p)
+    # Upgrade format-2 projects made before merchant authoring was introduced.
+    if isinstance(p,dict) and isinstance(p.get('npcs'),list):
+        for n in p['npcs']:
+            if isinstance(n,dict):n.setdefault('merchant',merchant_defaults())
+    schema_check(p,SCHEMA)
     if p['schema_version']!=2:raise ValueError('Expected adventure project format 2')
     for k,limit in [('id',40),('module_name',16)]:
         if not re.fullmatch('[a-z][a-z0-9_]{0,'+str(limit-1)+'}',p[k]):raise ValueError('Invalid '+k)
@@ -112,6 +118,7 @@ def validate(p,complete=False):
             if not (2<=r['width']<=16 and 2<=r['height']<=16 and r['x']>=1 and r['y']>=1 and r['x']+r['width']<a['width'] and r['y']+r['height']<a['height']):raise ValueError(r['name']+': room must fit inside the area with a one-tile border')
     aliases=set()
     for n in p['npcs']:
+        validate_merchant(n)
         if not re.fullmatch('[a-z][a-z0-9_]{0,23}',n['alias']) or n['alias'] in aliases:raise ValueError('Use a unique lowercase NPC chat alias')
         aliases.add(n['alias'])
         if len(n['dialogue'])>12:raise ValueError('Use at most 12 conversation topics per NPC')
@@ -162,6 +169,7 @@ def review(p):
         for o in p[collection]:
             if o['room'] not in rooms:errors.append(o['name']+': choose an existing room.')
     for n in p['npcs']:
+        if n['merchant']['enabled'] and not n['merchant']['stock']:warnings.append(n['name']+' is a merchant with no initial stock.')
         for qid in [n['reveal_after'],*[d['after_quest'] for d in n['dialogue']]]:
             if qid and qid not in quests:errors.append(n['name']+': unknown knowledge-unlock quest '+qid)
         if not n['knowledge'].strip():warnings.append(n['name']+' has no authored knowledge yet.')

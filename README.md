@@ -1,10 +1,20 @@
-# RWSoloSuite — Role Weaver Module Studio 0.2
+# RWSoloSuite — Role Weaver Module Studio 0.3
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
 ## From a Git checkout
 
-Run **Start Module Studio.cmd** from this folder. The Silent Bell is initialized automatically. Import **examples/starlight_trial.rwproject.json** for the AI-generated example, or **examples/silent_bell.rwproject.json** to restore a separate copy of the sample. Build modules through **Build & share**; generated modules, runtime data and local settings are excluded from Git.
+Run **Start Module Studio.cmd** from this folder. A fresh checkout initializes the shipped examples. On an existing installation, import **examples/ai_market.rwproject.json** for the AI-and-merchant trial, **examples/starlight_trial.rwproject.json** for the AI-generated example, or **examples/silent_bell.rwproject.json** to restore a separate sample copy. Build modules through **Build & share**; generated modules, runtime data and local settings are excluded from Git.
+
+## New in 0.3: AI conversations, quests and merchants
+
+- After choosing **Talk freely with AI**, close the menu and speak normally in Talk. You can also address **Bram Ironstock: Hello**, use **!talk bram show me your goods**, or end with **!end**. Follow-up focus lasts three minutes; private channels and OOC prefixes are excluded. Conversation remains within 12 metres and line of sight.
+- AI can offer/start a quest, complete a current talk objective and select an explicitly chosen authored branch. Menu dialogue uses the same native quest state, journal, ending and reward logic. Visiting, fighting, retrieving items and using objects still require actual game actions.
+- **Characters → Merchant shop** defines finite stock, exact prices, haggling chance, discount and offer duration. AI can generate these fields too. Purchases use the same native goods panel whether opened through chat or the NPC menu. The LLM cannot pay gold, deliver items or choose a discount.
+- Shops require proximity within six metres, visibility and no combat. The player clicks **Buy** at the displayed price. The game checks price, stock and funds again, delivers one unit, charges gold, and prints a receipt. Stock and offers are saved in the game. Potion delivery preserves an existing stack by splitting the purchased unit before merging.
+- Haggling rolls d100 against the configured chance. Offers include failed rolls, do not stack, and last the configured number of active game seconds. Gold prices round down, minimum one; cheap items may therefore receive a larger effective percentage reduction. New adventures enable live AI at export by default; it can be disabled.
+
+The first shop catalogue contains daggers, short swords, longswords, quarterstaves, shortbows, leather armour, small shields and Cure Light Wounds potions. Each merchant supports up to eight unique stock lines, 1–20 units each, at most 80 goods total, and explicit prices of 1–100000 gold. Haggling supports 0–100% success chance, 0–10% discount and 60–3600 active game seconds. This release sells goods to players; buyback, barter and restocking are future work. It does not require NWNX. **Native shop interaction, item transfers and save/load behavior still need the user's in-game verification.**
 
 ## Start creating
 
@@ -12,7 +22,7 @@ Run **Start Module Studio.cmd** from this folder. The Silent Bell is initialized
 2. Open an example or choose **New adventure**. Write the storyline, tone, public summary, opening, ending, intended levels and party size.
 3. In **Areas & rooms**, specify area type, width/height, room count, appearance and purpose. Generate the room layout, connect the rooms, and edit each exit's side and destination. Preview the exact corridor plan. One tile is 10 metres; north is up.
 4. In **AI DM · Adventure design**, select **Complete adventure**, or a narrower scope, and give your instructions. The AI uses your story, room plans and character notes. Existing area type, size and requested room count are preserved. It proposes native quests, characters, dialogue, encounters, items and furnishings. Review the proposal before applying it; the last applied proposal can be undone.
-5. Edit the generated content. **Characters** exposes personality, knowledge, secrets, motivation, game notes, ordinary dialogue and optional AI conversation profiles. **Encounters & items** includes combat, ambushes, puzzles, treasure and story interactions. **Quests & endings** defines objectives, prerequisites, rewards and branching decisions.
+5. Edit the generated content. **Characters** exposes personality, knowledge, secrets, motivation, game notes, ordinary dialogue, AI conversation profiles and merchant stock/prices. **Encounters & items** includes combat, ambushes, puzzles, treasure and story interactions. **Quests & endings** defines objectives, prerequisites, rewards and branching decisions.
 6. Choose **Check adventure**, fix any errors, then build in **Build & share**. Download the .mod, editable project, or share/Aurora ZIP. **Install for playtest** copies the build into your NWN modules folder and backs up a differing existing file.
 
 Generation uses the existing authorized OPENAI_API_KEY from the process, user or machine environment. It does not copy it into a project or package. API generation requires an internet connection and uses your API account. Manual editing, checking, building and ordinary gameplay do not require the key.
@@ -33,7 +43,9 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Starlight Trial** was generated through a real AI request from a short observatory story and an author-specified two-room dungeon. It includes two NPCs, combat, a puzzle, furnishings and a six-objective quest with two endings. It demonstrates the storyline-to-module pipeline.
 
-Both are included as editable projects and exported modules. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
+**The Silent Bell — AI & Merchant Trial** adds Bram Ironstock, a finite-stock merchant, to the abbey and enables live AI for the four key characters. Its filename is **rw_ai_market.mod**. This is the 0.3 compiled playtest build.
+
+All three are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
 ## Share and edit in Aurora
 
@@ -41,13 +53,13 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.2.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.3.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## Optional AI conversations while playing
 
 In **Build & share**, enable optional freeform NPC conversations before building. The normal story still works independently. Players who want live AI run **Start AI Player.cmd**, import the matching .rwproject.json if necessary, and use their own OPENAI_API_KEY.
 
-Speak to an AI-enabled NPC, choose **Talk freely with AI**, close the dialogue and type `!ai Your question` in the normal chat bar. Alternatively use `!talk alias Your question` nearby, or `!dm Give me a hint`. NPC aliases are shown in the character editor. Stand within 12 metres and in line of sight. Keep the game unpaused while waiting; replies are delivered on its heartbeat and requests expire after about 100 seconds. AI conversation can start an offered quest, complete its current talk objective, and select an explicitly chosen authored branch. The ordinary NPC menu uses exactly the same quest state and remains available. Item recovery, combat, visits and object interactions are confirmed by the game. Replies cannot invent new objectives or grant arbitrary rewards.
+Speak to an AI-enabled NPC, choose **Talk freely with AI**, close the dialogue and speak normally in Talk (or use `!ai Your question`). Alternatively use `!talk alias Your question` nearby, or `!dm Give me a hint`. NPC aliases are shown in the character editor. Stand within 12 metres and in line of sight; merchant panels require six metres and no combat. Keep the game unpaused while waiting; replies are delivered on its heartbeat and requests expire after about 100 seconds. AI conversation can start an offered quest, complete its current talk objective, and select an explicitly chosen authored branch. The ordinary NPC menu uses exactly the same quest state and remains available. Item recovery, combat, visits and object interactions are confirmed by the game. Replies cannot invent new objectives or grant arbitrary rewards.
 
 NPC prompts include their own knowledge, unlocked secrets and the relevant quest context. Secrets can unlock after a selected quest completes. The AI DM receives the full storyline to provide guidance. Recent dialogue and game/party context are sent to OpenAI for these optional live requests. The Responses API uses strict schemas and store: false. Studio limits attempted requests to 60 per hour per process. Settings retain the tested Role Weaver model, gpt-5.6-luna.
 

@@ -1,41 +1,35 @@
-# Validation — 2026-11-13
+# Validation — Module Studio 0.3.0
 
-Release: Role Weaver Module Studio 0.2.0, initial authoring/playtest release.
+Scope: AI conversation and quest progression, plus native AI/menu merchants. Other AI NPC port features remain on the roadmap.
 
 ## Completed
 
-- **43 automated tests passed**, including native compilation of ordinary and optional-AI adventures and regression coverage for the earlier courier edition.
-- Adventure checks cover requested room counts, bounds, connected rooms, conflicting ports, cross-area exits, one-way return paths, quest references, branches, cycles, prerequisite deadlocks and consumed quest items. AI proposal tests cover scope enforcement, one repair attempt and NPC secret gating.
-- The native terrain test compares every generated tile's rotated corner types with the installed NWN tileset definitions. This checks the terrain construction, but does not run the engine's walkmesh.
-- Export tests reparse and round-trip every generated GFF resource and compare the MOD index/payload with the export input. Branches compile into native conversation actions/conditions and journal entries. Standalone exports contain no SQL mailbox or NWNX dependency.
-- Optional-AI exports compile and retain the native quest engine. Transport tests cover old sessions, expired requests, paused companions, command allowlists and transaction cleanup. HTTP tests cover local host/origin/token checks, import/save, invalid paths and secret-free state.
-- A **real AI authoring request** used a short observatory story plus a configured 14×10-tile, two-room dungeon. It generated two NPCs, two encounters, furnishings and a six-objective quest with two decision outcomes. The final successful request needed no repair. The resulting proposal passed validation and exported. During review, sample prose claiming that the puzzle physically unlocked a chest was corrected to match the implemented mechanics; the original response remains in data/authoring-validation/proposal.json.
-- Browser checks verified the new authoring navigation, new project creation, a four-room layout, three corridor connections, saving, quest branch controls, adventure checks and native export. Both sample projects appear in the final editor. The previous global-name JavaScript error was corrected; the final views and actions worked.
-- JavaScript syntax and the PowerShell launcher parse checks passed. The local server is running on 127.0.0.1:8766.
-- No NWN game or Aurora instance was launched for these checks.
+- **61 automated tests pass**, including compilation against the installed NWN:EE header/assets with nwnsc 1.1.5. Native tests cover both AI-enabled and menu-only merchant builds, plus the legacy courier exporter.
+- Story tests cover current-NPC action allowlists, prerequisites, branch selection, invalid model actions and native checks against changed objective state. All paths call the shared native quest/reward functions.
+- Merchant tests cover upgrading old format-2 projects without mutating them, stock/price/haggle limits, real-observation quote grounding, sold-out stock, restricted model actions, exported inventory resources, native menu wiring and stack-safe delivery preparation.
+- Native export verifies every GFF round trip and the MOD resource index. The stock test verifies 11 actual goods on Bram and both merchant menu scripts. Native UI and transactions use no NWNX functions.
+- Delivery prepares one unit in an empty temporary native store before copying it into the buyer's inventory. This handles the documented CopyItem behavior of returning an existing merged stack, without resizing or overwriting that existing stack's quantity. Stock is reserved before delivery; failed delivery does not take gold. Exact engine behavior still needs playtesting.
+- Native shop events check window token/generation, module-load session, actor, proximity, line of sight, combat, quote price, expiry, stock and funds. Purchases require a native Buy click; the AI has no direct payment/item-transfer action.
+- Haggle rolls and offer duration are native. Offer state and stock follow the savegame; the duration counts active module-heartbeat seconds rather than wall time while paused.
+- Three **real OpenAI checks passed** using the previously authorized key: an observed dagger price, a requested shop opening, and an explicit sealing branch choice. Total: 3 requests, 2254 input tokens and 287 output tokens. These were model/adapter checks, not an in-game transport test.
+- Browser checks verified Bram's merchant card, quantities/prices, stock-line addition/removal, haggling toggle, saving, adventure review and native export. The original sample values were restored after editing. No browser errors or warnings were observed in the final check.
+- JavaScript syntax checks pass. Local Studio 0.3 and its player companion are running on 127.0.0.1:8766. Existing local projects/builds were preserved in the Git checkout's ignored data folder.
+- No NWN or Aurora instance was launched.
 
-## Final ordinary-play examples
+## Installed trial build
 
-| Adventure | Build | Areas / rooms / quests | Native resources | Compiled scripts |
-|---|---|---|---|---|
-| The Silent Bell | d4d90eb04ef8f6b07c2e | 3 / 7 / 2 | 89 | 18 |
-| The Starlight Trial | 07280a21ba675c01b460 | 1 / 2 / 1 | 63 | 19 |
+- Title: The Silent Bell — AI & Merchant Trial
+- Filename: rw_ai_market.mod
+- Build: 89751fbc24d1c1ca7a03
+- Contents: 3 areas, 7 rooms, 4 NPCs, 2 quests, 112 native resources, 23 compiled scripts
+- SHA-256: 71f904c83be6f100fb874256188ebc0722fd07f6fa31cdc9704c185c4eed460c
+- Installed in the local NWN user modules folder. The original Missing Courier files remain separate.
 
-SHA-256:
+## Required user verification
 
-- rw_silent_bell.mod: 40b5285a875d6225ccacd551b98a8e59b331b9818d615005b9eaa7b8caa322e4
-- starlight_trial.mod: 3b6d40d85409a99d26557acc93bf128828f3014e38740499ce41d53e26b41383
+The trial has **not** been played or opened in Aurora. Native compilation and resource checks cannot prove game event timing or UI rendering.
 
-The share ZIPs include the module, editable project, native source, layout, validation report and instructions. The application package uses explicit source/example allowlists, excluding local settings, runtime databases and environment files, and scans candidates for the configured credential.
+Priority checks: native goods-panel rendering; exact gold/item transfer; potion merges; insufficient funds; sold-out stock; double clicks; offer expiry; AI/menu quest switching; pending-reply rejection; and save/reload before/after purchases and decisions. Also check walkability, exits, party travel, death/respawn and both endings. PLAYTEST.md contains the concrete procedure.
 
-## Still requires the user's playtest
-
-- Opening, editing and saving both new modules in Aurora.
-- Walking every room/corridor, reaching placed objects, using both forms of exit, and checking party travel/control.
-- Native dialogue and journal event timing, both quest endings, rewards, death/respawn and save/reload behavior.
-- Actual encounter difficulty with different parties; count scaling is only a starting heuristic.
-- Optional in-game SQLite exchange, live NPC/DM responses, secret unlocks and stale-reply handling in the engine.
-- Playing a shared module on another NWN:EE installation without the authoring application.
-
-Compilation, simulated transport tests and resource validation do not prove in-game behavior. See PLAYTEST.md for the concrete procedure. The existing Missing Courier modules remain separate from these new examples.
+This first merchant release sells eight catalogue goods to players. Buyback, general barter, restocking, familiar/summon adapters, patrols and NPC-to-NPC conversations are not implemented in this release.
 

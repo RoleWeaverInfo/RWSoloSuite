@@ -18,6 +18,8 @@ from .nwn.game_assets import GameAssets
 from .nwn.area_tools import node,set_value as put,new_area,empty_objects,waypoint,comments_for,pack_module
 from .builder import ROOT,TYPES,BUILD_LOCK,string,position,conversation,literal
 from .story_actions import native as native_story
+from .merchants import CATALOG as GOODS
+from .runtime_ai import adapt as adapt_ai
 
 def local(obj,values):
     table=obj[1].get('VarTable',(15,[]))[1]
@@ -57,13 +59,15 @@ def build(project,store,game_root,compiler):
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
         result=json.loads((destination/'manifest.json').read_text(encoding='utf-8'));result['path']=str(destination/result['module']);return result
     original={(n,k):b for n,k,b in resources(base)};entries=OrderedDict();entries['repute',2038]=original['repute',2038]
     game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms)
+    escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
+    entries['aw_escrow',2051]=write(b'UTM V3.2',escrow)
     areas={};gits={};room_index={r:i for i,r in enumerate(rooms)};enc_index={e['id']:i for i,e in enumerate(p['encounters'])};npcs={n['id']:n for n in p['npcs']};quest_index={q['id']:i for i,q in enumerate(p['quests'])}
     area_template=read(original['mc_hall',2012])[1];git_template=read(original['mc_hall',2023])[1];tile_template=area_template[1]['Tile_List'][1][0]
     for a in p['areas']:
@@ -88,13 +92,46 @@ def _build(p,store,game_root,compiler):
     scripts={f.stem:f.read_text(encoding='utf-8') for f in (ROOT/'authoring_scripts').glob('*.nss')}
     def script(name,body):scripts[name]=body+'\n';return name
     def conditional(name,expression):return script(name,'#include "aw_quest"\nint StartingConditional(){return '+expression+';}')
+    shops=[];merchant_inventory={}
+    item_table=game.get('baseitems',2017).decode('latin1').splitlines()
+    item_header=next(line.split() for line in item_table if 'InvSlotWidth' in line and 'InvSlotHeight' in line)
+    item_sizes={}
+    for line in item_table:
+        parts=line.split()
+        if parts and parts[0].isdigit():
+            values=dict(zip(item_header,parts[1:]))
+            if values.get('InvSlotWidth','').isdigit() and values.get('InvSlotHeight','').isdigit():item_sizes[int(parts[0])]=(int(values['InvSlotWidth']),int(values['InvSlotHeight']))
+    for ni,n in enumerate(p['npcs']):
+        if not n['merchant']['enabled']:continue
+        shop=dict(n['merchant'],id=n['id']);stock=[];inventory=[];occupied=set()
+        for si,s in enumerate(shop['stock']):
+            good=GOODS[s['item']];ref=f'aw_s_{ni}_{si}'
+            obj=read(game.get(good['resref'],2025))[1];string(obj,'Tag',ref);string(obj,'TemplateResRef',ref,11)
+            put(obj,'LocalizedName',text(good['name']));put(obj,'StackSize',1);put(obj,'Plot',0);put(obj,'Identified',1)
+            entries[ref,2025]=write(b'UTI V3.2',obj)
+            stock.append(dict(s,name=good['name'],tag=ref,resref=ref))
+            width,height=item_sizes[obj[1]['BaseItem'][1]]
+            for _ in range(s['quantity']):
+                position_found=None
+                for y in range(512):
+                    for x in range(9-width):
+                        cells={(x+dx,y+dy) for dx in range(width) for dy in range(height)}
+                        if not cells&occupied:position_found=(x,y,cells);break
+                    if position_found:break
+                if position_found is None:raise ValueError(n['name']+': stock cannot fit in the merchant inventory')
+                x,y,cells=position_found;occupied.update(cells)
+                inventory.append(node(len(inventory),InventoryRes=(11,ref.encode()),Repos_PosX=(2,x),Repos_Posy=(2,y)))
+        shop['stock']=stock;shops.append(shop);merchant_inventory[n['id']]=inventory
     def creature(ident,name,base_name,rid=None,appearance=None,enemy=False,enc=None):
         obj=read(game.get(base_name,2027))[1];string(obj,'Tag',ident);string(obj,'TemplateResRef',ident,11);put(obj,'FirstName',text(name));put(obj,'LastName',text(''))
         string(obj,'Conversation','' if enemy else ident,11);put(obj,'FactionID',1 if enemy else 2);put(obj,'Plot',int(not enemy));put(obj,'IsImmortal',int(not enemy),0)
         if appearance is not None:put(obj,'Appearance_Type',appearance);put(obj,'Gender',int(appearance==255))
         if enemy:
             local(obj,{'AW_ENC':ident,'AW_BASE_DEATH':obj[1].get('ScriptDeath',(11,b''))[1].decode()});string(obj,'ScriptDeath','aw_dead',11)
-        else:put(obj,'Equip_ItemList',[],15);string(obj,'ScriptHeartbeat','',11)
+        else:
+            put(obj,'Equip_ItemList',[],15);string(obj,'ScriptHeartbeat','',11)
+            if ident in merchant_inventory:
+                put(obj,'ItemList',merchant_inventory[ident],15);string(obj,'ScriptSpawn','',11)
         entries[ident,2027]=write(b'UTC V3.2',obj)
         if rid:
             count=enc['count'] if enc else 1
@@ -117,7 +154,7 @@ def _build(p,store,game_root,compiler):
         x,y=placement.take(rid,side);position(obj,x,y);gits[rooms[rid][0]['id']][1]['Placeable List'][1].append((9,obj[1]));return x,y
     for ni,n in enumerate(p['npcs']):
         creature(n['id'],n['name'],'nw_guard',n['room'],APPEARANCES[n['appearance']])
-        lines=[];replies=[];starts=[]
+        lines=[];replies=[];starts=[];choice_entries=[]
         # Active choice objectives take precedence over ordinary conversation topics.
         for qi,q in enumerate(p['quests']):
             for si,s in enumerate(q['steps']):
@@ -127,13 +164,19 @@ def _build(p,store,game_root,compiler):
                     act=script(f'aqa_{qi}_{si}_{ci}','#include "aw_quest"\nvoid main(){SendMessageToPC(GetPCSpeaker(),'+literal(choice['text'])+');AQAdvance(GetPCSpeaker(),'+literal(q['id'])+','+str(si+1)+','+literal(choice['next'])+');}')
                     options.append(len(replies));replies.append((choice['label'],[],act))
                 cond=conditional(f'aqc_{qi}_{si}','AQState('+literal(q['id'])+')=='+str(si+1))
-                starts.append((len(lines),cond));lines.append((s['description'],options))
+                choice_entries.append(len(lines));starts.append((len(lines),cond));lines.append((s['description'],options))
         farewell=len(replies);replies.append(('Farewell.',[]));topics=[farewell]
         if p['ai_conversations'] and n['ai_enabled']:topics.insert(0,len(replies));replies.append(('Talk freely with AI.',[],'sp_select'))
+        if n['merchant']['enabled']:
+            for verb,label,flag in [('browse','Show me your goods.',False),('haggle','Can you offer a better price?',True)]:
+                if flag and not n['merchant']['haggle_enabled']:continue
+                act=script(f'aw_shop_{ni}_{int(flag)}','#include "aw_merchant"\nvoid main(){AWMOpen(GetPCSpeaker(),OBJECT_SELF,'+('TRUE' if flag else 'FALSE')+');}')
+                topics.insert(0,len(replies));replies.append((label,[],act))
         greeting=len(lines);lines.append((n['greeting'],topics,'aw_talk'));starts.append((greeting,''))
         for di,d in enumerate([dict(topic='What can you tell me?',text=n['knowledge'],after_quest='')]+n['dialogue']):
             if not d['text'].strip():continue
             line_index=len(lines);lines.append((d['text'],[farewell]));reply_index=len(replies);replies.append((d['topic'],[line_index]));topics.insert(len(topics)-1,reply_index)
+        for entry in choice_entries:lines[entry][1].extend(topics)
         dlg=conversation(lines,replies,starts)
         # Conditional topics are native Aurora dialogue edges, not LLM-only rules.
         ds=[d for d in [dict(topic='What can you tell me?',text=n['knowledge'],after_quest='')]+n['dialogue'] if d['text'].strip()]
@@ -141,8 +184,9 @@ def _build(p,store,game_root,compiler):
             if d['after_quest']:
                 cond=conditional(f'awd_{ni}_{di}','AQDone('+literal(d['after_quest'])+')')
                 ri=next(i for i,r in enumerate(replies) if r[0]==d['topic'])
-                for edge in dlg[1]['EntryList'][1][greeting][1]['RepliesList'][1]:
-                    if edge[1]['Index'][1]==ri:string(edge,'Active',cond,11)
+                for entry in dlg[1]['EntryList'][1]:
+                    for edge in entry[1]['RepliesList'][1]:
+                        if edge[1]['Index'][1]==ri:string(edge,'Active',cond,11)
         entries[n['id'],2029]=write(b'DLG V3.2',dlg)
     for i,item in enumerate(p['items']):
         obj=read(game.get(ITEM_BASES[item['kind']],2025))[1];string(obj,'Tag',item['id']);string(obj,'TemplateResRef',item['id'],11)
@@ -191,20 +235,21 @@ def _build(p,store,game_root,compiler):
     for a in p['areas']:
         ident=a['id'];entries[ident,2012]=write(b'ARE V3.2',areas[ident]);entries[ident,2023]=write(b'GIT V3.2',gits[ident]);entries[ident,2046]=write(b'GIC V3.2',comments_for(gits[ident]))
     native_rooms=[dict(r,area=a['id']) for a in p['areas'] for r in a['rooms']]
-    scripts['aw_config']='\n'.join([json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),'string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
-    ai=p['ai_conversations'];include='#include "sp_inc"' if ai else '#include "aw_quest"'
-    scripts['aw_load']=include+'\nvoid main(){'+('SPInit();' if ai else '')+'}'
-    scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"Optional AI: choose Talk freely with AI, then type !ai <message>; or !talk <alias> <message>.");' if ai else '')+'}'
-    scripts['aw_beat']=include+'\nvoid main(){object pc=GetFirstPC();while(GetIsObjectValid(pc)){AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}}'
+    scripts['aw_config']='\n'.join([json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),'string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
+    ai=p['ai_conversations'];include='#include "sp_inc"' if ai else '#include "aw_merchant"'
+    scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());'+('SPInit();' if ai else '')+'}'
+    scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'
+    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}}'
     if ai:
         for name in ('sp_inc','sp_chat','sp_select'):scripts[name]=(ROOT/'scripts'/(name+'.nss')).read_text(encoding='utf-8')
         scripts['aw_story']=native_story(p,literal)
+        scripts['aw_story']=scripts['aw_story'].replace('#include "aw_quest"','#include "aw_merchant"')
         inc=scripts['sp_inc'].replace('#include "mc_inc"','#include "aw_story"').replace('MCState()','AQProgress()').replace('GetIsObjectValid(MCSatchel(pc))','FALSE')
         inc=inc.replace('string verb=SPText(result,"action");','string verb=SPText(result,"action"); AWAIAction(pc,tag,SPText(result,"story_action"));')
         inc=inc.replace('j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress()));','j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress())); j=JsonObjectSet(j,"quests",AQStates());')
         inc=inc.replace('if(tag=="mc_edric" && verb=="accept_quest" && AQProgress()==0) MCAccept(pc);','// Quest decisions are made through native authored conversation choices.')
         inc=inc.replace('if(tag=="mc_edric" && verb=="turn_in") MCReward(pc);','')
-        scripts['sp_inc']=inc
+        scripts['sp_inc'],scripts['sp_chat'],scripts['sp_select']=adapt_ai(inc,p['npcs'],literal)
         scripts['sp_config']='\n'.join(['string SPProject(){return '+literal(p['id'])+';}','string SPBuild(){return '+literal(digest)+';}','json SPEncounters(){return JsonArray();}',
           'int SPIsNPC(string tag){return '+(' || '.join('tag=='+literal(n['id']) for n in p['npcs'] if n['ai_enabled']) or 'FALSE')+';}',
           'string SPAlias(string alias){'+''.join('if(alias=='+literal(n['alias'])+')return '+literal(n['id'])+';' for n in p['npcs'] if n['ai_enabled'])+'return "";}',
@@ -219,7 +264,7 @@ def _build(p,store,game_root,compiler):
             entries[name,2009]=(source/(name+'.nss')).read_bytes();ncs=compiled/(name+'.ncs')
             if ('void main(' in body or 'StartingConditional(' in body) and not ncs.exists():raise ValueError('Missing compiled script: '+name)
             if ncs.exists():entries[name,2010]=ncs.read_bytes()
-        types=TYPES|{2032:'utt'}
+        types=TYPES|{2032:'utt',2051:'utm'}
         for (name,kind),raw in entries.items():
             if kind not in (2009,2010) and write(*read(raw))!=raw:raise ValueError('Native resource round-trip failed: '+name)
             (source/(name+'.'+types[kind])).write_bytes(raw)
