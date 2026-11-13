@@ -1,0 +1,348 @@
+{
+  "schema_version": 2,
+  "id": "starlight_trial",
+  "module_name": "starlight_trial",
+  "title": "The Starlight Trial",
+  "summary": "Recover a stolen star lens from a ruined observatory, overcome a goblin scavenger and solve an inscription puzzle, then choose the lens's fate.",
+  "story": "A village astronomer asks the hero to recover a stolen star lens from an abandoned observatory. A frightened apprentice hid it after seeing a dangerous vision. Find the truth, solve a simple inscription puzzle, and decide whether to return the lens or seal it safely. Both decisions must conclude the adventure.",
+  "tone": "Adventurous fantasy",
+  "opening": "At dusk, Astronomer Elira leads you to the ruined observatory above the village. Its brass dome is split open, its halls are cold, and somewhere inside rests the star lens stolen by her apprentice. Elira wants it returned before anyone is harmed, but the apprentice may have hidden it for a reason.",
+  "ending": "The observatory falls quiet as the trial ends. Whether the star lens returns to the village or is sealed away, the danger has been faced and the truth brought into the light.",
+  "start_room": "arrival",
+  "level_min": 1,
+  "level_max": 3,
+  "party_size": 1,
+  "ai_conversations": false,
+  "areas": [
+    {
+      "id": "starting_area",
+      "name": "Ruined observatory",
+      "type": "dungeon",
+      "width": 14,
+      "height": 10,
+      "room_count": 2,
+      "description": "Two stone chambers: a furnished study and a secluded lens chamber. An east-west corridor links them beneath the cracked dome.",
+      "lighting": "warm",
+      "rooms": [
+        {
+          "id": "arrival",
+          "name": "Arrival",
+          "x": 1,
+          "y": 1,
+          "width": 4,
+          "height": 5,
+          "description": "The observatory study is crowded with star charts, dusty instruments, and a narrow window overlooking the village. A broken door opens east toward the lens chamber.",
+          "purpose": "Astronomer's study"
+        },
+        {
+          "id": "r_starting__2",
+          "name": "Lens Chamber",
+          "x": 8,
+          "y": 1,
+          "width": 4,
+          "height": 5,
+          "description": "A stone chamber contains a lens cache and a faded inscription. An old empty coffer and astronomical instruments show where the lens was once studied.",
+          "purpose": "Hidden lens vault"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "studyhall",
+      "name": "Study Passage",
+      "from_room": "arrival",
+      "to_room": "r_starting__2",
+      "requires_quest": "",
+      "from_side": "east",
+      "to_side": "west",
+      "kind": "corridor",
+      "two_way": true
+    }
+  ],
+  "npcs": [
+    {
+      "id": "astronomer",
+      "name": "Elira Voss",
+      "alias": "elira",
+      "role": "Village astronomer and quest giver",
+      "room": "arrival",
+      "personality": "Focused, compassionate, and impatient with superstition, though she is more worried than she admits.",
+      "knowledge": "Elira knows the star lens was taken from the observatory and that her apprentice Neris fled into the lens chamber. She knows the chamber bears an inscription but not its answer.",
+      "secret": "Elira once used the lens to predict a famine and fears its visions could tempt her to control the village's future.",
+      "reveal_after": "",
+      "motivation": "Recover the lens before its visions cause panic or attract something from beyond the stars.",
+      "game_notes": "Her conversation starts the main quest. She directs the hero to search the study and confront whatever is guarding the passage.",
+      "greeting": "You came at the right hour. The observatory has one last secret, and my apprentice carried it into these ruins. Bring back the star lens before its light finds another frightened mind.",
+      "appearance": "woman",
+      "ai_enabled": false,
+      "dialogue": [
+        {
+          "topic": "star lens",
+          "text": "The lens is a disk of blue crystal set in a silver frame. It reveals possible futures, not certainties. In careless hands, that distinction can become deadly.",
+          "after_quest": ""
+        },
+        {
+          "topic": "neris",
+          "text": "Neris was clever and kind, but visions frightened them. They said the lens showed a black star over the village, then vanished before I could ask what it meant.",
+          "after_quest": ""
+        },
+        {
+          "topic": "inscription",
+          "text": "The chamber inscription is old observatory verse: it asks which light guides travelers home. I never solved it because the answer seemed too obvious to trust.",
+          "after_quest": ""
+        },
+        {
+          "topic": "reward",
+          "text": "If you recover the lens, I will see that you are paid from the village's dwindling observatory fund. More importantly, you may save us from a dangerous mistake.",
+          "after_quest": ""
+        }
+      ]
+    },
+    {
+      "id": "apprentice",
+      "name": "Neris Vale",
+      "alias": "neris",
+      "role": "Frightened observatory apprentice",
+      "room": "r_starting__2",
+      "personality": "Nervous, earnest, and observant; Neris speaks quickly when discussing the vision and slowly when discussing the lens.",
+      "knowledge": "Neris knows the lens is hidden in a nearby cache and understands the inscription's answer. They saw a vision of the village burning beneath a black star.",
+      "secret": "The vision showed a possible future created by using the lens, not an unavoidable prophecy. Neris hid the lens to stop Elira from forcing that future into being.",
+      "reveal_after": "lensquest",
+      "motivation": "Keep the lens from being used recklessly while finding the courage to tell Elira what the vision truly showed.",
+      "game_notes": "Neris offers context after the hero reaches the chamber. Their secret should only become available after the quest concludes.",
+      "greeting": "Please read the inscription before deciding what to do with the lens. I hid it in the nearby cache because its vision was worse than anything in these ruins.",
+      "appearance": "man",
+      "ai_enabled": false,
+      "dialogue": [
+        {
+          "topic": "vision",
+          "text": "The sky became a pit of ink, and a black star hung above the village. I heard Elira say that one sacrifice would save everyone, but I could not see who she meant.",
+          "after_quest": ""
+        },
+        {
+          "topic": "inscription",
+          "text": "The wall asks what light guides travelers home. It is not the sun, moon, or stars. Think of the light that follows a person even when the road disappears.",
+          "after_quest": ""
+        },
+        {
+          "topic": "coffer",
+          "text": "The old brass coffer is empty. I moved the lens into the nearby cache. Read the inscription before deciding its fate; understanding its warning matters more than any lock.",
+          "after_quest": ""
+        },
+        {
+          "topic": "truth",
+          "text": "I should have told Elira sooner: the vision was only one possible path. The lens makes possibilities look like promises.",
+          "after_quest": "lensquest"
+        }
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "goblinraid",
+      "name": "Goblin Scavenger",
+      "room": "arrival",
+      "description": "A lone goblin scavenger bursts from beneath the study table, clutching a brass gear taken from the observatory instruments.",
+      "after_quest": "",
+      "prompt": "The goblin hisses and lunges, hoping to escape with its prize.",
+      "success": "The scavenger drops the gear and flees through a crack in the wall. The study is safe to search.",
+      "failure": "The goblin knocks you aside and disappears with the gear, but the passage remains open.",
+      "kind": "combat",
+      "creature": "goblin",
+      "count": 1,
+      "maximum": 1,
+      "scale": true,
+      "options": [],
+      "answer": 0,
+      "gold": 8,
+      "xp": 35
+    },
+    {
+      "id": "lensriddle",
+      "name": "The Traveler's Inscription",
+      "room": "r_starting__2",
+      "description": "Silver letters circle the brass coffer: 'When road and sky are lost, what faithful light leads the traveler home?' Three carved symbols wait beneath the verse.",
+      "after_quest": "",
+      "prompt": "Choose the answer that best fits the inscription.",
+      "success": "The correct symbol glows softly. You understand the inscription: use the lens as a guide, never as a command. The nearby cache holds the lens.",
+      "failure": "The wrong symbol flashes cold blue. The inscription offers no answer; consider the verse and try again.",
+      "kind": "puzzle",
+      "creature": "goblin",
+      "count": 1,
+      "maximum": 1,
+      "scale": false,
+      "options": [
+        "The light of a hearth",
+        "The light of a distant star",
+        "The light of a guide's lantern"
+      ],
+      "answer": 2,
+      "gold": 0,
+      "xp": 25
+    }
+  ],
+  "items": [
+    {
+      "id": "starlens",
+      "name": "Star Lens",
+      "description": "A blue crystal disk in a silver frame. It shimmers with possible futures and should not be used carelessly.",
+      "room": "r_starting__2",
+      "container": "",
+      "kind": "quest_token",
+      "quantity": 1
+    }
+  ],
+  "furnishings": [
+    {
+      "id": "studytable",
+      "name": "Chart Table",
+      "room": "arrival",
+      "description": "A broad table covered in star charts and ink pots.",
+      "kind": "table",
+      "placement": "center"
+    },
+    {
+      "id": "studychair",
+      "name": "Astronomer's Chair",
+      "room": "arrival",
+      "description": "A high-backed chair with worn cushions and brass armrests.",
+      "kind": "chair",
+      "placement": "north"
+    },
+    {
+      "id": "studybooks",
+      "name": "Chart Bookshelf",
+      "room": "arrival",
+      "description": "Shelves sag beneath almanacs, maps, and cracked celestial journals.",
+      "kind": "bookshelf",
+      "placement": "west"
+    },
+    {
+      "id": "studycandle",
+      "name": "Blue Candle",
+      "room": "arrival",
+      "description": "A blue candle burns with a steady, unnatural flame.",
+      "kind": "candle",
+      "placement": "east"
+    },
+    {
+      "id": "lenspedestal",
+      "name": "Lens Pedestal",
+      "room": "r_starting__2",
+      "description": "A waist-high stone pedestal marked with three faded symbols.",
+      "kind": "table",
+      "placement": "center"
+    },
+    {
+      "id": "lenschest",
+      "name": "Empty Brass Coffer",
+      "room": "r_starting__2",
+      "description": "An old empty coffer rests beneath the inscription; the lens is kept in a nearby cache.",
+      "kind": "chest",
+      "placement": "south"
+    },
+    {
+      "id": "chamberbarrel",
+      "name": "Water Barrel",
+      "room": "r_starting__2",
+      "description": "A dusty barrel of stale water stands beside the entry.",
+      "kind": "barrel",
+      "placement": "west"
+    },
+    {
+      "id": "chambercandle",
+      "name": "Star Candle",
+      "room": "r_starting__2",
+      "description": "A candle shaped like a five-pointed star gives the chamber its warm light.",
+      "kind": "candle",
+      "placement": "north"
+    }
+  ],
+  "quests": [
+    {
+      "id": "lensquest",
+      "name": "The Starlight Trial",
+      "description": "Recover the star lens from the ruined observatory, learn why Neris hid it, and decide whether it should be returned or sealed away.",
+      "start_npc": "astronomer",
+      "completion": "The lens is recovered and its fate is decided. Elira and Neris must live with the truth of the vision, but the observatory's danger has been contained.",
+      "optional": false,
+      "requires": [],
+      "gold": 50,
+      "xp": 100,
+      "steps": [
+        {
+          "id": "meetelira",
+          "name": "Hear Elira's Plea",
+          "description": "Speak with Elira in the observatory study.",
+          "target": "astronomer",
+          "next": "clearstudy",
+          "kind": "talk",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "clearstudy",
+          "name": "Drive Off the Scavenger",
+          "description": "Defeat the goblin scavenging the observatory study.",
+          "target": "goblinraid",
+          "next": "reachchamber",
+          "kind": "defeat",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "reachchamber",
+          "name": "Enter the Lens Chamber",
+          "description": "Search the lens chamber and find Neris.",
+          "target": "r_starting__2",
+          "next": "solveinscription",
+          "kind": "visit",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "solveinscription",
+          "name": "Solve the Inscription",
+          "description": "Answer the traveler’s inscription to understand its warning.",
+          "target": "lensriddle",
+          "next": "claimlens",
+          "kind": "interact",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "claimlens",
+          "name": "Recover the Star Lens",
+          "description": "Take the star lens from its nearby cache.",
+          "target": "starlens",
+          "next": "fatechoice",
+          "kind": "retrieve",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "fatechoice",
+          "name": "Choose the Lens's Fate",
+          "description": "Decide whether to return the lens to Elira or seal it away for good.",
+          "target": "astronomer",
+          "next": "",
+          "kind": "choice",
+          "consume": false,
+          "choices": [
+            {
+              "label": "Return the lens to Elira",
+              "next": "",
+              "text": "You place the star lens in Elira's hands. She promises to study it only with witnesses and to treat its visions as warnings, never commands. Neris joins her, and the observatory becomes a place of careful learning again."
+            },
+            {
+              "label": "Seal the lens away",
+              "next": "",
+              "text": "You wrap the star lens in velvet and seal it beneath the observatory stones. Elira objects, but after hearing Neris describe the vision, she agrees that some futures are safer left unseen. The village sleeps beneath an ordinary sky."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

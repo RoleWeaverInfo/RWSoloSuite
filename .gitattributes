@@ -1,0 +1,10 @@
+* text=auto
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.nss text eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.mod binary
+*.exe binary
