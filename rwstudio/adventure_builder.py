@@ -17,6 +17,7 @@ from .nwn.module_copy import resources
 from .nwn.game_assets import GameAssets
 from .nwn.area_tools import node,set_value as put,new_area,empty_objects,waypoint,comments_for,pack_module
 from .builder import ROOT,TYPES,BUILD_LOCK,string,position,conversation,literal
+from .story_actions import native as native_story
 
 def local(obj,values):
     table=obj[1].get('VarTable',(15,[]))[1]
@@ -56,7 +57,7 @@ def build(project,store,game_root,compiler):
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
@@ -197,7 +198,9 @@ def _build(p,store,game_root,compiler):
     scripts['aw_beat']=include+'\nvoid main(){object pc=GetFirstPC();while(GetIsObjectValid(pc)){AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}}'
     if ai:
         for name in ('sp_inc','sp_chat','sp_select'):scripts[name]=(ROOT/'scripts'/(name+'.nss')).read_text(encoding='utf-8')
-        inc=scripts['sp_inc'].replace('#include "mc_inc"','#include "aw_quest"').replace('MCState()','AQProgress()').replace('GetIsObjectValid(MCSatchel(pc))','FALSE')
+        scripts['aw_story']=native_story(p,literal)
+        inc=scripts['sp_inc'].replace('#include "mc_inc"','#include "aw_story"').replace('MCState()','AQProgress()').replace('GetIsObjectValid(MCSatchel(pc))','FALSE')
+        inc=inc.replace('string verb=SPText(result,"action");','string verb=SPText(result,"action"); AWAIAction(pc,tag,SPText(result,"story_action"));')
         inc=inc.replace('j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress()));','j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress())); j=JsonObjectSet(j,"quests",AQStates());')
         inc=inc.replace('if(tag=="mc_edric" && verb=="accept_quest" && AQProgress()==0) MCAccept(pc);','// Quest decisions are made through native authored conversation choices.')
         inc=inc.replace('if(tag=="mc_edric" && verb=="turn_in") MCReward(pc);','')

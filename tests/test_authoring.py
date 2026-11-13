@@ -140,5 +140,8 @@ class NativeAdventureTests(unittest.TestCase):
     def test_optional_ai_variant_retains_native_quest_engine(self):
         p=copy.deepcopy(self.p);p['ai_conversations']=True;m=build_project(p,self.store,GAME,COMPILER);r={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
         self.assertIn(('sp_chat',2010),r);self.assertIn(('aw_beat',2010),r);self.assertIn(b'AQTick(pc)',r['aw_beat',2009]);self.assertIn(b'AQStates()',r['sp_inc',2009]);self.assertNotIn(b'MCReward',r['sp_inc',2009])
+        self.assertIn(b'AWAIAction(pc,tag,SPText(result,"story_action"))',r['sp_inc',2009])
+        self.assertIn(b'AQAdvance(pc,"bell_fate",3,"seal_bell")',r['aw_story',2009])
+        self.assertIn(b'AQState("bell_fate")==3',r['aw_story',2009])
 
 if __name__=='__main__':unittest.main()
