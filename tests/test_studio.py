@@ -58,6 +58,8 @@ class FakeProvider:
         self.calls+=1
         if self.hook:self.hook()
         return {'reply':'The cave lies east.','action':'none'}
+    def social(self,project,payload,can_continue):
+        self.calls+=1;return {'line_a':'Hello','line_b':'Good day','action':'none'}
     def companion(self,*args):
         self.calls+=1;return {'reply':'Watches attentively.','action':'none','companion_action':''}
     def dm(self,*args):return {'reply':'Rest first.','encounter_id':'','reason':'Injured party'}
@@ -91,6 +93,22 @@ class BridgeTests(unittest.TestCase):
         self.bridge.process_one();self.assertEqual(self.state(),'ready');self.assertEqual(self.provider.calls,1)
         with self.bridge.connect() as db:response=json.loads(db.execute('SELECT response FROM sp_requests').fetchone()[0])
         self.assertEqual(response['reply'],'Watches attentively.')
+    def test_player_requests_take_priority_over_older_social_work(self):
+        self.request()
+        with self.bridge.connect() as db:
+            db.execute("INSERT INTO sp_requests(request_id,session_id,kind,npc_tag,payload,created,updated) VALUES(?,?,?,?,?,?,?)",('social','session','social','',json.dumps({'game':{},'source':'mira','target':'tomas'}),self.now-10,self.now))
+        self.bridge.process_one()
+        with self.bridge.connect() as db:
+            states=dict(db.execute('SELECT request_id,state FROM sp_requests').fetchall())
+        self.assertEqual(states,dict(request='ready',social='queued'))
+    def test_social_dispatch_and_continuation_checks(self):
+        self.request()
+        with self.bridge.connect() as db:db.execute("UPDATE sp_requests SET kind='social'")
+        self.bridge.process_one();self.assertEqual(self.state(),'ready')
+        with self.bridge.connect() as db:db.execute("UPDATE sp_requests SET state='working'")
+        self.assertTrue(self.bridge.social_current('request','session'))
+        with self.bridge.connect() as db:db.execute("INSERT INTO sp_requests(request_id,session_id,kind,npc_tag,payload,created,updated) VALUES(?,?,?,?,?,?,?)",('player','session','npc','mc_edric','{}',self.now,self.now))
+        self.assertFalse(self.bridge.social_current('request','session'))
     def test_reload_during_model_request_discards_reply(self):
         self.request()
         def reload():

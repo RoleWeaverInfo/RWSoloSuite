@@ -1,3 +1,31 @@
+# Validation — Module Studio 0.5.0
+
+Added native same-area room patrols and optional two-sided public AI conversations for authored NPCs, with module/per-NPC creator switches. No NWNX or game/client binary changes.
+
+- **90 automated checks pass**, including native AI-on/AI-off module compilation and the existing courier, quest, merchant and companion regressions. New checks cover migration with defaults off, reachable routes, bounds, mutual partner opt-in, profile/privacy isolation, finite non-mechanical responses, player-priority mailbox ordering, yielding between speakers, behavior generation scope, exact pending actor references, interruption/expiry checks and retained native heartbeat/combat.
+- JavaScript syntax passes. Browser checks verified global and individual patrol/social switches, saved off states, restored on states, route reordering/restoration, character selection and adventure review. No browser warnings/errors observed. The trial's edited settings were restored. Tomas was subsequently given the same route as Mira to provide a shared meeting stop.
+- **One real two-sided exchange passed** through the previously authorized OpenAI key: 2 requests, 608 input tokens and 275 output tokens. Speaker contexts are isolated and responses contain action none. This used synthetic actor identities, not a live NWN transport test.
+- Native social delivery requires both actual actors, matching UUID/epoch, ownership/control/life/combat checks, range/LOS/perception and no active player request/conversation. Only emitted public lines are saved. Patrols use native ActionMoveToLocation, with bounded attempts and retries; no teleport.
+- Studio 0.5 is running locally with AI Player enabled. Existing projects/builds were preserved. Existing projects migrate with ambient behavior disabled.
+- No NWN or Aurora instance launched. Native pathfinding, speech rendering, interruption, native control and save/reload acceptance remain for the user. See PLAYTEST.md.
+
+## Final installed trial
+
+- Title: The Silent Bell — Patrol & Social Trial
+- File: rw_ambient.mod
+- Build: 96822e969406c35c49a4
+- SHA-256: 4c05359609982e43a19a89003225002c5aabaa72f032d5502a61a3d1a8bcc625
+- Contents: 3 areas, 7 rooms, 7 NPCs, 2 quests, 145 resources, 34 compiled scripts.
+- Mira and Tomas have shared guest-hall/sanctuary patrol stops; both permit public conversation with each other.
+
+## Remaining scope
+
+This release supports authored unowned NPCs, same-area room-centre routes and short nearby exchanges. It does not add cross-area patrols, custom coordinate waypoints, travelling social visits, all-creature social adapters, autonomous town schedules or mechanical actions through social speech. Both NPC profiles must opt in; live social AI needs the player companion and key, while native patrols work offline. User playtesting is required before treating these behaviors as engine-verified.
+
+---
+
+## Previous 0.4 validation record
+
 # Validation — Module Studio 0.4.0
 
 Companion foundation: recruitable party members, existing native familiars and spell summons. No NWNX or game/client binary changes.

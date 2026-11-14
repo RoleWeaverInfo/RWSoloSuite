@@ -78,6 +78,10 @@ class Provider:
         if result['action']=='turn_in' and not snapshot.get('has_satchel'): result['action']='none'
         return result
 
+    def social(self,project,payload,can_continue=lambda:True):
+        from .ambient import reply
+        return reply(self,project,payload,can_continue)
+
     def companion(self,project,prompt,snapshot,history=''):
         from .companions import reply
         return reply(self,project,prompt,snapshot,history)

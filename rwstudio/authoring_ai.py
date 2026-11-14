@@ -13,6 +13,7 @@ DESIGN_RULES='''You are the AI DM and adventure author in Role Weaver Module Stu
 Build a coherent opening, motivations, discoveries, escalation and satisfying ending from the author's storyline. All required progress must work through authored native objectives/dialogue without an API or companion. Live AI can start quests, complete current talk objectives and select authored branches through the same validated quest engine as menu dialogue. Visits, item recovery, combat and world interactions are still confirmed by the game.
 Preserve supplied IDs, area dimensions/type/room_count, explicit room positions and connections unless the author explicitly requests their change. You may add areas and supporting content when the story needs them. Keep id, module_name, levels, party_size and ai_conversations unchanged.
 Geometry: area width/height 6–32 tiles, each tile 10 metres. Room x/y >=1, width/height >=2, x+width<area.width, y+height<area.height. Leave at least TWO empty tiles between rooms, preferably THREE. room_count must equal the number of rooms. Corridors only connect rooms in the SAME area; choose east-to-west when aligned horizontally, north-to-south when aligned vertically. Corridors must be two_way=true and requires_quest empty. Cross-area connections use kind exit. Specify both exit sides, and never reuse a room/side port. Every room must be reachable from start_room. Avoid crossing unrelated rooms/corridors.
+Ambient behaviors: root ambient has independent patrols/social switches, social_interval 60–3600 active seconds, social_budget 1–12 two-line exchange attempts per active hour. NPC behavior has patrol_enabled, route (2–16 room IDs connected by ungated same-area corridors), loop/pingpong mode, wait_seconds 6–300, run, social_enabled, partners (empty permits any opted-in NPC; otherwise exact NPC IDs), public topic <=600 chars, cooldown 60–3600 and communication speech/nonverbal. Both NPCs must opt in and allow each other. Patrols pause for players/combat/recruitment. Social exchanges never progress quests or share secrets. Scope behaviors changes only ambient and npcs. Preserve creator switches unless explicitly asked.
 Populate every room with appropriate NPCs, encounters, items or furniture. Keep fewer than 12 placed objects/creatures per 3x3-tile room. Furniture: table, chair, barrel, bookshelf, crate, chest, sign, candle, bed. NPC appearances: man, woman, innkeeper. Descriptions, lights and stock furnishings convey appearance; custom models are not generated.
 NPCs need personality, scoped knowledge, motivations, role, game_notes, authored greeting, and 2–5 useful dialogue topics. Every NPC alias is a unique lowercase word using letters/digits/underscores, not a display name. Keep secrets out of unconditional knowledge/dialogue. reveal_after and dialogue.after_quest are quest IDs, or empty for unconditional. Give NPCs different perspectives and meaningful story functions.
 Encounters: combat places enemies at build time; ambush spawns them on entering their room; puzzle has 2–6 options and a zero-based answer index; treasure creates a chest; story creates an interactable narrative object. Use only catalogue creatures. Counts 1–8, maximum>=count. scale enables bounded party size/level count scaling. after_quest is supported for ambush, puzzle, treasure, story, NOT placed combat. Match difficulty to the intended levels/party.
@@ -26,7 +27,7 @@ Keep ordinary descriptions <500 characters, story <2500, dialogue <650. Typical 
 
 def generate(provider,project,instruction,scope='adventure',area_id=''):
     project=validate(project)
-    if scope not in ('adventure','story','areas','cast','encounters','quests','populate','companions'):raise ValueError('Unknown generation scope')
+    if scope not in ('adventure','story','areas','cast','encounters','quests','populate','companions','behaviors'):raise ValueError('Unknown generation scope')
     prepared=copy.deepcopy(project)
     for i,a in enumerate(prepared['areas']):
         if len(a['rooms'])!=a['room_count']:prepared['areas'][i]=arrange(a)
@@ -36,7 +37,7 @@ def generate(provider,project,instruction,scope='adventure',area_id=''):
 
 def finish_proposal(provider,project,prepared,result,scope,area_id,context,repaired=False):
     result['id']=project['id'];result['module_name']=project['module_name'];result['schema_version']=2
-    keys={'story':('story','summary','tone','opening','ending'),'cast':('npcs',),'encounters':('encounters','items','furnishings'),'quests':('quests','npcs','encounters','items','furnishings'),'areas':('areas','connections','start_room'),'populate':('npcs','encounters','items','furnishings'),'companions':('companions','npcs')}
+    keys={'story':('story','summary','tone','opening','ending'),'cast':('npcs',),'encounters':('encounters','items','furnishings'),'quests':('quests','npcs','encounters','items','furnishings'),'areas':('areas','connections','start_room'),'populate':('npcs','encounters','items','furnishings'),'companions':('companions','npcs'),'behaviors':('ambient','npcs')}
     if scope!='adventure':
         merged=copy.deepcopy(project)
         for key in keys[scope]:merged[key]=result[key]

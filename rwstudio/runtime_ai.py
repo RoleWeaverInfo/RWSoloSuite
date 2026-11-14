@@ -16,14 +16,14 @@ void SPAsk(object pc,string kind,string message)''')
     replace('if(!SPIsNPC(tag) || !SPNear(pc,npc))',
             'if((kind=="npc" && !SPIsNPC(tag)) || !SPNear(pc,npc) || !AWCAIReady(pc,npc) || (kind=="companion" && !AWCReady(pc,npc)))')
     replace('json p=JsonObject(); p=JsonObjectSet(p,"message",JsonString(GetStringLeft(message,1200)));',
-            'if(kind=="npc" || kind=="companion")SetLocalInt(pc,"SP_FOCUS_AT",SPNow());\n    SetLocalString(pc,"AWM_REQUEST",AWMVersion(pc,npc));SetLocalString(pc,"AWC_PENDING_VERSION",AWCEnabled() && AWText(AWCPolicy(npc),"id")!=""?AWCVersion(pc,npc):"");SetLocalObject(pc,"SP_PENDING_ACTOR",npc);\n    json p=JsonObject(); p=JsonObjectSet(p,"message",JsonString(GetStringLeft(message,1200)));')
+            'if(kind=="npc" || kind=="companion"){AWATouch(npc);}if(kind=="npc" || kind=="companion")SetLocalInt(pc,"SP_FOCUS_AT",SPNow());\n    SetLocalString(pc,"AWM_REQUEST",AWMVersion(pc,npc));SetLocalString(pc,"AWC_PENDING_VERSION",AWCEnabled() && AWText(AWCPolicy(npc),"id")!=""?AWCVersion(pc,npc):"");SetLocalObject(pc,"SP_PENDING_ACTOR",npc);\n    json p=JsonObject(); p=JsonObjectSet(p,"message",JsonString(GetStringLeft(message,1200)));')
     replace('p=JsonObjectSet(p,"history",JsonString(GetLocalString(pc,"SP_HIST_"+tag)));',
             'p=JsonObjectSet(p,"history",JsonString(GetLocalString(pc,"AWC_PENDING_VERSION")!=""?AWText(AWCRecord(pc,AWCIdentity(pc,npc)),"history"):GetLocalString(pc,"SP_HIST_"+tag)));')
     replace('if(kind=="npc") {\n        object npc=GetObjectByTag(tag);','if(kind=="npc" || kind=="companion") {\n        object npc=GetLocalObject(pc,"SP_PENDING_ACTOR");')
     replace('SendMessageToPC(pc,GetName(npc)+": "+reply);',r'''if(AWText(AWMShop(npc),"id")!="" && GetLocalString(pc,"AWM_REQUEST")!=AWMVersion(pc,npc)){
  reply="My stock or prices changed while I was answering. Please reopen my goods panel for current information.";result=JsonObjectSet(result,"merchant_action",JsonString(""));}
         if(GetLocalString(pc,"AWC_PENDING_VERSION")!="" && (AWCVersion(pc,npc)!=GetLocalString(pc,"AWC_PENDING_VERSION") || !AWCAIReady(pc,npc) || IsInConversation(pc) || IsInConversation(npc))){SendMessageToPC(pc,"Companion control, ownership or preferences changed. The older AI reply was discarded.");return;}
-        SendMessageToPC(pc,GetName(npc)+(AWCMode(npc)=="nonverbal"?" ":": ")+reply);''')
+        AWATouch(npc);SendMessageToPC(pc,GetName(npc)+(AWCMode(npc)=="nonverbal"?" ":": ")+reply);''')
     replace('string history=GetLocalString(pc,"SP_HIST_"+tag)+"\\nPlayer: "+GetLocalString(pc,"SP_QUESTION")+"\\nNPC: "+reply;',
             'string history=(GetLocalString(pc,"AWC_PENDING_VERSION")!=""?AWText(AWCRecord(pc,AWCIdentity(pc,npc)),"history"):GetLocalString(pc,"SP_HIST_"+tag))+"\\nPlayer: "+GetLocalString(pc,"SP_QUESTION")+"\\nNPC: "+reply;')
     replace('SetLocalString(pc,"SP_HIST_"+tag,GetStringRight(history,6000));',

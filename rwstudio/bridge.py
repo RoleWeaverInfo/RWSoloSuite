@@ -58,7 +58,7 @@ class Bridge:
         with self.connect() as db:
             db.execute("UPDATE sp_commands SET state='expired',receipt='Game did not acknowledge within 45 seconds',updated=? WHERE state='queued' AND created<?",(now,now-45))
             db.execute("UPDATE sp_requests SET state='expired',updated=? WHERE state IN ('queued','working') AND created<?",(now,now-120))
-            row=db.execute("SELECT r.*,s.project_id,s.build_id,s.snapshot FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.state='queued' AND s.updated>? AND r.created>? ORDER BY r.created LIMIT 1",(now-45,now-90)).fetchone()
+            row=db.execute("SELECT r.*,s.project_id,s.build_id,s.snapshot FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.state='queued' AND s.updated>? AND r.created>? ORDER BY CASE WHEN r.kind='social' THEN 1 ELSE 0 END,r.created LIMIT 1",(now-45,now-90)).fetchone()
             if row is None: return
             # Atomic claim; more than one Studio worker cannot process the same turn.
             if db.execute("UPDATE sp_requests SET state='working',updated=? WHERE request_id=? AND state='queued'",(now,row['request_id'])).rowcount!=1: return
@@ -71,6 +71,7 @@ class Bridge:
             snapshot=payload['game']
             if row['kind']=='npc': response=self.provider.npc(project,row['npc_tag'],payload['message'],snapshot,payload.get('history',''))
             elif row['kind']=='companion':response=self.provider.companion(project,payload['message'],snapshot,payload.get('history',''))
+            elif row['kind']=='social':response=self.provider.social(project,payload,lambda:self.social_current(row['request_id'],row['session_id']))
             elif row['kind']=='dm':
                 proposal=self.provider.dm(project,payload['message'],snapshot)
                 response={'reply':proposal['reply'],'action':'none'}
@@ -87,6 +88,14 @@ class Bridge:
             fresh=db.execute('SELECT updated FROM sp_sessions WHERE session_id=?',(row['session_id'],)).fetchone()
             if not self.enabled or not fresh or fresh['updated']<int(time.time())-45: state='expired'
             db.execute("UPDATE sp_requests SET state=?,response=?,updated=? WHERE request_id=? AND state='working'",(state,json.dumps(response),int(time.time()),row['request_id']))
+
+    def social_current(self,request_id,session_id):
+        if not self.enabled:return False
+        with self.connect() as db:
+            now=int(time.time())
+            row=db.execute("SELECT 1 FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.request_id=? AND r.session_id=? AND r.state='working' AND r.created>? AND s.updated>?",(request_id,session_id,now-90,now-45)).fetchone()
+            player=db.execute("SELECT 1 FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.kind!='social' AND r.state='queued' AND r.created>? AND s.updated>? LIMIT 1",(now-90,now-45)).fetchone()
+            return bool(row) and player is None
 
     def command(self,session_id,action,encounter_id='',message=''):
         if not self.enabled: raise ValueError('Start the local companion before sending a game action')

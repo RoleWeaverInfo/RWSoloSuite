@@ -1,3 +1,23 @@
+# Module Studio 0.5 playtest — patrols and NPC social chat
+
+Start a **new single-player game** with **The Silent Bell — Patrol & Social Trial** (`rw_ambient.mod`, installed separately). Older saves do not acquire the scripts. The original courier, merchant and companion trials remain unchanged. No NWN or Aurora instance was launched during development.
+
+1. Run **Start AI Player.cmd**. Studio 0.5's development instance is already enabled. Start in the abbey guest hall and keep the game unpaused.
+2. Watch **Mira Fen** and **Tomas Reed** walk to the guest-hall stop, wait and patrol to the sanctuary and back. Mira waits 30 active seconds, Tomas 45. They should walk through the actual corridor, never teleport. Stand near their shared stop to observe a two-sided public exchange. Each line should come from the correct NPC, with a short gap.
+3. Talk to either NPC through their ordinary menu while walking or awaiting an ambient response. Movement/social speech should yield. Send a freeform player question while a social response is pending: player work takes priority; an interrupted exchange must not resume later as stale dialogue. Existing quest and merchant menus must still work.
+4. Separate the NPCs beyond six metres, break line of sight, enter combat, kill/raise a mortal test actor, possess an actor or recruit an eligible test NPC. No delayed social line should arrive for an unavailable or changed actor. Use normal companion controls to check recruitment still stops ambient behavior and does not replace native follow/combat.
+5. Stay nearby for several minutes. Exchanges must respect global and per-character cooldowns, and the six-attempt budget per active hour. Failed/interrupted attempts count too. No NPC should submit AI calls every heartbeat. After an attempted request, pause for over 90 wall-clock seconds, then resume: the old social exchange should be discarded.
+6. Save before public speech, continue and save again, then reload the earlier save. The later public conversation must not appear in that earlier timeline. Test reload while the first line is pending and between first/second lines: no duplicated or late reply. Recruited companion handlers must still work after reload, without recursive event errors.
+7. In Studio's **Behaviors** page, disable social globally, rebuild with a different module filename, start a new game and verify patrols still run but NPC-to-NPC calls stop. Then disable only one partner's social flag, or exclude the other from its partner list: the pair must not converse. Test a nonverbal social profile and ensure it does not speak quoted words.
+8. Disable patrols globally and rebuild: both caretakers should remain at their authored placements. Enable globally but disable only Mira: Tomas should patrol while Mira stays. Reorder/add/remove stops and test both route modes and wait/run controls. Invalid rooms, other-area stops or routes without ordinary corridor access must fail the adventure check.
+9. Disable live AI at export, leave patrols on and rebuild a distinct trial. With Studio closed, patrols and all ordinary quests, merchants and companion commands should still run. The editor warns that social AI cannot run in that export.
+10. In a separate Aurora copy, block a route with solid geometry. The NPC should fail or time out, wait before retrying and never teleport or loop API requests. Also verify movement does not override a cutscene-controlled actor or native combat.
+11. Open the final `rw_ambient.mod` in Aurora, inspect its three areas, Mira/Tomas, native routes/configuration, dialogues and source scripts, then Save As a separate copy. Aurora edits are not imported back into Studio.
+
+These tests require actual game/Aurora verification. Automated compilation and resource assertions do not prove pathfinding, event timing, native speech rendering or save/reload behavior. This first adapter supports authored NPCs in one area, not social visits or arbitrary encounter spawns. Previous companion/quest/merchant regression steps follow.
+
+---
+
 # Module Studio 0.4 playtest — party, familiar and summon companions
 
 The new trial is **The Silent Bell — Companion Trial**, filename **rw_companions.mod**, installed in your NWN user modules folder. It has 3 areas, 5 NPCs, 2 quests and the existing merchant. Start a **new game**; older saves do not acquire these scripts. No NWN or Aurora instance was launched during development.

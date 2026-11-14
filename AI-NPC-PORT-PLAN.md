@@ -34,8 +34,8 @@ Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwst
 | Merchants | merchants.py, merchant_admin.py; docs/MERCHANTS_AND_LEADING.md | Implemented in 0.3 for eight stock goods, finite quantities, exact prices, chat/menu access, game-rolled haggling and native purchase receipts. Uses a native NUI goods panel; no buyback or restocking. In-game acceptance remains pending. |
 | Inventory and barter | inventory.py; docs/INVENTORY_TASKS.md | Real item ownership, inspect/take/deposit/give/fetch/help, permitted chests, explicitly confirmed gifts/barter, plot-item protection and native inventory presentation. Adapt NWNX-dependent inspection to EE APIs and supported native UI. |
 | Payments | interactions.py; docs/PAYMENTS_AND_NPC_COMBAT.md | Exact recipient, purpose, bounded amount and explicit player confirmation. Speech is never proof of payment. |
-| Patrols | patrol.py; docs/PATROL_PREVIEW.md | Author-defined waypoints, route order, waits, loop/ping-pong policy, interruptions and pathfinding status. Patrol movement itself needs no LLM call. |
-| NPC-to-NPC conversation | checkins.py, nearby.py; docs/NEARBY_BEHAVIOUR.md | Two-sided opt-in, travel to a visible recipient, short bounded exchange, pair cooldown, interrupt priority and game-confirmed speech. Private player transcripts do not become shared NPC knowledge. |
+| Patrols | patrol.py; docs/PATROL_PREVIEW.md | Implemented in 0.5: creator switches, same-area ordered room stops, waits, loop/ping-pong, native movement and interruption/blocked-route checks. Custom coordinate waypoints and cross-area routes remain pending; in-game acceptance required. |
+| NPC-to-NPC conversation | checkins.py, nearby.py; docs/NEARBY_BEHAVIOUR.md | Implemented in 0.5: two-sided opt-in, allowed partners, nearby visible idle NPCs, two isolated model turns, cooldown/budget, interruption priority and native public speech. Private player transcripts/secrets are excluded. Travelling visits and broader actor adapters remain pending; in-game acceptance required. |
 | Village routines | village.py; docs/VILLAGE_LIFE.md | Bounded home wandering, resting, approved seating, greetings and visits. Native routines run independently of model requests. |
 | Perception | perception.py; docs/PERCEPTION.md | Observer-specific visible surroundings, injury and faction context, freshness and scan limits. Do not disclose hidden inventories, traps, quest locals or other NPC secrets. |
 | Gestures and movement | actions.py, action_service.py; docs/CONTROLLED_ACTIONS.md | Exact authored action IDs, approved destinations, follow/lead/home, seating and usable unlocked doors. Native game validates and acknowledges effects. |
@@ -46,6 +46,10 @@ Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwst
 ## Companion foundation in 0.4
 
 Implemented native adapters for recruits, familiars and summons, their permissions, follow/stay/guard, save-local recent memory, personality templates and recoverable original-item storage. Native combat and dismissal remain active. Automated checks pass; in-game acceptance remains pending. Errands, social visits, relationship scores and AI spell/healing control are future work.
+
+## Ambient foundation in 0.5
+
+The Behaviors page and AI generation scope author module/per-NPC patrol/social policies. Native module-heartbeat scheduling retains creature heartbeat/combat, pauses for player control/recruitment and rejects unavailable/stale actors. Patrols work without the bridge; public social speech uses the local bridge with player priority and no mechanical actions. Ninety automated checks pass. User playtesting of actual pathfinding, speech and save/reload remains required.
 
 ## Local architecture
 
@@ -70,7 +74,7 @@ Generate multiple creatures from the same encounter blueprint. Address each sepa
 
 Ship a merchant/companion test area. Buy via menu and chat, check finite stock and actual charged prices, test repeated haggles, cancel an exchange, recruit/dismiss a party companion, dismiss/resummon a familiar, expire a summon, cancel an errand, and recover inventory safely. Test party, familiar and summon authority independently, including existing party-control changes. Verify intelligent creatures speak and ordinary animals react nonverbally. No AI reply may invent payment, stock, delivery or ownership.
 
-### 4. Patrols, social behavior and permitted actions
+### 4. Patrols, social behavior and permitted actions — foundation implemented in 0.5, awaiting playtest
 
 Ship an authored patrol and NPC social route. Verify physical movement, waits, one question/reply, cooldowns and memory attribution; interrupt through player conversation/combat. Test blocked routes, missing recipients and model outages without request floods or teleporting actors through walls.
 

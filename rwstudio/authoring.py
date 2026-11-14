@@ -5,6 +5,8 @@ from .content import _obj, array, enum, S, I, B, schema_check
 from .merchants import SCHEMA as MERCHANT_SCHEMA, defaults as merchant_defaults, validate as validate_merchant
 from .companions import SCHEMA as COMPANION_SCHEMA, NPC_SCHEMA as NPC_COMPANION_SCHEMA, defaults as companion_defaults, npc_defaults as npc_companion_defaults, validate as validate_companions
 
+from .ambient import SCHEMA as AMBIENT_SCHEMA,NPC_SCHEMA as BEHAVIOR_SCHEMA,defaults as ambient_defaults,npc_defaults as behavior_defaults,errors as behavior_errors
+
 AREA_TYPES={'castle':'Castle interior','dungeon':'Stone dungeon','cave':'Cave / mine','forest':'Forest / wilderness'}
 SIDES=('north','east','south','west')
 CREATURES={'goblin':'nw_goblina','goblin_boss':'nw_goblinboss','rat':'nw_rat001','wolf':'nw_wolf','dire_wolf':'nw_direwolf','skeleton':'nw_skeleton','zombie':'nw_zombie01','orc':'nw_orca','orc_shaman':'nw_orcwiza','bandit':'nw_bandit001','spider':'nw_spidgiant','troll':'nw_troll','ogre':'nw_ogre01','kobold':'nw_kobold001','ghoul':'nw_ghoul','bear':'nw_bearbrwn'}
@@ -13,11 +15,11 @@ APPEARANCES={'innkeeper':233,'woman':255,'man':267}
 ITEM_BASES={'quest_token':'nw_it_msmlmisc05','healing_potion':'nw_it_mpotion001'}
 ROOM_SCHEMA=_obj({'id':S,'name':S,'x':I,'y':I,'width':I,'height':I,'description':S,'purpose':S})
 AREA_SCHEMA=_obj({'id':S,'name':S,'type':enum(*AREA_TYPES),'width':I,'height':I,'room_count':I,'description':S,'lighting':enum('warm','cold','dark','daylight'),'rooms':array(ROOM_SCHEMA)})
-NPC_SCHEMA=_obj({**{k:S for k in ('id','name','alias','role','room','personality','knowledge','secret','reveal_after','motivation','game_notes','greeting')},'appearance':enum(*APPEARANCES),'ai_enabled':B,'dialogue':array(_obj({'topic':S,'text':S,'after_quest':S})),'merchant':MERCHANT_SCHEMA,'companion':NPC_COMPANION_SCHEMA})
+NPC_SCHEMA=_obj({**{k:S for k in ('id','name','alias','role','room','personality','knowledge','secret','reveal_after','motivation','game_notes','greeting')},'appearance':enum(*APPEARANCES),'ai_enabled':B,'dialogue':array(_obj({'topic':S,'text':S,'after_quest':S})),'merchant':MERCHANT_SCHEMA,'companion':NPC_COMPANION_SCHEMA,'behavior':BEHAVIOR_SCHEMA})
 ENCOUNTER_SCHEMA=_obj({**{k:S for k in ('id','name','room','description','after_quest','prompt','success','failure')},'kind':enum('combat','ambush','puzzle','treasure','story'),'creature':enum(*CREATURES),'count':I,'maximum':I,'scale':B,'options':array(S),'answer':I,'gold':I,'xp':I})
 STEP_SCHEMA=_obj({**{k:S for k in ('id','name','description','target','next')},'kind':enum('talk','visit','retrieve','defeat','interact','choice'),'consume':B,'choices':array(_obj({'label':S,'next':S,'text':S}))})
 QUEST_SCHEMA=_obj({**{k:S for k in ('id','name','description','start_npc','completion')},'optional':B,'requires':array(S),'gold':I,'xp':I,'steps':array(STEP_SCHEMA)})
-SCHEMA=_obj({'schema_version':I,**{k:S for k in ('id','module_name','title','summary','story','tone','opening','ending','start_room')},'level_min':I,'level_max':I,'party_size':I,'ai_conversations':B,'companions':COMPANION_SCHEMA,
+SCHEMA=_obj({'schema_version':I,**{k:S for k in ('id','module_name','title','summary','story','tone','opening','ending','start_room')},'level_min':I,'level_max':I,'party_size':I,'ai_conversations':B,'companions':COMPANION_SCHEMA,'ambient':AMBIENT_SCHEMA,
  'areas':array(AREA_SCHEMA),'connections':array(_obj({**{k:S for k in ('id','name','from_room','to_room','requires_quest')},'from_side':enum(*SIDES),'to_side':enum(*SIDES),'kind':enum('corridor','exit'),'two_way':B})),
  'npcs':array(NPC_SCHEMA),'encounters':array(ENCOUNTER_SCHEMA),
  'items':array(_obj({**{k:S for k in ('id','name','description','room','container')},'kind':enum(*ITEM_BASES),'quantity':I})),
@@ -45,7 +47,7 @@ def room(ident,name,x=2,y=2,width=3,height=3,description=''):
 
 def npc(ident,name,room_id):
     return dict(id=ident,name=name,alias=ident,role='Supporting character',room=room_id,appearance='man',ai_enabled=True,
-                personality='',knowledge='',secret='',reveal_after='',motivation='',game_notes='',greeting='Greetings, traveler.',dialogue=[],merchant=merchant_defaults(),companion=npc_companion_defaults())
+                personality='',knowledge='',secret='',reveal_after='',motivation='',game_notes='',greeting='Greetings, traveler.',dialogue=[],merchant=merchant_defaults(),companion=npc_companion_defaults(),behavior=behavior_defaults())
 
 def encounter(ident,name,room_id,kind='combat'):
     return dict(id=ident,name=name,room=room_id,kind=kind,description='',creature='goblin',count=1,maximum=3,scale=False,after_quest='',prompt='',options=[],answer=0,success='',failure='',gold=0,xp=0)
@@ -57,7 +59,7 @@ def quest(ident,name,steps=None):
     return dict(id=ident,name=name,description='',start_npc='',completion='The task is complete.',optional=False,requires=[],gold=0,xp=100,steps=steps or [])
 
 def blank(ident='my_adventure',title='My adventure'):
-    return dict(schema_version=2,id=ident,module_name=ident[:16],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=True,companions=companion_defaults(True),
+    return dict(schema_version=2,id=ident,module_name=ident[:16],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=True,companions=companion_defaults(True),ambient=ambient_defaults(),
                 areas=[dict(id='starting_area',name='Starting area',type='castle',width=12,height=12,room_count=1,description='',lighting='warm',rooms=[room('arrival','Arrival')])],connections=[],npcs=[],encounters=[],items=[],furnishings=[],quests=[])
 
 def seed():
@@ -94,13 +96,17 @@ def seed():
 
 def validate(p,complete=False):
     p=copy.deepcopy(p)
-    if isinstance(p,dict):p.setdefault('companions',companion_defaults())
+    if isinstance(p,dict):p.setdefault('companions',companion_defaults());p.setdefault('ambient',ambient_defaults())
     # Upgrade format-2 projects made before merchant authoring was introduced.
     if isinstance(p,dict) and isinstance(p.get('npcs'),list):
         for n in p['npcs']:
-            if isinstance(n,dict):n.setdefault('merchant',merchant_defaults());n.setdefault('companion',npc_companion_defaults())
+            if isinstance(n,dict):n.setdefault('merchant',merchant_defaults());n.setdefault('companion',npc_companion_defaults());n.setdefault('behavior',behavior_defaults())
     schema_check(p,SCHEMA)
     validate_companions(p)
+    if not 60<=p['ambient']['social_interval']<=3600 or not 1<=p['ambient']['social_budget']<=12:raise ValueError('Ambient exchanges use 60–3600 seconds and 1–12 attempts per active hour.')
+    for n in p['npcs']:
+        b=n['behavior']
+        if not 6<=b['wait_seconds']<=300 or not 60<=b['cooldown']<=3600 or len(b['route'])>16 or len(b['partners'])>16:raise ValueError('Use up to 16 patrol stops/partners, 6–300 second waits and 60–3600 second social cooldowns.')
     if p['schema_version']!=2:raise ValueError('Expected adventure project format 2')
     for k,limit in [('id',40),('module_name',16)]:
         if not re.fullmatch('[a-z][a-z0-9_]{0,'+str(limit-1)+'}',p[k]):raise ValueError('Invalid '+k)
@@ -172,7 +178,10 @@ def review(p):
     for collection in ('npcs','encounters','items','furnishings'):
         for o in p[collection]:
             if o['room'] not in rooms:errors.append(o['name']+': choose an existing room.')
+    errors.extend(behavior_errors(p))
+    if p['ambient']['social'] and not p['ai_conversations']:warnings.append('NPC social conversations require live AI enabled at export; native patrols still work offline.')
     for n in p['npcs']:
+        if n['behavior']['social_enabled'] and not n['ai_enabled']:warnings.append(n['name']+': enable character AI to allow social conversations.')
         if n['companion']['requires_quest'] and n['companion']['requires_quest'] not in quests:errors.append(n['name']+': recruitment requires an unknown quest.')
         if n['companion']['recruitable'] and not p['companions']['enabled']:errors.append(n['name']+': enable companions before recruiting this NPC.')
         if n['companion']['recruitable'] and not n['companion']['essential'] and any(not q['optional'] and any(s['target']==n['id'] for s in q['steps']) for q in p['quests']):warnings.append(n['name']+' is a mortal recruitable main-quest character; death can block the story.')

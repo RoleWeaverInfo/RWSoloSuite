@@ -1,4 +1,4 @@
-# RWSoloSuite — Role Weaver Module Studio 0.4
+# RWSoloSuite — Role Weaver Module Studio 0.5
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -47,7 +47,9 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Silent Bell — Companion Trial** adds Seren Ashford, a recruitable abbey guardian, alongside the existing quest and merchant trial. Its filename is **rw_companions.mod**. This is the 0.4 compiled playtest build.
 
-All four are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
+**The Silent Bell — Patrol & Social Trial** adds Mira Fen and Tomas Reed, with shared abbey patrol stops and mutually opted-in public conversation. Its filename is **rw_ambient.mod**. This is the 0.5 compiled playtest build.
+
+All five are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
 ## Share and edit in Aurora
 
@@ -55,7 +57,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.4.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.5.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## Optional AI conversations while playing
 
@@ -84,6 +86,20 @@ Party inventory exchanges move the original unequipped eligible item or whole st
 Familiar/summon storage uses an ordinary **owner-held recoverable satchel**, not the disappearing creature's equipment slots. It remains accessible through normal inventory after dismissal or expiry; use **Recover familiar / summon satchels** in the controls. Empty satchels can be discarded from their panel. Familiar type 255 uses its blueprint in the memory key, so different custom blueprints do not share a familiar history. Bags preserve their actual items independently of history pruning.
 
 This release implements the companion foundation. Fetch errands, autonomous collection, NPC visits/social exchanges, relationship scores, healing and AI spell/tactical control remain future work. Compiled native scripts and automated checks have passed; in-game behavior and Aurora opening of this new build still need the user's playtest.
+
+## Patrols and NPC-to-NPC chat (0.5)
+
+Open **Behaviors** for independent **module-wide patrol and social switches**, then select a character and enable either feature for that NPC. Existing projects migrate with both features off. The **Patrols and NPC social behavior** generation scope creates the same editable policies while preserving story, areas, quests and other project settings. Rebuild and start a new game to apply creator changes.
+
+Patrols use an ordered list of 2–16 room stops, a loop or back-and-forth route, walk/run and 6–300 second waits. Rooms must connect through ungated ordinary corridors in the NPC's starting area. NPCs walk with native pathfinding; they do not use exit signs or teleport between areas. Routes only start a new movement near a player (45 metres), do not replace creature heartbeat/combat scripts, and pause for dialogue, shop use, combat, possession or recruitment. Failed paths wait 60 active seconds before retrying; a single movement attempt is bounded to 120 active seconds. Room stops are room centres; custom waypoint coordinates, cross-area routes and patrol visualization are future work.
+
+For social chat, enable both characters, allow each other in their partner lists (empty means any opted-in character), and give each a public topic, cooldown and speech/nonverbal mode. Both characters' AI profiles and the module's live AI export must be enabled, and the local AI Player must be running. Only unowned, idle, mutually visible NPCs within six metres converse, with a player near enough to hear. Recruited companions, familiars/summons and encounter monsters are outside this initial ambient adapter.
+
+Each exchange uses two short model requests: the first speaker receives only their own public profile and this pair's public history; the second receives their own profile and the first public line. Secret fields, gated topics, private player transcripts and the full plot are excluded. Keep sensitive story facts out of unconditional Knowledge and public topics. Social speech cannot trigger quest, inventory, payment or movement actions. The game rechecks both actual bodies, ownership, life/combat/control, visibility, proximity, interruption epochs and expiry before each line. Only emitted public lines enter their pair's bounded, save-local history.
+
+Controls include a global 60–3600 second attempt interval, per-character 60–3600 second cooldowns and 1–12 exchange attempts per active game hour (default six). Failed/interrupted attempts consume the budget. The existing provider's 60-request hourly limit also applies. One exchange runs at a time; player requests are selected first, and queued player work cancels the second model request before it starts. An already-running provider request finishes before the bridge can service the next request. Native player activity can discard its eventual result. No conversation repeats once per creature heartbeat, and paused games do not play old replies after the 90-second wall-clock expiry.
+
+The trial has both caretakers patrol between the guest hall and sanctuary, so their shared stops provide opportunities to meet. Mira waits 30 seconds; Tomas waits 45. Default social cooldown is 180 seconds and the global interval is 120. Keep NWN unpaused to observe movement and speech. NPC visits, travelling to seek a conversation partner, longer autonomous social scenes, town schedules and all-creature social adapters remain future work.
 
 ## Current authoring boundaries
 
