@@ -1,3 +1,24 @@
+# Module Studio 0.6 — companion inspection and visit tasks
+
+Start a **new game** with **The Silent Bell — Companion Errand Trial** (`rw_errands.mod`, installed separately). Keep **Start AI Player.cmd** running for NPC visits. Older modules and saves are unchanged.
+
+1. Recruit **Seren Ashford** in the guest hall. Use `!companions`, select Seren and scroll to the task controls. Choose **Inspect a nearby container**, then select the guest-hall **Healing supplies cache**. Do not loot it first: the test needs contents to inspect. Watch Seren walk to it, interact, return and report the actual contents without taking anything.
+2. Also try `!companion seren inspect Healing supplies cache`. After a completed report, ask Seren through ordinary AI what was found. Compare against the real container. Empty it yourself and inspect again: the new report should say empty, without assuming its previous contents remain.
+3. Set up locked/trapped and quest-gated containers in a separate Aurora copy. Inspection must refuse inaccessible targets or fail when the native interaction cannot open them, with no reported hidden contents, loot, trap bypass or quest reward. Test multiple similar chests: ambiguous generic names must require an exact target.
+4. Use `!companion seren ask ilyra Where is Rowan?`. Watch Seren approach Ilyra, speak the question, wait for Ilyra's actual answer, return and report it. The report must not arrive while Seren is still away. The journal/reward state must remain unchanged by this visit.
+5. Try the **Visit an AI NPC and report back** target picker. It asks “How can you help us?” by default; chat commands allow a specific question. Target recipients must have **Accept owner-directed companion visits** and AI enabled. Ordinary ambient social settings are independent.
+6. Repeat with a normally summoned speaking familiar (e.g. imp/pixie) and an intelligent summon, using `!companion familiar ask ilyra Where is Rowan?` or `!companion summon1 ask ilyra Where is Rowan?`. Use a cat/bat for inspection: expect nonverbal behavior and the owner's factual observation receipt, not invented animal speech. A nonverbal companion must not launch a verbal NPC visit.
+7. While travelling/waiting, use `!companion seren status`, then `!companion seren cancel`. Also use a newer native Follow/Stand ground order, possess/control the creature, enter combat, change its preferences, change area, dismiss a familiar or expire a summon. Tasks should stop; newer native orders must survive cleanup. A disappeared actor must release the recipient's visit lock.
+8. Talk to Ilyra yourself while the companion's answer is pending. No stale answer/report should arrive after that interruption. Try a dead, busy, recruited, distant, unseen or non-opted-in recipient, a blocked route and a paused game beyond the visit timeout. No repeated API calls, teleport or fabricated success.
+9. After a successful return, verify the previous native follow/stay/guard mode resumes. For an interruption during combat, cleanup must not clear the combat queue. Try another task after cleanup; stale task modes must not become the new default.
+10. Disable inspection/visits for the source template or recruit in Studio, and disable **Accept owner-directed companion visits** on a recipient. Rebuild a different module name and start a new game: disabled tasks/targets must not run. Turning player movement/AI preferences off must also restrict the relevant task. AI-disabled exports should keep inspection but contain no visit mailbox scripts.
+11. Save before a task, while travelling, while awaiting an answer, and after an answer but before return. Reload each save. Check native task state and reports match that save, late responses are rejected and no future knowledge appears. Repeat familiar death/resummoning and summon expiry while a task is active.
+12. Open `rw_errands.mod` in Aurora, inspect source/recipient profiles, new native task scripts and ordinary quest resources, and Save As a separate copy. Native chest opening, associate movement and reporting timing are still engine acceptance checks, not proved by compilation.
+
+105 automated checks pass, plus one real recipient-answer model check using synthetic identities. No NWN/Aurora instance was launched by the agent. This is a same-area, visible-target task foundation: no fetching, locks/trap work, cross-area visits or companion-driven quest changes. Existing speech, inventory, merchant, patrol and quest regression instructions follow.
+
+---
+
 # Module Studio 0.5.1 — NPC speech and native panel fixes
 
 Start a **new game** with **The Silent Bell — UI & Speech Fix** (`rw_ui_fix.mod`, installed separately). Keep AI Player running. Your previous modules/saves are unchanged and do not receive these scripts automatically.

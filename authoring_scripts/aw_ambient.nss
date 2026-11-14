@@ -3,13 +3,13 @@
 json AWACfg(){return JsonArrayGet(AWAConfig(),0);}
 json AWAPolicy(object body){return AWFind(AWABehaviors(),GetTag(body));}
 int AWAActor(object body){return GetIsObjectValid(body) && GetObjectType(body)==OBJECT_TYPE_CREATURE && !GetIsPC(body) && !GetIsDM(body) && !GetIsDMPossessed(body) && !GetIsPossessedFamiliar(body) && !GetIsDead(body) && !GetIsObjectValid(GetMaster(body)) && GetResRef(body)==AWText(AWAPolicy(body),"id");}
-int AWASafe(object body){if(!AWAActor(body) || !GetCommandable(body) || GetIsInCombat(body) || IsInConversation(body) || AWMClock()<GetLocalInt(body,"AWA_HOLD"))return FALSE;
+int AWASafe(object body){if(GetLocalString(body,"AWA_VISIT_LOCK")!="" || !AWAActor(body) || !GetCommandable(body) || GetIsInCombat(body) || IsInConversation(body) || AWMClock()<GetLocalInt(body,"AWA_HOLD"))return FALSE;
  object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(IsInConversation(pc) && GetArea(pc)==GetArea(body) && GetDistanceBetween(pc,body)<12.0)return FALSE;if(GetLocalInt(pc,"AWM_TOKEN") && GetLocalObject(pc,"AWM_ACTOR")==body)return FALSE;pc=GetNextPC();}return TRUE;}
 void AWAStop(object body){if(GetLocalInt(body,"AWA_MOVING") && AWAActor(body) && GetCommandable(body) && !GetIsInCombat(body) && !IsInConversation(body) && GetCurrentAction(body)==ACTION_MOVETOPOINT)AssignCommand(body,ClearAllActions(TRUE));DeleteLocalInt(body,"AWA_MOVING");}
 void AWATouch(object body){if(!GetIsObjectValid(body))return;SetLocalInt(body,"AWA_EPOCH",GetLocalInt(body,"AWA_EPOCH")+1);SetLocalInt(body,"AWA_HOLD",AWMClock()+30);AWAStop(body);}
 int AWANearPlayer(object body){object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(!GetIsDead(pc) && GetArea(pc)==GetArea(body) && GetDistanceBetween(pc,body)<=45.0)return TRUE;pc=GetNextPC();}return FALSE;}
 void AWALoad(){DeleteLocalString(GetModule(),"AWS_PENDING");DeleteLocalInt(GetModule(),"AWS_STAGE");json all=AWABehaviors();int i=0;while(i<JsonGetLength(all)){json b=JsonArrayGet(all,i);object body=GetObjectByTag(AWText(b,"id"));DeleteLocalInt(body,"AWA_SOCIAL_LOCK");
- if(AWAActor(body) && ((AWInt(AWACfg(),"patrols") && AWInt(b,"patrol_enabled")) || (AWInt(AWACfg(),"social") && AWInt(b,"social_enabled")))){
+ if(AWAActor(body) && ((AWInt(AWACfg(),"patrols") && AWInt(b,"patrol_enabled")) || (AWInt(AWACfg(),"social") && AWInt(b,"social_enabled")) || AWInt(b,"accept_visits"))){
  string base=GetEventScript(body,EVENT_SCRIPT_CREATURE_ON_DIALOGUE);if(base!="aw_am_dialog" && base!="aw_cp_dialog"){SetLocalString(body,"AWA_BASE_DIALOG",base);SetEventScript(body,EVENT_SCRIPT_CREATURE_ON_DIALOGUE,"aw_am_dialog");}
  base=GetEventScript(body,EVENT_SCRIPT_CREATURE_ON_DEATH);if(base!="aw_am_dead" && base!="aw_cp_dead"){SetLocalString(body,"AWA_BASE_DEATH",base);SetEventScript(body,EVENT_SCRIPT_CREATURE_ON_DEATH,"aw_am_dead");}}
  i++;}}

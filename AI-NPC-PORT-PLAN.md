@@ -51,6 +51,10 @@ Implemented native adapters for recruits, familiars and summons, their permissio
 
 The Behaviors page and AI generation scope author module/per-NPC patrol/social policies. Native module-heartbeat scheduling retains creature heartbeat/combat, pauses for player control/recruitment and rejects unavailable/stale actors. Patrols work without the bridge; public social speech uses the local bridge with player priority and no mechanical actions. Ninety automated checks pass. User playtesting of actual pathfinding, speech and save/reload remains required.
 
+## Owner-directed task foundation in 0.6
+
+Implemented creator-controlled container inspection and companion-to-NPC question/return/report tasks for recruits, familiars and summons. Recipients opt in independently. Native movement and open/arrival checks own the task state; one recipient-only AI response has no mechanical actions. Actual target/owner identities, control/command epochs, permissions, session/expiry and return proximity guard reports. Item fetching, unseen/cross-area visits, locks/traps and companion-led quest changes remain pending. Automated checks and one model-context check pass; user engine playtesting remains required.
+
 ## Local architecture
 
 1. **Authoring profiles and policies.** Version and migrate existing projects. Add creator-facing merchant stock, movement destinations, patrol routes, social permissions, companion templates and per-creature conversation controls. AI generation must produce the same editable policies as the manual editor.

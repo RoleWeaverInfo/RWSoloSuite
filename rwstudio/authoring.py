@@ -101,6 +101,14 @@ def validate(p,complete=False):
     if isinstance(p,dict) and isinstance(p.get('npcs'),list):
         for n in p['npcs']:
             if isinstance(n,dict):n.setdefault('merchant',merchant_defaults());n.setdefault('companion',npc_companion_defaults());n.setdefault('behavior',behavior_defaults())
+    if isinstance(p,dict):
+        for n in (p.get('npcs',[]) if isinstance(p.get('npcs'),list) else []):
+            if isinstance(n,dict):
+                if isinstance(n.get('companion'),dict):
+                    n['companion'].setdefault('inspect_containers',False);n['companion'].setdefault('social_visits',False)
+                if isinstance(n.get('behavior'),dict):n['behavior'].setdefault('accept_visits',False)
+        for t in (p['companions'].get('templates',[]) if isinstance(p.get('companions'),dict) and isinstance(p['companions'].get('templates'),list) else []):
+            if isinstance(t,dict):t.setdefault('inspect_containers',False);t.setdefault('social_visits',False)
     schema_check(p,SCHEMA)
     validate_companions(p)
     if not 60<=p['ambient']['social_interval']<=3600 or not 1<=p['ambient']['social_budget']<=12:raise ValueError('Ambient exchanges use 60–3600 seconds and 1–12 attempts per active hour.')

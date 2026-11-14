@@ -58,7 +58,7 @@ class Bridge:
         with self.connect() as db:
             db.execute("UPDATE sp_commands SET state='expired',receipt='Game did not acknowledge within 45 seconds',updated=? WHERE state='queued' AND created<?",(now,now-45))
             db.execute("UPDATE sp_requests SET state='expired',updated=? WHERE state IN ('queued','working') AND created<?",(now,now-120))
-            row=db.execute("SELECT r.*,s.project_id,s.build_id,s.snapshot FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.state='queued' AND s.updated>? AND r.created>? ORDER BY CASE WHEN r.kind='social' THEN 1 ELSE 0 END,r.created LIMIT 1",(now-45,now-90)).fetchone()
+            row=db.execute("SELECT r.*,s.project_id,s.build_id,s.snapshot FROM sp_requests r JOIN sp_sessions s USING(session_id) WHERE r.state='queued' AND s.updated>? AND r.created>? ORDER BY CASE WHEN r.kind='social' THEN 2 WHEN r.kind='visit' THEN 1 ELSE 0 END,r.created LIMIT 1",(now-45,now-90)).fetchone()
             if row is None: return
             # Atomic claim; more than one Studio worker cannot process the same turn.
             if db.execute("UPDATE sp_requests SET state='working',updated=? WHERE request_id=? AND state='queued'",(now,row['request_id'])).rowcount!=1: return
@@ -71,6 +71,7 @@ class Bridge:
             snapshot=payload['game']
             if row['kind']=='npc': response=self.provider.npc(project,row['npc_tag'],payload['message'],snapshot,payload.get('history',''))
             elif row['kind']=='companion':response=self.provider.companion(project,payload['message'],snapshot,payload.get('history',''))
+            elif row['kind']=='visit':response=self.provider.visit(project,payload)
             elif row['kind']=='social':response=self.provider.social(project,payload,lambda:self.social_current(row['request_id'],row['session_id']))
             elif row['kind']=='dm':
                 proposal=self.provider.dm(project,payload['message'],snapshot)

@@ -58,6 +58,8 @@ class FakeProvider:
         self.calls+=1
         if self.hook:self.hook()
         return {'reply':'The cave lies east.','action':'none'}
+    def visit(self,*args):
+        self.calls+=1;return {'reply':'The road leads east.','action':'none'}
     def social(self,project,payload,can_continue):
         self.calls+=1;return {'line_a':'Hello','line_b':'Good day','action':'none'}
     def companion(self,*args):
@@ -101,6 +103,12 @@ class BridgeTests(unittest.TestCase):
         with self.bridge.connect() as db:
             states=dict(db.execute('SELECT request_id,state FROM sp_requests').fetchall())
         self.assertEqual(states,dict(request='ready',social='queued'))
+    def test_visit_uses_separate_recipient_dispatch(self):
+        self.request()
+        with self.bridge.connect() as db:db.execute("UPDATE sp_requests SET kind='visit'")
+        self.bridge.process_one();self.assertEqual(self.state(),'ready')
+        with self.bridge.connect() as db:response=json.loads(db.execute('SELECT response FROM sp_requests').fetchone()[0])
+        self.assertEqual(response['reply'],'The road leads east.')
     def test_social_dispatch_and_continuation_checks(self):
         self.request()
         with self.bridge.connect() as db:db.execute("UPDATE sp_requests SET kind='social'")

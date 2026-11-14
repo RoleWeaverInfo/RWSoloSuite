@@ -1,3 +1,32 @@
+# Validation — Module Studio 0.6.0
+
+Added owner-directed companion inspection and NPC visit/return/report tasks. Supports recruitable party members and the actual owned familiars/summons; nonverbal profiles inspect without invented speech, while verbal visits require a speaking source profile.
+
+- **105 automated checks pass**, including installed-game native compilation for AI-on/off modules and all earlier quest, merchant, companion, patrol/social and UI/speech checks. Added coverage for default-off migration, source/recipient opt-in, matching familiar/summon profiles, distinct actor identities, gated recipient knowledge, bounded answers, no mechanical model actions, bridge visit dispatch, native chest-open/ownership checks, order/permission/epoch guards, disappearance cleanup and return proximity.
+- Browser verified source inspection/visit flags and recipient visit opt-in, saving disabled states and restoring the example, plus adventure review. No browser errors/warnings observed. The trial settings were restored to its factory example.
+- One real recipient-answer request passed through the previously authorized OpenAI key: 1 request, 285 input tokens and 151 output tokens. The answer used Ilyra's scoped knowledge and action none. Synthetic actor identities were used; this was not an in-game travel/transport test.
+- Inspection calls native interaction, requires confirmed GetIsOpen and immediate item ownership before observing contents, and contains no item-taking or reward functions. Opening unavailable containers fails without reading contents. Reports are bounded and flag omitted items.
+- Visit transport starts only after arrival and native question speech. Target identity, life/control, opt-in, range, epoch/session/expiry and actual answer delivery are checked before return. Reports require the owner within five metres and LOS. No quest/merchant actions are applied.
+- Associate movement uses a bounded lease of native follow/stay/guard flags. Restoration checks both the captured native command and control epoch. Cleanup defers for direct control and does not clear combat actions. Disappeared companions release recipient locks; newer native orders invalidate restoration.
+- Studio 0.6 and AI Player are configured locally. No NWN/Aurora instance launched by the agent. Actual pathfinding, NPC chest interaction, recipient speech, cancellation and return timing remain the user's engine playtest.
+
+## Installed trial
+
+- Title: The Silent Bell — Companion Errand Trial
+- File: rw_errands.mod
+- Build: f0ba3e8e679884d13d20
+- SHA-256: 3b8d67ab6b7907d08831872bb3bb16759885acbfc3eec2f92f1bb3521e7e6eb1
+- 154 resources, 38 compiled scripts; 3 areas, 7 rooms, 7 NPCs, 2 quests.
+- Source task permissions and AI recipients are enabled for the trial. Earlier installed trial modules and saves were preserved. Start a new game to receive the new scripts.
+
+## Limits and acceptance
+
+One task per owner; visible same-area targets within 45 metres; 240 active seconds overall and 90 wall-clock seconds for visit replies. Inspect only accessible unlocked/untrapped containers, no taking or recursive bag search. Visits ask a specific question or the picker default and report the actual answer without quest/reward changes. Source and recipient permissions default off in upgraded projects. Cross-area travel, lock/trap work, theft/item fetching, invisible recipients and unrestricted LLM planning remain unimplemented. Native compilation cannot prove engine action timing; PLAYTEST.md contains the required checks.
+
+---
+
+## Previous 0.5.1 validation record
+
 # Validation — Module Studio 0.5.1
 
 Fixes prompted by user playtest: yellow system-only NPC replies, missing/one-sided companion inventory display, and clipped native panels.

@@ -1,4 +1,4 @@
-# RWSoloSuite — Role Weaver Module Studio 0.5.1
+# RWSoloSuite — Role Weaver Module Studio 0.6
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -51,7 +51,9 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Silent Bell — UI & Speech Fix** (`rw_ui_fix.mod`) contains the same adventure with the 0.5.1 speech/inventory/panel fixes. This is the current playtest build.
 
-All six are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
+**The Silent Bell — Companion Errand Trial** (`rw_errands.mod`) enables the new 0.6 inspection and owner-directed visit permissions for testing. This is the current compiled trial.
+
+All seven are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
 ## Share and edit in Aurora
 
@@ -59,7 +61,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.5.1.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.6.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## Optional AI conversations while playing
 
@@ -91,7 +93,7 @@ Party inventory exchanges move the original unequipped eligible item or whole st
 
 Familiar/summon storage uses an ordinary **owner-held recoverable satchel**, not the disappearing creature's equipment slots. It remains accessible through normal inventory after dismissal or expiry; use **Recover familiar / summon satchels** in the controls. Empty satchels can be discarded from their panel. Familiar type 255 uses its blueprint in the memory key, so different custom blueprints do not share a familiar history. Bags preserve their actual items independently of history pruning.
 
-This release implements the companion foundation. Fetch errands, autonomous collection, NPC visits/social exchanges, relationship scores, healing and AI spell/tactical control remain future work. Compiled native scripts and automated checks have passed; in-game behavior and Aurora opening of this new build still need the user's playtest.
+This release implements the companion foundation. Item-fetch errands, autonomous collection, relationship scores, healing and AI spell/tactical control remain future work. Version 0.6 adds the bounded inspection and owner-directed visit tasks described below. Compiled native scripts and automated checks have passed; in-game behavior and Aurora opening of this new build still need the user's playtest.
 
 ## Patrols and NPC-to-NPC chat (0.5)
 
@@ -110,6 +112,30 @@ The trial has both caretakers patrol between the guest hall and sanctuary, so th
 ## Native panel fixes (0.5.1)
 
 Merchant and companion windows use native scroll groups, explicit row widths/heights and resizable windows. Scroll to see overflow, including the shop footer, companion chat button and inventory controls. Item names use wrapping text in the inventory. This addresses clipping in the initial native panels; the new build still needs in-game rendering verification at your GUI scale.
+
+## Companion inspection and visits (0.6)
+
+Companions can carry out two owner-directed tasks. **Inspect a nearby container** walks to an accessible visible container, tries its normal native interaction, waits for the game to confirm it is open, observes direct contents and returns to report. It takes no items, opens no locked/trapped container, bypasses no quest gate and reads no contents through a closed lid. Reports list up to 16 direct items within a bounded text/scan budget, mark unidentified items without revealing their real names and disclose when more items were omitted. Bags inside a chest are not recursively searched. This inspection works with live AI disabled.
+
+**Visit an AI NPC and report back** carries the owner's question to a visible opted-in NPC in the same area. On arrival, the companion speaks the question; the recipient receives its own profile, unlocked knowledge and that question, then speaks an answer. The companion stores that actual answer, walks back and reports within five metres of the owner. The answer cannot advance quests, claim rewards, buy goods, transfer items or order either actor. No private player transcripts or other NPC profiles are included. Nonverbal recipients respond nonverbally; a companion must have a speaking profile to conduct a verbal visit. Animals can inspect but give nonverbal reactions plus a factual owner-facing inspection receipt.
+
+In **Characters → Party companion**, or on a familiar/summon template under **Companions**, enable **Allow inspecting accessible containers** and/or **Allow owner-directed NPC visits**. Recipients independently enable **Accept owner-directed companion visits** under **Behaviors** and must have AI enabled. Visits need live AI at export and AI Player running. These permissions default off when old projects are upgraded. Both tasks require creator movement permission and the owner's in-game movement permission; visits also respect AI preferences. Ordinary ambient social opt-in is independent from accepting an owner-directed visit.
+
+Use the companion controls to choose **Inspect a nearby container** or **Visit an AI NPC and report back**. The target picker offers up to eight visible permitted targets; selecting an NPC asks the default question “How can you help us?”. For specific questions/targets, type in Talk:
+
+```text
+!companion seren inspect Healing supplies cache
+!companion seren ask ilyra Where is Rowan?
+!companion familiar ask bram What can you tell us about the abbey?
+!companion summon1 status
+!companion summon1 cancel
+```
+
+The same `inspect`/`check`/`ask`/`talk to` commands can be given during an already-focused companion conversation. Common `please`, `can you`, `could you` and `go` prefixes are recognized; this is a bounded native command parser, not unrestricted LLM task planning. Use an exact container name or the NPC's single-word alias. A generic `check the nearby chest` works only when there is exactly one permitted matching container; ambiguous matches are refused. Unrecognized dialogue remains ordinary conversation and cannot launch invented errands.
+
+The companion must start near the owner, out of combat and direct control. Targets must be visible, accessible, within 45 metres and in the same area. One task per owner runs at a time; the active task is bounded to 240 active seconds, and a visit reply expires after 90 wall-clock seconds. Blocked movement, ownership/control/permission changes, combat, owner area changes, recipient interruptions, summon expiry or newer native orders stop the task. Cancel is available in the companion panel and through the command above. Normal native associate modes are restored only when ownership and the captured native command are unchanged; a newer order must never be overwritten.
+
+Recent confirmed reports join that companion's save-local memory. A save made before an answer does not acquire later knowledge. On reload, old in-flight visit responses are rejected by the native session/identity checks. Fetching contents, cross-area errands, doors/locks/traps, unseen/remote recipients and companion-led quest changes remain outside this release. Actual pathfinding, native chest interaction, interruption and return/report timing still need the user's playtest.
 
 ## Current authoring boundaries
 

@@ -12,7 +12,10 @@ void main(){object pc=NuiGetEventPlayer();if(!GetIsPC(pc) || NuiGetEventWindow()
  if(side!=""){int delta=1;if(id=="give_previous"+suffix || id=="take_previous"+suffix)delta=-1;SetLocalInt(pc,"AWC_"+side+"_PAGE",GetLocalInt(pc,"AWC_"+side+"_PAGE")+delta);}
  else if(id!="pack_refresh"+suffix){int giving=0;while(giving<2){side=giving?"GIVE":"TAKE";string eventId=giving?"give":"take";int i=0;while(i<GetLocalInt(pc,"AWC_"+side+"_ROWS")){if(id==eventId+IntToString(i)+suffix){SetLocalInt(pc,"AWC_GIVING",giving);AWCTransfer(pc,storage,GetLocalObject(pc,"AWC_"+side+"_ITEM_"+IntToString(i)));return;}i++;}giving++;}return;}
  AWCOpenPack(pc,storage);return;}
+ if(view=="task_pick"){int i=0;while(i<GetLocalInt(pc,"AWT_PICK_ROWS")){if(id=="task_target"+IntToString(i)+suffix){AWTStart(pc,body,GetLocalString(pc,"AWT_PICK_KIND"),GetLocalObject(pc,"AWT_PICK_"+IntToString(i)),"How can you help us?");AWCUIClose(pc);return;}i++;}return;}
+ if(view=="control" && id=="task_cancel"+suffix && AWTOwned(pc,body)){AWTCancel(pc,body);AWCOpenList(pc);return;}
  if(view!="control" || !AWCReady(pc,body,FALSE) || !AWCObserve(pc,body)){AWCUIClose(pc);return;}string identity=AWCIdentity(pc,body);json record=AWCRecord(pc,identity);
+ if(id=="task_inspect"+suffix){AWTChoose(pc,body,"inspect");return;}if(id=="task_visit"+suffix){AWTChoose(pc,body,"visit");return;}
  if(id=="chat"+suffix){if(!AWInt(AWCCfg(),"live_ai") || !AWCAIReady(pc,body))return;SetLocalObject(pc,"SP_FOCUS",body);SetLocalInt(pc,"AWC_CHAT_ARMED",TRUE);AWCUIClose(pc);SendMessageToPC(pc,"Speak normally in Talk. Use !end to finish this companion conversation.");return;}
  if(id=="toggle_ai"+suffix)AWCSet(pc,identity,"ai",!AWInt(record,"ai"));
  else if(id=="toggle_move"+suffix)AWCSet(pc,identity,"movement",!AWInt(record,"movement"));

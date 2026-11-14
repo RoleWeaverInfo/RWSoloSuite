@@ -3,18 +3,18 @@ import copy
 import re
 from .content import _obj,array,enum,S,I,B
 
-NPC_SCHEMA=_obj({'recruitable':B,'essential':B,'requires_quest':S,'movement':B,'inventory':B,'communication':enum('speech','nonverbal','auto')})
+NPC_SCHEMA=_obj({'recruitable':B,'essential':B,'requires_quest':S,'movement':B,'inventory':B,'inspect_containers':B,'social_visits':B,'communication':enum('speech','nonverbal','auto')})
 TEMPLATE_SCHEMA=_obj({**{k:S for k in ('id','name','role','personality','knowledge','game_notes')},'kind':enum('familiar','summon'),
- 'familiar_type':dict(I,minimum=-1,maximum=255),'blueprints':array(S),'communication':enum('speech','nonverbal','auto'),'movement':B,'inventory':B,'ai_enabled':B})
+ 'familiar_type':dict(I,minimum=-1,maximum=255),'blueprints':array(S),'communication':enum('speech','nonverbal','auto'),'movement':B,'inventory':B,'inspect_containers':B,'social_visits':B,'ai_enabled':B})
 SCHEMA=_obj({'enabled':B,'party_limit':dict(I,minimum=1,maximum=7),'familiars':B,'summons':B,'templates':dict(array(TEMPLATE_SCHEMA),maxItems=24)})
 
-def npc_defaults():return dict(recruitable=False,essential=False,requires_quest='',movement=True,inventory=True,communication='speech')
+def npc_defaults():return dict(recruitable=False,essential=False,requires_quest='',movement=True,inventory=True,inspect_containers=False,social_visits=False,communication='speech')
 
 def template(ident,name,kind='summon',familiar_type=-1,communication='auto',personality='Loyal, curious and attentive to the owner.'):
     return dict(id=ident,name=name,kind=kind,familiar_type=familiar_type,blueprints=[],role='Bonded '+kind,personality=personality,
                 knowledge='Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.',
                 game_notes='Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.',
-                communication=communication,movement=True,inventory=True,ai_enabled=True)
+                communication=communication,movement=True,inventory=True,inspect_containers=False,social_visits=False,ai_enabled=True)
 
 def defaults(enabled=False):
     profiles=[template('fam_default','Other familiar','familiar'),template('summon_default','Other summon')]

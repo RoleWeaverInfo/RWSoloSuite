@@ -59,7 +59,7 @@ def build(project,store,game_root,compiler):
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
@@ -253,13 +253,14 @@ def _build(p,store,game_root,compiler):
     native_rooms=[dict(r,area=a['id']) for a in p['areas'] for r in a['rooms']]
     companion_cfg={k:v for k,v in p['companions'].items() if k!='templates'};companion_cfg['live_ai']=p['ai_conversations']
     companion_npcs=[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs'] if n['companion']['recruitable']]
-    behaviors=[dict(n['behavior'],id=n['id'],ai_enabled=n['ai_enabled']) for n in p['npcs']]
+    behaviors=[dict(n['behavior'],id=n['id'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']]
     scripts['aw_config']='\n'.join([json_function('AWAConfig',[p['ambient']]),json_function('AWABehaviors',behaviors),json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),json_function('AWCompanionConfig',[companion_cfg]),json_function('AWCompanionTemplates',p['companions']['templates']),json_function('AWCompanionNPCs',companion_npcs),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
     ai=p['ai_conversations'];include='#include "aw_social"' if ai else '#include "aw_ambient"'
     scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());AWALoad();if(AWCEnabled()){AWCInit();SetMaxHenchmen('+str(p['companions']['party_limit'])+');}'+('SPInit();' if ai else '')+'}'
     scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'
-    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
-    if not ai:scripts.pop('aw_social',None)
+    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
+    if not ai:
+        for name in ('aw_social','aw_ct_request','aw_ct_poll','aw_ct_cancel'):scripts.pop(name,None)
     if ai:
         for name in ('sp_inc','sp_chat','sp_select'):scripts[name]=(ROOT/'scripts'/(name+'.nss')).read_text(encoding='utf-8')
         scripts['aw_story']=native_story(p,literal)
