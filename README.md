@@ -1,4 +1,13 @@
-# RWSoloSuite — Role Weaver Module Studio 0.7.2
+# RWSoloSuite — Role Weaver Module Studio 0.7.3
+
+## Launcher working-directory fix (0.7.3)
+
+The launcher previously started nwmain.exe with the installation root as its working directory. NWN requires the binary directory (`bin/win32`). The reported 3221225477 / 0xC0000005 crash had zero entries in all three installed base-resource keytables, missing PriorityGroups.2da and failed shader/UI resources during initialization, consistent with that path error. The launcher now starts from the binary directory for both New Adventure and Load Saved Game; CheckOnly displays that directory. Errors show the hexadecimal code and actual log location instead of assuming Steam/installation damage.
+
+Source: [Beamdog developer guidance](https://forums.beamdog.com/discussion/67102/instanced-self-contained-installations/p1?new=1).
+
+Run Play Adventure.cmd again. No module rebuild, game reinstall, key change or saved-game conversion is needed for this launcher-only correction. Current test module remains rw_uifix.mod. All 22 launcher tests passed, including new/saved working-directory checks and signed/unsigned access-violation errors. Game processes were simulated; actual launch remains the user's acceptance test. No NWN or Aurora launch was performed by the agent.
+
 
 ## Window sizing correction (0.7.2)
 
@@ -85,7 +94,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.2.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.3.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## One launcher for playing (0.7)
 

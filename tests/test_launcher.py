@@ -61,6 +61,21 @@ class LauncherTests(unittest.TestCase):
         with patch.object(launcher,'http',side_effect=lambda path,*args:events.append(path)):
             launcher.run(p,popen=popen,check_state=self.state,check_game=lambda:False,sleep=lambda t:None)
         self.assertEqual(events,['/api/player/register','/api/bridge','game']);self.assertEqual(spawn[0],[p['executable'],*p['game_arguments']]);self.assertFalse(game.terminated)
+    def test_new_and_saved_games_launch_from_the_binary_directory(self):
+        for resume in (False,True):
+            p=self.plan(resume=resume);calls=[]
+            def popen(args,**kwargs):calls.append((args,kwargs));return FakeProcess([0])
+            with patch.object(launcher,'http',return_value={}):
+                launcher.run(p,popen=popen,check_state=self.state,check_game=lambda:False,sleep=lambda t:None)
+            cwd=Path(calls[0][1]['cwd'])
+            self.assertEqual(cwd,Path(p['executable']).parent)
+            self.assertNotEqual(cwd,Path(p['game_root']))
+            self.assertEqual((cwd/'../../data').resolve(),self.game/'data')
+    def test_access_violation_reports_hex_code_and_local_log_location(self):
+        for code in (3221225477,-1073741819):
+            with patch.object(launcher,'http',return_value={}):
+                with self.assertRaisesRegex(launcher.LaunchError,'0xC0000005.*access violation.*nwengineLog.txt'):
+                    launcher.run(self.plan(),popen=lambda *a,**k:FakeProcess([code]),check_state=self.state,check_game=lambda:False,sleep=lambda t:None)
     def test_bridge_startup_timeout_does_not_launch_game_and_cleans_up_owned_worker(self):
         p=self.plan();worker=FakeProcess([None]);spawn=[]
         def popen(args,**kw):spawn.append(args);return worker

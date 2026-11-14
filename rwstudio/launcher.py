@@ -80,7 +80,7 @@ def plan(module='rw_uifix',module_file=None,sidecar=None,game_root=None,user_dir
         document=dict(build_id=context['build_id'],project=project)
     args=['-userdirectory',str(user)]
     if not resume:args+=['+LoadNewModule',name]
-    return dict(module=name,source=str(source),installed=str(user/'modules'/(name+'.mod')),game_root=str(game),executable=str(game/'bin/win32/nwmain.exe'),user_dir=str(user),game_arguments=args,ai=ai,offline=offline,document=document,data=str(root/'data'),root=str(root))
+    return dict(module=name,source=str(source),installed=str(user/'modules'/(name+'.mod')),game_root=str(game),executable=str(game/'bin/win32/nwmain.exe'),game_working_directory=str(game/'bin/win32'),user_dir=str(user),game_arguments=args,ai=ai,offline=offline,document=document,data=str(root/'data'),root=str(root))
 
 def http(path,body=None,token=None):
     headers={'Content-Type':'application/json'}
@@ -164,7 +164,9 @@ def run(p,popen=subprocess.Popen,check_state=state,check_game=game_running,sleep
             print('NWN is already running. No second game was opened. Switch back and load your adventure/save there.',flush=True)
         else:
             print('Starting NWN'+(' at character selection for '+p['module'] if '+LoadNewModule' in p['game_arguments'] else ' at the main menu; choose Load Game')+'.',flush=True)
-            started_game=popen([p['executable'],*p['game_arguments']],cwd=p['game_root'])
+            # NWN resolves installed resources relative to its binary directory,
+            # not the install root. A wrong cwd can leave all base keytables empty.
+            started_game=popen([p['executable'],*p['game_arguments']],cwd=p['game_working_directory'])
         while (started_game.poll() is None or check_game() if started_game is not None else check_game()):
             if p['ai'] and ((bridge is not None and bridge.poll() is not None) or (bridge is None and check_state() is None)):
                 restarts+=1
@@ -172,7 +174,10 @@ def run(p,popen=subprocess.Popen,check_state=state,check_game=game_running,sleep
                 print('AI Player stopped; restarting it. Repeat any interrupted question.',flush=True)
                 bridge=start_bridge();configure(ready(),p)
             sleep(1)
-        if started_game is not None and started_game.returncode not in (None,0):raise LaunchError('NWN exited with code '+str(started_game.returncode)+'. Check the game installation/Steam client.')
+        if started_game is not None and started_game.returncode not in (None,0):
+            code=started_game.returncode & 0xffffffff
+            detail=' (Windows access violation)' if code==0xc0000005 else ''
+            raise LaunchError(f'NWN exited with code {started_game.returncode} (0x{code:08X}){detail}. See '+str(Path(p['user_dir'])/'logs/nwengineLog.txt')+' and the crashreport folder. AI Player readiness does not confirm that the game loaded successfully.')
     finally:
         # Leave reused services and the game alone. Stop only this launcher's own AI worker.
         if bridge is not None and bridge.poll() is None:
