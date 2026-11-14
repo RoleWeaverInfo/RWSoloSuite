@@ -32,9 +32,9 @@ void AWMOpen(object pc,object actor,int haggle=FALSE){json shop=AWMShop(actor);i
  string label="Buy "+AWText(sku,"name")+" | "+IntToString(price)+" gold | "+IntToString(qty)+" left";
  rows=JsonArrayInsert(rows,AWUIHeight(AWUIEnabled(AWUIId(AWUIButton(JsonString(label)),"buy_"+prefix+IntToString(i)),JsonBool(qty>0)),36.0));i++;}
  json buttons=JsonArray();buttons=JsonArrayInsert(buttons,AWUIId(AWUIButton(JsonString("Refresh")),"refresh_"+prefix));
- if(AWInt(shop,"haggle_enabled"))buttons=JsonArrayInsert(buttons,AWUIId(AWUIButton(JsonString("Ask for a better price")),"haggle_"+prefix));
+ if(AWInt(shop,"haggle_enabled"))buttons=JsonArrayInsert(buttons,AWUIId(AWUIButton(JsonString("Negotiate price")),"haggle_"+prefix));
  buttons=JsonArrayInsert(buttons,AWUIId(AWUIButton(JsonString("Close")),"close_"+prefix));rows=JsonArrayInsert(rows,AWUIRow(buttons));
- json window=AWUIWindow(AWUIScroll(AWUIStack(rows)),JsonString("Merchant goods - scroll for all stock"),AWUIRect(-1.0,-1.0,620.0,520.0),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE));
+ json window=AWUIWindow(AWUIScroll(AWUIStack(rows,550.0)),JsonString("Merchant goods - scroll for all stock"),AWUIRect(-1.0,-1.0,620.0,520.0),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE));
  int token=NuiCreate(pc,window,"aw_shop_"+IntToString(gen),"aw_shop_evt");SetLocalInt(pc,"AWM_TOKEN",token);if(!token){DeleteLocalObject(pc,"AWM_ACTOR");SendMessageToPC(pc,"The goods panel could not open. Try again after closing another window.");}}
 void AWMBuy(object pc,object actor,int index){if(!AWMNear(pc,actor) || GetLocalInt(pc,"AWM_PANEL_EXP")<=AWMClock()){AWMClose(pc);SendMessageToPC(pc,"This shop offer expired or you moved away. Reopen the goods panel.");return;}
  json stock=JsonObjectGet(AWMShop(actor),"stock");if(index<0 || index>=JsonGetLength(stock))return;json sku=JsonArrayGet(stock,index);int price=AWMPrice(pc,actor,sku);

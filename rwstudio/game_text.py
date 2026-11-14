@@ -21,7 +21,7 @@ def game_text(value):
 def response_text(value):
     """The bridge owns this boundary, covering NPC, DM, visit and social replies."""
     if isinstance(value, dict):
-        return {key: game_text(item) if key in ('reply', 'line_a', 'line_b') and isinstance(item, str)
+        return {key: game_text(item) if key in ('reply', 'line_a', 'line_b', 'task_question') and isinstance(item, str)
                 else response_text(item) for key, item in value.items()}
     if isinstance(value, list):
         return [response_text(item) for item in value]

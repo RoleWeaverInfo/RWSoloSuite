@@ -23,7 +23,7 @@ class LauncherTests(unittest.TestCase):
         self.sidecar=self.module.with_suffix('.rwproject.json');write_json(self.sidecar,dict(build_id=BUILD,project=self.project))
     def tearDown(self):self.temp.cleanup()
     def plan(self,**kwargs):return launcher.plan(module='rw_silent_bell',game_root=self.game,user_dir=self.user,root=self.runtime,**kwargs)
-    def state(self):return dict(key_available=True,settings=dict(user_dir=str(self.user)),csrf='local-test-token',bridge=dict(enabled=True),version='0.7.1')
+    def state(self):return dict(key_available=True,settings=dict(user_dir=str(self.user)),csrf='local-test-token',bridge=dict(enabled=True),version='0.8.0')
     def test_native_launch_keeps_character_selection_and_explicit_user_folder(self):
         p=self.plan();self.assertEqual(p['game_arguments'],['-userdirectory',str(self.user.resolve()),'+LoadNewModule','rw_silent_bell']);self.assertTrue(p['ai']);self.assertEqual(p['document']['build_id'],BUILD)
         self.assertNotIn('+TestNewModule',p['game_arguments'])
@@ -98,7 +98,7 @@ class LauncherTests(unittest.TestCase):
             with self.assertRaisesRegex(launcher.LaunchError,'mismatch'):launcher.run(self.plan(),popen=lambda *a,**k:self.fail('game must not launch'),check_state=self.state,check_game=lambda:False)
     def test_old_bridge_version_is_rejected_before_launch(self):
         old=dict(self.state(),version='0.6.0')
-        with self.assertRaisesRegex(launcher.LaunchError,'0.7'):
+        with self.assertRaisesRegex(launcher.LaunchError,'0.8'):
             launcher.run(self.plan(),popen=lambda *a,**k:self.fail('game must not launch'),check_state=lambda:old,check_game=lambda:False)
     def test_reused_bridge_is_restarted_if_it_stops_during_play(self):
         worker=FakeProcess([None]);game=FakeProcess([None,0]);spawn=[];states=iter([self.state(),None,self.state()])

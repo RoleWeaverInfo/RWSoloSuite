@@ -16,7 +16,9 @@ json AWUIText(string text){json out=AWUIElement("text");out=JsonObjectSet(out,"v
 json AWUIScroll(json child){json out=AWUIElement("group");out=JsonObjectSet(out,"children",JsonArrayInsert(JsonArray(),child));out=JsonObjectSet(out,"border",JsonBool(FALSE));return JsonObjectSet(out,"scrollbars",JsonInt(4));}
 // Size leaf controls, not both a control and its enclosing row. Equal required
 // parent/child dimensions conflict with the engine's margins and padding.
-// Leave layout widths flexible so resizing and different UI scales can reflow.
-json AWUIStack(json children){json rows=JsonArray();int i=0;while(i<JsonGetLength(children)){json child=JsonArrayGet(children,i);
- if(JsonGetString(JsonObjectGet(child,"type"))!="row")child=AWUIRow(JsonArrayInsert(JsonArray(),child));
+// NUI leaf controls otherwise default to 150px even in a wide scrolling group.
+// Set each leaf's width, leaving enclosing row/column dimensions unconstrained.
+json AWUIStack(json children,float width){json rows=JsonArray();int i=0;while(i<JsonGetLength(children)){json child=JsonArrayGet(children,i);
+ if(JsonGetString(JsonObjectGet(child,"type"))!="row")child=AWUIRow(JsonArrayInsert(JsonArray(),AWUIWidth(child,width)));
+ else {json cells=JsonObjectGet(child,"children");int count=JsonGetLength(cells);json sized=JsonArray();int c=0;while(c<count){sized=JsonArrayInsert(sized,AWUIWidth(JsonArrayGet(cells,c),(width-12.0*IntToFloat(count-1))/IntToFloat(count)));c++;}child=JsonObjectSet(child,"children",sized);}
  rows=JsonArrayInsert(rows,child);i++;}return AWUICol(rows);}

@@ -1,4 +1,23 @@
-# RWSoloSuite — Role Weaver Module Studio 0.7.3
+# RWSoloSuite — Role Weaver Module Studio 0.8.0
+
+## Current trial: natural companion tasks (0.8)
+
+Use **Play Adventure.cmd**, choose **New Adventure**, and select a character for **The Silent Bell - Natural Companion Trial** (`rw_natural.mod`). Older modules and saved games keep their embedded scripts; do not use an older save to test this update. AI Player 0.8.0+ is required. Existing modules, Aurora copies and saves are preserved.
+
+Select a companion in `!companions`, choose **Talk freely with AI**, close the panel, then speak normally. Examples:
+- "Go ask the merchant what swords he has for sale."
+- "Could you look inside that chest and come back and tell me what you find?"
+
+The AI selects one game-offered nearby object and an inspection or visit; the game rechecks exact object identity, ownership, creator/player permissions, speech mode, control, visibility and task availability. Ambiguous targets should prompt a question. A native **task started** receipt confirms dispatch. The companion must actually approach/open/ask and return before a report is confirmed. Contents are not read until the container is open. Locked, trapped or quest-gated containers remain unavailable. No purchase, theft, cross-area travel or quest advancement is added. Animals may inspect nonverbally but cannot conduct verbal visits. Precise commands and the task-selection menu still work without interpretation; natural interpretation requires live AI.
+
+The old chest check incorrectly used GetObjectSeen, which the installed nwscript.nss documents as creature-only. Containers now use proximity and geometric line of sight plus the existing container/lock/trap/quest checks. Nearby observations include container names without exposing their contents.
+
+Merchant controls use 550px content widths, companion controls 580px, and each inventory's contents 230px within separate scrolling panes. Width is applied to individual controls and group viewports only; enclosing row/column dimensions remain unconstrained. This replaces the 150px default widths seen in the screenshots while avoiding equal required parent/child dimensions. Rendering at the player's UI scale remains an in-game acceptance check.
+
+Validation: 146 regression checks passed, including native compilation; five live AI checks passed for merchant phrasing, chest phrasing, negation, quoted speech and ambiguous containers. These language checks use a synthetic nearby scene and do not establish actual movement or GUI appearance. No NWN/Aurora launch performed by the agent.
+
+## Earlier release notes and reference
+
 
 ## Launcher working-directory fix (0.7.3)
 
@@ -94,7 +113,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.3.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.8.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## One launcher for playing (0.7)
 
@@ -102,7 +121,7 @@ Double-click **Play Adventure.cmd**. Choose **1** for a new adventure or **2** t
 
 Keep the launcher window open while playing. It supervises the AI worker and can restart it if it exits. When NWN closes, it stops only the worker it started; an AI Player already running before launch is left alone. If NWN is already running, it does not open or close another game; it readies AI and asks you to switch back to the game. It refuses to install a different module version while NWN is running.
 
-The workspace launcher defaults to **rw_uifix**. Other installed adventures can be selected with `Play Adventure.cmd -Module module_filename`. `-Resume` opens the saved-game menu directly. `-Offline` plays natively without live AI and pauses any running local AI bridge. `-CheckOnly` verifies paths, the module's embedded build ID and matching project without starting the game/service or spending API credit. Game/user folders can be supplied using `-GameRoot` / `-UserDir`; otherwise configured Studio paths or Steam library discovery are used.
+The workspace launcher defaults to **rw_natural**. Other installed adventures can be selected with `Play Adventure.cmd -Module module_filename`. `-Resume` opens the saved-game menu directly. `-Offline` plays natively without live AI and pauses any running local AI bridge. `-CheckOnly` verifies paths, the module's embedded build ID and matching project without starting the game/service or spending API credit. Game/user folders can be supplied using `-GameRoot` / `-UserDir`; otherwise configured Studio paths or Steam library discovery are used.
 
 Every newly exported share/Aurora ZIP now includes a module-specific **Play Adventure.cmd**, its bootstrap and an **AI Player** runtime folder. Players must extract the whole ZIP and keep those files together. The launcher installs the .mod into the selected NWN user folder if needed, backing up a differing installed version. Player context registration does not overwrite an author's current project draft. The portable helper is for playing; use the full Studio package for authoring.
 

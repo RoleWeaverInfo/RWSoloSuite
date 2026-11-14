@@ -1,4 +1,25 @@
-# Module Studio 0.7.3 - reported playtest fixes
+# Module Studio 0.8.0 - reported playtest fixes
+
+## Current trial: natural companion tasks (0.8)
+
+Use **Play Adventure.cmd**, choose **New Adventure**, and select a character for **The Silent Bell - Natural Companion Trial** (`rw_natural.mod`). Older modules and saved games keep their embedded scripts; do not use an older save to test this update. AI Player 0.8.0+ is required. Existing modules, Aurora copies and saves are preserved.
+
+Select a companion in `!companions`, choose **Talk freely with AI**, close the panel, then speak normally. Examples:
+- "Go ask the merchant what swords he has for sale."
+- "Could you look inside that chest and come back and tell me what you find?"
+
+The AI selects one game-offered nearby object and an inspection or visit; the game rechecks exact object identity, ownership, creator/player permissions, speech mode, control, visibility and task availability. Ambiguous targets should prompt a question. A native **task started** receipt confirms dispatch. The companion must actually approach/open/ask and return before a report is confirmed. Contents are not read until the container is open. Locked, trapped or quest-gated containers remain unavailable. No purchase, theft, cross-area travel or quest advancement is added. Animals may inspect nonverbally but cannot conduct verbal visits. Precise commands and the task-selection menu still work without interpretation; natural interpretation requires live AI.
+
+The old chest check incorrectly used GetObjectSeen, which the installed nwscript.nss documents as creature-only. Containers now use proximity and geometric line of sight plus the existing container/lock/trap/quest checks. Nearby observations include container names without exposing their contents.
+
+Merchant controls use 550px content widths, companion controls 580px, and each inventory's contents 230px within separate scrolling panes. Width is applied to individual controls and group viewports only; enclosing row/column dimensions remain unconstrained. This replaces the 150px default widths seen in the screenshots while avoiding equal required parent/child dimensions. Rendering at the player's UI scale remains an in-game acceptance check.
+
+Validation: 146 regression checks passed, including native compilation; five live AI checks passed for merchant phrasing, chest phrasing, negation, quoted speech and ambiguous containers. These language checks use a synthetic nearby scene and do not establish actual movement or GUI appearance. No NWN/Aurora launch performed by the agent.
+
+Please check: both inventory columns are visible at full width; all merchant labels and prices are readable; the companion controls fill the panel; an unlocked chest appears in task targets; both ordinary-language requests above dispatch and report back. Try two eligible chests and confirm the AI asks which one. Close menus before giving spoken orders.
+
+## Earlier release notes and reference
+
 
 ## Launcher working-directory fix (0.7.3)
 

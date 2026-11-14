@@ -76,6 +76,16 @@ class NativeCompanionTaskTests(unittest.TestCase):
     def test_task_entries_compile_and_shared_tick_runs(self):
         for name in ('aw_ct_move','aw_ct_request','aw_ct_poll','aw_ct_cancel'):self.assertIn((name,2010),self.r)
         self.assertIn(b'AWTTick(pc)',self.r['aw_beat',2009]);self.assertIn(b'AWTParse(pc,GetLocalObject(pc,"SP_FOCUS"),message)',self.r['sp_inc',2009])
+    def test_containers_do_not_use_creature_only_perception(self):
+        core=self.r['aw_cp_tasks',2009];chest=core[core.index(b'int AWTChest('):core.index(b'int AWTRecipient(')]
+        self.assertNotIn(b'GetObjectSeen',chest)
+        for text in (b'LineOfSightObject(body,target)',b'GetHasInventory(target)',b'!GetLocked(target)',b'!GetIsTrapped(target)',b'AQDone('):self.assertIn(text,chest)
+        recipient=core[core.index(b'int AWTRecipient('):core.index(b'json AWTCandidates(')]
+        self.assertIn(b'GetObjectSeen(target,body)',recipient)
+    def test_natural_task_dispatch_rechecks_native_offer_and_permissions(self):
+        core=self.r['aw_cp_tasks',2009];runtime=self.r['sp_inc',2009]
+        for text in (b'AWT_PENDING_OPTIONS',b'choice==kind+":"+AWText(entry,"uuid")',b'GetObjectByUUID(AWText(entry,"uuid"))',b'AWTStart(pc,body,kind,target,question)'):self.assertIn(text,core)
+        self.assertIn(b'JsonDump(taskOptions)',runtime);self.assertIn(b'AWTApplyAI(pc,npc,result)',runtime)
     def test_inspection_reads_only_after_confirmed_open_and_does_not_take_items(self):
         core=self.r['aw_cp_tasks',2009]
         for text in (b'GetIsOpen(target)',b'!GetLocked(target)',b'!GetIsTrapped(target)',b'GetItemPossessor(item,TRUE)==target',b'AWT_OPEN_UNTIL',b'additional items not listed',b'GetObjectUUID(target)!=GetLocalString(body,"AWT_TARGET_UUID")'):self.assertIn(text,core)
@@ -89,7 +99,7 @@ class NativeCompanionTaskTests(unittest.TestCase):
         core=self.r['aw_cp_tasks',2009];poll=self.r['aw_ct_poll',2009]
         for text in (b'AWT_TARGET_EPOCH',b'GetDistanceBetween(OBJECT_SELF,target)>6.0',b'AWT_SESSION',b'>=90',b'AssignCommand(target,SpeakString(',b'AWT_RESULT'):self.assertIn(text,poll)
         self.assertIn(b'if(phase==4)',core);self.assertIn(b'GetDistanceBetween(pc,body)>5.0',core);self.assertIn(b'AWCHistorySet',core)
-        self.assertNotIn(b'AWAIAction',poll);self.assertNotIn(b'SP_HIST_',self.r['aw_ct_request',2009])
+        self.assertNotIn(b'AWAIAction',poll);self.assertNotIn(b'SP_HIST_',self.r['aw_ct_request',2009]);self.assertIn(b'GetDistanceBetween(OBJECT_SELF,target)<=6.0',self.r['aw_ct_request',2009])
     def test_ai_off_build_keeps_native_inspection_and_excludes_visit_transport(self):
         p=copy.deepcopy(self.p);p['ai_conversations']=False;m=build_project(p,self.store,GAME,COMPILER);r={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
         self.assertIn(('aw_ct_move',2010),r);self.assertNotIn(('aw_ct_request',2010),r)
