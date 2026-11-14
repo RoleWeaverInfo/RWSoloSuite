@@ -59,6 +59,7 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/player/register':return self.store.register_player_build(b['build_id'],b['project'])
         if route=='/api/project/save':return {'project':self.store.save(b['project'])}
         if route=='/api/project/new':
             ident=b['id'];path=self.store.path(ident)

@@ -172,6 +172,11 @@ class HTTPTests(unittest.TestCase):
         self.request('/api/project/save',{'project':p});_,raw=self.request('/api/project?id=another');self.assertEqual(json.loads(raw)['project'],p)
         self.request('/api/project/import',{'document':{'build_id':'c'*20,'project':p}})
         self.assertEqual(self.app.store.built_project('c'*20),p)
+    def test_player_build_registration_preserves_authoring_project(self):
+        from rwstudio.authoring import seed as authored_seed
+        built=authored_seed();draft=copy.deepcopy(built);draft['story']='Authoring draft must survive'
+        self.request('/api/project/save',{'project':draft});status,raw=self.request('/api/player/register',{'build_id':'d'*20,'project':built})
+        self.assertEqual(status,200);self.assertTrue(json.loads(raw)['registered']);self.assertEqual(self.app.store.get(built['id'])['story'],draft['story'])
     def test_static_dashboard_assets(self):
         for url in ['/','/app.js','/style.css']:
             status,raw=self.request(url);self.assertEqual(status,200);self.assertGreater(len(raw),100)

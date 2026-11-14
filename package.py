@@ -5,19 +5,20 @@ import json
 import os
 import zipfile
 from rwstudio import VERSION
+from rwstudio.player_package import package_build_files
 
 ROOT=Path(__file__).resolve().parent
 
 def package(build,examples=()):
     builds=list(dict.fromkeys([build,*examples]));manifests=[]
-    files=[ROOT/f for f in ('.gitignore','.gitattributes','studio.py','package.py','Start Module Studio.cmd','Start AI Player.cmd','Start Solo Studio.cmd','Start-SoloStudio.ps1','README.md','PLAYTEST.md','VALIDATION.md','AI-NPC-PORT-PLAN.md','ROLE-WEAVER-LICENSE.txt')]
+    files=[ROOT/f for f in ('.gitignore','.gitattributes','studio.py','package.py','Start Module Studio.cmd','Start AI Player.cmd','Start Solo Studio.cmd','Start-SoloStudio.ps1','Play Adventure.cmd','Start-Adventure.ps1','play.py','README.md','PLAYTEST.md','VALIDATION.md','AI-NPC-PORT-PLAN.md','ROLE-WEAVER-LICENSE.txt')]
     for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','tests','examples'):
         files += [f for f in (ROOT/name).rglob('*') if f.is_file() and '__pycache__' not in f.parts and f.suffix!='.pyc']
     for ident in builds:
         if len(ident)!=20 or any(c not in '0123456789abcdef' for c in ident):raise ValueError('Invalid build ID')
         folder=ROOT/'data/builds'/ident
         manifest=json.loads((folder/'manifest.json').read_text(encoding='utf-8'));manifests.append((folder,manifest))
-        files += [f for f in folder.rglob('*') if f.is_file()]
+        files += package_build_files(folder,manifest)
     out=ROOT/'dist';out.mkdir(exist_ok=True)
     target=out/('Role-Weaver-Module-Studio-'+VERSION+'.zip')
     prefix='Role-Weaver-Module-Studio'

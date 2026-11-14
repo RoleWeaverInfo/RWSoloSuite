@@ -1,3 +1,27 @@
+# Validation — Module Studio 0.7.0
+
+Added a single Windows Play Adventure launcher that readies AI Player, registers the matching module build and opens NWN. A New Adventure / Load Saved Game choice is offered in the same launcher. Native gameplay scripts/module bytes are unchanged for the existing errand release.
+
+- **126 automated checks pass**, including startup readiness, timeout cleanup, key-presence/configuration errors, native build/sidecar matching, character-selection arguments, saved-game arguments, reused/owned service lifecycle, recovery after a reused service stops, duplicate-game prevention, offline bridge pausing, module backups, bundled-module installation, draft-safe registration and portable package privacy. Earlier native gameplay tests remain included.
+- The real Play Adventure.cmd → PowerShell → Python path passes -CheckOnly against the installed rw_errands.mod. A completely extracted share ZIP also passes its bootstrap's -CheckOnly with matching module/project and paths containing spaces. These checks start neither NWN nor AI Player and make no OpenAI request.
+- A real readiness/context-registration check against Studio 0.7 passed with the installed errand build; the authoring draft remained byte-identical. This check did not start NWN or make an OpenAI request.
+- The game arguments were verified against the installed official NWN:EE v74 release notes, Patch 1.66: +LoadNewModule opens the module at premade character selection; +TestNewModule silently chooses the first character and is not used.
+- New exports contain a module-specific Play Adventure.cmd, Start-Adventure.ps1 and AI Player runtime. Cached export refreshes update launcher files atomically without rewriting the native module. Packaging uses explicit runtime/source allowlists; player settings, environment files, logs and local histories are excluded.
+- Registering a player's build context does not save/overwrite the author's project draft. Existing imported contexts are compared after schema migration; mismatched build IDs/context are refused before game launch.
+- The launcher supervises its worker until the game exits, restarts a stopped worker up to three times, and stops only its own worker. An existing AI Player is reused. An active NWN game is never closed or duplicated, and a differing installed module is not replaced while NWN is running.
+- No NWN or Aurora instance launched by the agent. Startup/game lifecycle tests use fake game processes; actual Windows/Steam launch, character selection, saved-game selection and sustained in-game responses remain for the user's test. Bridge readiness means local service plus key availability, not API credit/authentication validation.
+
+## Existing trial preserved
+
+- Module: rw_errands.mod
+- Build: f0ba3e8e679884d13d20
+- SHA-256: 3b8d67ab6b7907d08831872bb3bb16759885acbfc3eec2f92f1bb3521e7e6eb1
+- The share ZIP now includes the launcher/runtime; its .mod remains byte-identical. No new game is required solely for the launcher. An older save still needs its own matching build context.
+
+---
+
+## Previous 0.6 validation record
+
 # Validation — Module Studio 0.6.0
 
 Added owner-directed companion inspection and NPC visit/return/report tasks. Supports recruitable party members and the actual owned familiars/summons; nonverbal profiles inspect without invented speech, while verbal visits require a speaking source profile.

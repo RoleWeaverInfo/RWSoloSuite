@@ -1,4 +1,4 @@
-# RWSoloSuite — Role Weaver Module Studio 0.6
+# RWSoloSuite — Role Weaver Module Studio 0.7
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -61,11 +61,25 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.6.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+
+## One launcher for playing (0.7)
+
+Double-click **Play Adventure.cmd**. Choose **1** for a new adventure or **2** to load a saved game. The launcher starts or reuses AI Player, checks its readiness and API-key availability, registers the exact module's AI context, then opens NWN. New adventures use the game's normal character-selection screen; saved games open at the main menu so you can choose Load Game. You do not start AI Player separately.
+
+Keep the launcher window open while playing. It supervises the AI worker and can restart it if it exits. When NWN closes, it stops only the worker it started; an AI Player already running before launch is left alone. If NWN is already running, it does not open or close another game; it readies AI and asks you to switch back to the game. It refuses to install a different module version while NWN is running.
+
+The workspace launcher defaults to **rw_errands**. Other installed adventures can be selected with `Play Adventure.cmd -Module module_filename`. `-Resume` opens the saved-game menu directly. `-Offline` plays natively without live AI and pauses any running local AI bridge. `-CheckOnly` verifies paths, the module's embedded build ID and matching project without starting the game/service or spending API credit. Game/user folders can be supplied using `-GameRoot` / `-UserDir`; otherwise configured Studio paths or Steam library discovery are used.
+
+Every newly exported share/Aurora ZIP now includes a module-specific **Play Adventure.cmd**, its bootstrap and an **AI Player** runtime folder. Players must extract the whole ZIP and keep those files together. The launcher installs the .mod into the selected NWN user folder if needed, backing up a differing installed version. Player context registration does not overwrite an author's current project draft. The portable helper is for playing; use the full Studio package for authoring.
+
+NWN:EE, Python 3.10+ and the player's own OPENAI_API_KEY are still required for live AI. Keys, personal settings, runtime logs and game histories are not included in exports. Readiness confirms the local bridge and key presence, not remaining API credit. No PW server or NWNX is involved.
+
+This launcher works with the existing Companion Errand Trial and saves: **its native .mod was not changed for 0.7**. A saved game must still have the matching AI build context; the launcher cannot upgrade old saves or substitute another build's story. The current share ZIP and full Studio package include the matching context for the shipped trial.
 
 ## Optional AI conversations while playing
 
-In **Build & share**, enable optional freeform NPC conversations before building. The normal story still works independently. Players who want live AI run **Start AI Player.cmd**, import the matching .rwproject.json if necessary, and use their own OPENAI_API_KEY.
+In **Build & share**, enable optional freeform NPC conversations before building. The normal story still works independently. Players who want live AI can use **Play Adventure.cmd** to start AI Player and NWN together, with matching project registration handled automatically. **Start AI Player.cmd** remains available for manual/advanced use. Players use their own OPENAI_API_KEY.
 
 Successful NPC/companion replies use native Talk speech from that actor, with ordinary in-world speech and chat presentation. Connection errors, DM hints and control/transaction receipts remain system messages. Nearby characters may hear ordinary Talk as usual.
 

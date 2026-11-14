@@ -20,6 +20,7 @@ from .builder import ROOT,TYPES,BUILD_LOCK,string,position,conversation,literal
 from .story_actions import native as native_story
 from .merchants import CATALOG as GOODS
 from .runtime_ai import adapt as adapt_ai
+from .player_package import refresh_share_zip
 
 def local(obj,values):
     table=obj[1].get('VarTable',(15,[]))[1]
@@ -63,7 +64,7 @@ def _build(p,store,game_root,compiler):
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
-        result=json.loads((destination/'manifest.json').read_text(encoding='utf-8'));result['path']=str(destination/result['module']);return result
+        result=json.loads((destination/'manifest.json').read_text(encoding='utf-8'));result['path']=str(destination/result['module']);refresh_share_zip(destination,result);return result
     original={(n,k):b for n,k,b in resources(base)};entries=OrderedDict();entries['repute',2038]=original['repute',2038]
     game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms)
     escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
@@ -295,13 +296,12 @@ def _build(p,store,game_root,compiler):
         manifest=dict(build_id=digest,project_id=p['id'],title=p['title'],module=mod.name,sha256=hashlib.sha256(mod.read_bytes()).hexdigest(),resources=len(entries),areas=len(p['areas']),rooms=len(rooms),quests=len(p['quests']),compiled_scripts=sum(k==2010 for _,k in entries),standalone=True,optional_live_ai=ai,gameplay_tested=False,path=str(destination/mod.name))
         write_json(out/'project.json',p);write_json(out/'manifest.json',manifest);write_json(out/'validation.json',report);write_json(out/'layout.json',layouts)
         write_json(out/(p['module_name']+'.rwproject.json'),dict(build_id=digest,project=p))
-        instructions='Install '+mod.name+' in your Neverwinter Nights/modules folder. Start a NEW single-player game. The complete adventure, authored conversations, quest journal, encounter scaling and ending run without Studio or an API key.\n\nOpen the .mod in Aurora to edit native resources. Keep a separate copy: rebuilding uses the authoring project, not Aurora edits.\n'
+        instructions='Single launcher: extract this entire ZIP, then double-click Play Adventure.cmd. It starts/enables AI Player, registers this exact build and launches NWN at character selection. Keep the launcher window open while playing. Python 3.10+, NWN:EE and your own OPENAI_API_KEY are required for live AI. For an existing save, run Play Adventure.cmd -Resume to open the game menu and choose Load Game. -Offline skips live AI.\n\nInstall '+mod.name+' in your Neverwinter Nights/modules folder. Start a NEW single-player game. The complete adventure, authored conversations, quest journal, encounter scaling and ending run without Studio or an API key.\n\nOpen the .mod in Aurora to edit native resources. Keep a separate copy: rebuilding uses the authoring project, not Aurora edits.\n'
         if ai:instructions+='\nOptional freeform NPC chat: run Role Weaver Module Studio’s AI Player companion, import the .rwproject.json file, and use your own OPENAI_API_KEY. Stay near an AI NPC and type !talk <alias> <message>. The ordinary quest does not depend on this service.\n'
         if p['companions']['enabled']:instructions+='\nCompanions: use !companions, approach an authored recruit and choose Join my party. Summon familiars and creatures normally with your own class abilities. Their profiles attach to those actual native creatures. Use Talk freely with AI, then close the controls and speak in Talk; !companion familiar <message> also works. Follow/stay/guard and inventory do not require an API. Familiar/summon satchels remain in the owner inventory after expiry. Native menus still handle their dismissal.\n'
         if p['ambient']['patrols'] or p['ambient']['social']:instructions+='\nAmbient NPCs: patrols walk the authored same-area room stops without AI. Social chat requires both NPCs to opt in, plus live AI Player. It has no quest/reward actions, uses public profile knowledge and pauses for players/combat/recruitment. Creator switches are in Behaviors.\n'
         (out/'PLAY.txt').write_text(instructions,encoding='utf-8')
         shutil.copy2(ROOT/'ROLE-WEAVER-LICENSE.txt',out/'ROLE-WEAVER-LICENSE.txt')
-        with zipfile.ZipFile(out/(p['module_name']+'-aurora.zip'),'w',zipfile.ZIP_DEFLATED) as z:
-            for f in [mod,out/'PLAY.txt',out/'ROLE-WEAVER-LICENSE.txt',out/'manifest.json',out/'validation.json',out/'layout.json',out/(p['module_name']+'.rwproject.json'),*source.iterdir()]:z.write(f,f.relative_to(out))
+        refresh_share_zip(out,manifest)
         shutil.copytree(out,destination,dirs_exist_ok=True)
     return manifest

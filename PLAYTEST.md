@@ -1,3 +1,19 @@
+# Module Studio 0.7 — one launcher for game and AI
+
+Use **Play Adventure.cmd** in the RWSoloSuite folder, or extract the complete `rw_errands-aurora.zip` and use its module-specific launcher. The existing `rw_errands.mod` and your saves are unchanged; no new game is required just for this launcher.
+
+1. Save/quit NWN for the first clean launch test. Stop any manually started AI Player if you want to test cold startup. Double-click **Play Adventure.cmd**, choose **1**, and confirm AI becomes ready before NWN opens at the normal character-selection screen for the correct module. Choose your character, unpause and ask an AI NPC a question.
+2. Keep the launcher window open during play. After NWN exits, a worker started by this launcher should stop. A previously running AI Player should remain running. Do not close another authoring session merely to test this.
+3. Launch again and choose **2**. At the game menu, use Load Game and select your existing trial save. AI should work without separately starting/importing anything. `Play Adventure.cmd -Resume` is the equivalent direct option.
+4. With NWN already running, run the launcher: it should enable/reuse AI but never close the active game, open a duplicate game, replace a differing module file or discard an unsaved session. Switch back and use the currently loaded module/save.
+5. In a separate test environment, stop only the launcher-owned AI worker while playing. The launcher should restart it, register the same context and tell you to repeat any interrupted question. Repeated startup failure should be reported; the game must not be killed.
+6. Run `Play Adventure.cmd -Offline` to play without live AI. Native quests, merchants and companion controls should work; an existing bridge should be paused. Missing keys, mismatched sidecars, missing Python, game path errors or an incompatible older AI Player should produce an actionable error rather than an apparently ready AI game.
+7. Extract the complete adventure ZIP into a folder with spaces and run its launcher. It must include the **AI Player** folder and matching .rwproject.json, install/backup the module as needed, and keep game, sidecar and context matched. Do not distribute just the .cmd or a developer's data/settings folder.
+
+126 automated checks cover the launcher plus existing features. The real PowerShell/Python entry point is checked with `-CheckOnly`; game process launch/lifecycle tests use fake processes. The game CLI options were verified in the installed official NWN:EE v74 release notes (Patch 1.66): +LoadNewModule selects the module and opens character selection, while +TestNewModule auto-selects a character and is deliberately not used. Actual Windows/Steam handoff and in-game AI still require your test. No NWN or Aurora instance was launched by the agent.
+
+---
+
 # Module Studio 0.6 — companion inspection and visit tasks
 
 Start a **new game** with **The Silent Bell — Companion Errand Trial** (`rw_errands.mod`, installed separately). Keep **Start AI Player.cmd** running for NPC visits. Older modules and saves are unchanged.
