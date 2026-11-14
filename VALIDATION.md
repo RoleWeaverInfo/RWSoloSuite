@@ -1,3 +1,26 @@
+# Validation — Module Studio 0.5.1
+
+Fixes prompted by user playtest: yellow system-only NPC replies, missing/one-sided companion inventory display, and clipped native panels.
+
+- **92 automated checks pass**, including installed-game native compilation, AI-on/off export and prior quest/merchant/companion/patrol/social regressions.
+- Successful NPC/companion replies call SpeakString on the captured actual actor; failures remain SendMessageToPC. Existing ownership, pending-version and story-action guards remain.
+- Panels now use an auto-scrolling native group and explicit row widths/heights. Companion windows and merchant windows are resizable. Group/text/row constructors were checked against the installed game's nw_inc_nui.nss via GameAssets; no external UI library or game asset edits.
+- Inventory shows both sides concurrently with separate six-entry pages. It enumerates direct inventory plus equipped items, marks restricted entries instead of hiding them, and retains original-object/native transfer checks. Familiar/summon storage remains a distinct owner-held satchel.
+- No NWN or Aurora instance launched by the agent, and no additional OpenAI request was needed for these fixes. Actual speech and panel rendering remain for the user's playtest; no claim of engine UI verification.
+
+## Separate installed test build
+
+- Title: The Silent Bell — UI & Speech Fix
+- File: rw_ui_fix.mod
+- Build: bd87aac992f04bec7956
+- SHA-256: 68b9fd1d6722e934ee892287fbfccd7176333dd21bd5828c5029b0b011a0bf77
+- 145 resources, 34 compiled scripts; 3 areas, 7 rooms, 7 NPCs, 2 quests.
+- Prior installed trials and existing saves preserved. Start a new game to receive these scripts.
+
+---
+
+## Previous 0.5 validation record
+
 # Validation — Module Studio 0.5.0
 
 Added native same-area room patrols and optional two-sided public AI conversations for authored NPCs, with module/per-NPC creator switches. No NWNX or game/client binary changes.

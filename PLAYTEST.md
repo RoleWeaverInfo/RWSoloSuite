@@ -1,3 +1,19 @@
+# Module Studio 0.5.1 — NPC speech and native panel fixes
+
+Start a **new game** with **The Silent Bell — UI & Speech Fix** (`rw_ui_fix.mod`, installed separately). Keep AI Player running. Your previous modules/saves are unchanged and do not receive these scripts automatically.
+
+1. Speak to Ilyra or Seren through AI. Successful replies should now appear as ordinary speech from the NPC, with the usual in-world speech display and Talk chat text. They should not be duplicated as yellow system messages. Connection errors, DM hints and control receipts still use system text.
+2. Open `!companions`, select an actor and scroll the window. Check that all settings, **Talk freely with AI** and **Back** are accessible. Resize the window if useful and check your normal GUI scale.
+3. Recruit Seren and open inventory. Expect two visible columns: **YOUR BELONGINGS - give** and **COMPANION STORAGE - take**. Equipped, protected, unidentified, cursed and other restricted items should be listed with disabled buttons and a reason. No transfer occurs merely by viewing.
+4. Collect the guest-hall healing supplies to obtain a loose eligible item. Scroll the inventories, use each side's Previous/Next controls, give one whole potion stack to Seren, reopen/refresh and take it back. Check actual inventories and confirmation, including merged stacks. Nothing should be copied or recreated.
+5. Summon normally and open its inventory. Its recoverable owner-held satchel starts empty; the left column must still show your belongings. Give an eligible item, dismiss/expire the summon and recover that same item from the bag. The satchel is not a view of the creature's innate equipped weapons.
+6. Open Bram's shop. Scroll through all five authored stock lines and the Refresh/Haggle/Close footer. Test purchase and haggling without hidden rows. This shop lists authored sale stock, not every piece of NPC equipment.
+7. Repeat at your normal window resolution/GUI scale and report anything still clipped. Check both the scrollbar and window resizing. Re-test older quest, companion and patrol/social behavior using the procedures below.
+
+Native scripts compile and 92 automated checks pass. These changes have not been run in NWN/Aurora by the agent; actual speech bubbles, scrollbar rendering, widths and transfer behavior need your playtest.
+
+---
+
 # Module Studio 0.5 playtest — patrols and NPC social chat
 
 Start a **new single-player game** with **The Silent Bell — Patrol & Social Trial** (`rw_ambient.mod`, installed separately). Older saves do not acquire the scripts. The original courier, merchant and companion trials remain unchanged. No NWN or Aurora instance was launched during development.

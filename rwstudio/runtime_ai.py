@@ -23,7 +23,7 @@ void SPAsk(object pc,string kind,string message)''')
     replace('SendMessageToPC(pc,GetName(npc)+": "+reply);',r'''if(AWText(AWMShop(npc),"id")!="" && GetLocalString(pc,"AWM_REQUEST")!=AWMVersion(pc,npc)){
  reply="My stock or prices changed while I was answering. Please reopen my goods panel for current information.";result=JsonObjectSet(result,"merchant_action",JsonString(""));}
         if(GetLocalString(pc,"AWC_PENDING_VERSION")!="" && (AWCVersion(pc,npc)!=GetLocalString(pc,"AWC_PENDING_VERSION") || !AWCAIReady(pc,npc) || IsInConversation(pc) || IsInConversation(npc))){SendMessageToPC(pc,"Companion control, ownership or preferences changed. The older AI reply was discarded.");return;}
-        AWATouch(npc);SendMessageToPC(pc,GetName(npc)+(AWCMode(npc)=="nonverbal"?" ":": ")+reply);''')
+        AWATouch(npc);if(state=="ready")AssignCommand(npc,SpeakString(AWCMode(npc)=="nonverbal"?"*"+reply+"*":reply,TALKVOLUME_TALK));else SendMessageToPC(pc,reply);''')
     replace('string history=GetLocalString(pc,"SP_HIST_"+tag)+"\\nPlayer: "+GetLocalString(pc,"SP_QUESTION")+"\\nNPC: "+reply;',
             'string history=(GetLocalString(pc,"AWC_PENDING_VERSION")!=""?AWText(AWCRecord(pc,AWCIdentity(pc,npc)),"history"):GetLocalString(pc,"SP_HIST_"+tag))+"\\nPlayer: "+GetLocalString(pc,"SP_QUESTION")+"\\nNPC: "+reply;')
     replace('SetLocalString(pc,"SP_HIST_"+tag,GetStringRight(history,6000));',

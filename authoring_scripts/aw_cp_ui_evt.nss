@@ -8,10 +8,9 @@ void main(){object pc=NuiGetEventPlayer();if(!GetIsPC(pc) || NuiGetEventWindow()
  if(view=="recover"){int i=0;while(i<GetLocalInt(pc,"AWC_PACK_ROWS")){if(id=="bag"+IntToString(i)+suffix){SetLocalInt(pc,"AWC_PACK_PAGE",0);SetLocalInt(pc,"AWC_GIVING",FALSE);AWCOpenPack(pc,GetLocalObject(pc,"AWC_PACK_ROW_"+IntToString(i)));return;}i++;}return;}
  if(view=="pack"){object storage=GetLocalObject(pc,"AWC_STORAGE");if(!AWCPackReady(pc,storage)){AWCUIClose(pc);return;}
  if(id=="discard_empty"+suffix){if(AWCPackOwned(pc,storage) && !GetIsObjectValid(GetFirstItemInInventory(storage)) && !GetLocalInt(pc,"AWC_TRANSFER_PENDING")){DestroyObject(storage);AWCOpenRecover(pc);}return;}
- if(id=="pack_previous"+suffix)SetLocalInt(pc,"AWC_PACK_PAGE",GetLocalInt(pc,"AWC_PACK_PAGE")-1);
- else if(id=="pack_next"+suffix)SetLocalInt(pc,"AWC_PACK_PAGE",GetLocalInt(pc,"AWC_PACK_PAGE")+1);
- else if(id=="pack_side"+suffix){SetLocalInt(pc,"AWC_GIVING",!GetLocalInt(pc,"AWC_GIVING"));SetLocalInt(pc,"AWC_PACK_PAGE",0);}
- else if(id!="pack_refresh"+suffix){int i=0;while(i<GetLocalInt(pc,"AWC_ITEMS")){if(id=="item"+IntToString(i)+suffix){AWCTransfer(pc,storage,GetLocalObject(pc,"AWC_ITEM_"+IntToString(i)));return;}i++;}return;}
+ string side="";if(id=="give_previous"+suffix || id=="give_next"+suffix)side="GIVE";if(id=="take_previous"+suffix || id=="take_next"+suffix)side="TAKE";
+ if(side!=""){int delta=1;if(id=="give_previous"+suffix || id=="take_previous"+suffix)delta=-1;SetLocalInt(pc,"AWC_"+side+"_PAGE",GetLocalInt(pc,"AWC_"+side+"_PAGE")+delta);}
+ else if(id!="pack_refresh"+suffix){int giving=0;while(giving<2){side=giving?"GIVE":"TAKE";string eventId=giving?"give":"take";int i=0;while(i<GetLocalInt(pc,"AWC_"+side+"_ROWS")){if(id==eventId+IntToString(i)+suffix){SetLocalInt(pc,"AWC_GIVING",giving);AWCTransfer(pc,storage,GetLocalObject(pc,"AWC_"+side+"_ITEM_"+IntToString(i)));return;}i++;}giving++;}return;}
  AWCOpenPack(pc,storage);return;}
  if(view!="control" || !AWCReady(pc,body,FALSE) || !AWCObserve(pc,body)){AWCUIClose(pc);return;}string identity=AWCIdentity(pc,body);json record=AWCRecord(pc,identity);
  if(id=="chat"+suffix){if(!AWInt(AWCCfg(),"live_ai") || !AWCAIReady(pc,body))return;SetLocalObject(pc,"SP_FOCUS",body);SetLocalInt(pc,"AWC_CHAT_ARMED",TRUE);AWCUIClose(pc);SendMessageToPC(pc,"Speak normally in Talk. Use !end to finish this companion conversation.");return;}

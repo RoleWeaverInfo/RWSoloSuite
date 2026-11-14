@@ -1,4 +1,4 @@
-# RWSoloSuite — Role Weaver Module Studio 0.5
+# RWSoloSuite — Role Weaver Module Studio 0.5.1
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -49,7 +49,9 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Silent Bell — Patrol & Social Trial** adds Mira Fen and Tomas Reed, with shared abbey patrol stops and mutually opted-in public conversation. Its filename is **rw_ambient.mod**. This is the 0.5 compiled playtest build.
 
-All five are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
+**The Silent Bell — UI & Speech Fix** (`rw_ui_fix.mod`) contains the same adventure with the 0.5.1 speech/inventory/panel fixes. This is the current playtest build.
+
+All six are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
 ## Share and edit in Aurora
 
@@ -57,11 +59,13 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.5.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.5.1.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## Optional AI conversations while playing
 
 In **Build & share**, enable optional freeform NPC conversations before building. The normal story still works independently. Players who want live AI run **Start AI Player.cmd**, import the matching .rwproject.json if necessary, and use their own OPENAI_API_KEY.
+
+Successful NPC/companion replies use native Talk speech from that actor, with ordinary in-world speech and chat presentation. Connection errors, DM hints and control/transaction receipts remain system messages. Nearby characters may hear ordinary Talk as usual.
 
 Speak to an AI-enabled NPC, choose **Talk freely with AI**, close the dialogue and speak normally in Talk (or use `!ai Your question`). Alternatively use `!talk alias Your question` nearby, or `!dm Give me a hint`. NPC aliases are shown in the character editor. Stand within 12 metres and in line of sight; merchant panels require six metres and no combat. Keep the game unpaused while waiting; replies are delivered on its heartbeat and requests expire after about 100 seconds. AI conversation can start an offered quest, complete its current talk objective, and select an explicitly chosen authored branch. The ordinary NPC menu uses exactly the same quest state and remains available. Item recovery, combat, visits and object interactions are confirmed by the game. Replies cannot invent new objectives or grant arbitrary rewards.
 
@@ -81,7 +85,9 @@ Familiars and summons are the game's existing associates, created through normal
 
 Companion histories and preferences live in module SQLite, inside the save. Familiar memories use owner/caster/type identity across resummoning; each summon has a distinct instance identity. Party histories follow the authored recruit in that owner's save. Histories are bounded to 6,000 characters and 256 profiles, pruning inactive summons first. This is recent conversational memory, not a full relationship simulation.
 
-Party inventory exchanges move the original unequipped eligible item or whole stack through native Give/Take actions after the owner clicks it. Plot, cursed, unidentified, container and equipped items, and items valued over 5,000 gold, are excluded from that panel. The explicit click replaces the owner's action queue; possession and combat block exchanges. Transfers are checked on the module heartbeat, never cloned or automatically retried. If unconfirmed, inspect both inventories before trying again.
+The inventory panel shows player belongings and companion storage side by side, six entries per side/page. Scroll to reach the lower entries and independent Previous/Next controls. Equipped and protected belongings remain visible; they cannot be transferred until eligible. Familiar/summon satchels begin empty and are distinct from the summoned creature’s innate equipment.
+
+Party inventory exchanges move the original unequipped eligible item or whole stack through native Give/Take actions after the owner clicks it. Plot, cursed, unidentified, container and equipped items, and items valued over 5,000 gold, are shown in the panel with a disabled transfer button and a reason. The explicit click replaces the owner's action queue; possession and combat block exchanges. Transfers are checked on the module heartbeat, never cloned or automatically retried. If unconfirmed, inspect both inventories before trying again.
 
 Familiar/summon storage uses an ordinary **owner-held recoverable satchel**, not the disappearing creature's equipment slots. It remains accessible through normal inventory after dismissal or expiry; use **Recover familiar / summon satchels** in the controls. Empty satchels can be discarded from their panel. Familiar type 255 uses its blueprint in the memory key, so different custom blueprints do not share a familiar history. Bags preserve their actual items independently of history pruning.
 
@@ -100,6 +106,10 @@ Each exchange uses two short model requests: the first speaker receives only the
 Controls include a global 60–3600 second attempt interval, per-character 60–3600 second cooldowns and 1–12 exchange attempts per active game hour (default six). Failed/interrupted attempts consume the budget. The existing provider's 60-request hourly limit also applies. One exchange runs at a time; player requests are selected first, and queued player work cancels the second model request before it starts. An already-running provider request finishes before the bridge can service the next request. Native player activity can discard its eventual result. No conversation repeats once per creature heartbeat, and paused games do not play old replies after the 90-second wall-clock expiry.
 
 The trial has both caretakers patrol between the guest hall and sanctuary, so their shared stops provide opportunities to meet. Mira waits 30 seconds; Tomas waits 45. Default social cooldown is 180 seconds and the global interval is 120. Keep NWN unpaused to observe movement and speech. NPC visits, travelling to seek a conversation partner, longer autonomous social scenes, town schedules and all-creature social adapters remain future work.
+
+## Native panel fixes (0.5.1)
+
+Merchant and companion windows use native scroll groups, explicit row widths/heights and resizable windows. Scroll to see overflow, including the shop footer, companion chat button and inventory controls. Item names use wrapping text in the inventory. This addresses clipping in the initial native panels; the new build still needs in-game rendering verification at your GUI scale.
 
 ## Current authoring boundaries
 

@@ -113,6 +113,19 @@ class NativeCompanionTests(unittest.TestCase):
         self.assertTrue(bag['Plot'][1]);self.assertEqual(bag['PropertiesList'][1],[])
         self.assertIn(b'GetItemPossessor(item,TRUE)',ui);self.assertIn(b'ActionTakeItem(item,from)',ui);self.assertIn(b'AWC_TRANSFER_PENDING',ui)
         self.assertNotIn(b'CopyItem(',ui);self.assertIn(b'AWCPackOwned',ui);self.assertIn(b'AWCManualControl',ui)
+    def test_npc_replies_use_actor_speech_instead_of_system_text(self):
+        runtime=self.res['sp_inc',2009]
+        self.assertIn(b'if(state=="ready")AssignCommand(npc,SpeakString(',runtime)
+        self.assertNotIn(b'SendMessageToPC(pc,GetName(npc)+',runtime)
+        self.assertIn(b'else SendMessageToPC(pc,reply)',runtime)
+    def test_scrollable_panels_size_rows_and_offer_both_inventories(self):
+        ui=self.res['aw_ui',2009];pack=self.res['aw_cp_ui',2009];shop=self.res['aw_merchant',2009];events=self.res['aw_cp_ui_evt',2009]
+        self.assertIn(b'AWUIElement("group")',ui);self.assertIn(b'"scrollbars",JsonInt(4)',ui);self.assertIn(b'AWUIWidth(AWUIHeight(child,height),width)',ui)
+        self.assertIn(b'AWUIScroll(AWUIStack(rows,590.0))',pack);self.assertIn(b'AWUIScroll(AWUIStack(rows,560.0))',shop)
+        self.assertIn(b'AWCPackColumn(pc,pc,TRUE)',pack);self.assertIn(b'AWCPackColumn(pc,storage,FALSE)',pack)
+        self.assertIn(b'GetItemInSlot(slot,holder)',pack);self.assertIn(b'AWCVisibleItems(holder)',pack)
+        for reason in (b'protected',b'equipped',b'cursed',b'unidentified',b'container',b'over transfer limit'):self.assertIn(reason,pack)
+        self.assertIn(b'AWC_"+side+"_ITEM_',events);self.assertIn(b'SetLocalInt(pc,"AWC_GIVING",giving)',events)
     def test_controls_work_in_ai_disabled_build_without_transport(self):
         p=copy.deepcopy(self.p);p['ai_conversations']=False;m=build_project(p,self.store,GAME,COMPILER);r={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
         self.assertIn(('aw_cp_chat',2010),r);self.assertNotIn(('sp_chat',2010),r)
