@@ -78,6 +78,10 @@ class Provider:
         if result['action']=='turn_in' and not snapshot.get('has_satchel'): result['action']='none'
         return result
 
+    def companion(self,project,prompt,snapshot,history=''):
+        from .companions import reply
+        return reply(self,project,prompt,snapshot,history)
+
     def dm(self,project,prompt,snapshot):
         if project.get('schema_version')==2:
             from .authoring_ai import dm_reply

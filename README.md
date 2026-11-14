@@ -1,4 +1,4 @@
-# RWSoloSuite — Role Weaver Module Studio 0.3
+# RWSoloSuite — Role Weaver Module Studio 0.4
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -45,7 +45,9 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Silent Bell — AI & Merchant Trial** adds Bram Ironstock, a finite-stock merchant, to the abbey and enables live AI for the four key characters. Its filename is **rw_ai_market.mod**. This is the 0.3 compiled playtest build.
 
-All three are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
+**The Silent Bell — Companion Trial** adds Seren Ashford, a recruitable abbey guardian, alongside the existing quest and merchant trial. Its filename is **rw_companions.mod**. This is the 0.4 compiled playtest build.
+
+All four are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
 ## Share and edit in Aurora
 
@@ -53,7 +55,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.3.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.4.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## Optional AI conversations while playing
 
@@ -64,6 +66,24 @@ Speak to an AI-enabled NPC, choose **Talk freely with AI**, close the dialogue a
 NPC prompts include their own knowledge, unlocked secrets and the relevant quest context. Secrets can unlock after a selected quest completes. The AI DM receives the full storyline to provide guidance. Recent dialogue and game/party context are sent to OpenAI for these optional live requests. The Responses API uses strict schemas and store: false. Studio limits attempted requests to 60 per hour per process. Settings retain the tested Role Weaver model, gpt-5.6-luna.
 
 The local companion listens only on loopback, with host/origin checks and a request token. Its SQLite mailbox uses the NWN user database rwsp_bridge; old sessions and expired responses are rejected. This adapts Role Weaver's scoped character knowledge and game-authoritative rules without the PW add-on's Linux/NWNX/Redis services. It does not alter the game's party-control system.
+
+## AI companions (0.4)
+
+Use **Characters → Party companion** to make an authored NPC recruitable, choose an optional completed-quest requirement, allow movement/inventory and protect essential story characters. The stock guard class, equipment and combat scripts are retained for recruits; refine their statistics and equipment in Aurora. A merchant and a recruit must be separate characters.
+
+Use **Companions** to set 1–7 recruit slots and author familiar/summon personality, knowledge, communication and permissions. AI generation has a **Companions and starting templates** scope that updates companions and supporting NPCs while preserving the rest of the adventure. The suite includes eleven familiar personalities plus two fallback profiles. Exact blueprint matches win over familiar type, then fallback. Existing projects migrate with companion support disabled; enable it explicitly before rebuilding.
+
+During play, type **!companions** to open the native controls. Recruit/dismiss party members, follow, stand ground, guard the actual master, set AI/movement/inventory preferences, reply length and tone, and open inventory. **Talk freely with AI** arms the selected actor; close the panel and speak in Talk. You can also use `!companion seren <message>`, `!companion familiar <message>` or `!companion summon1 <message>`. The list handles ambiguous names. Native commands work with Studio closed; live conversations require the local AI Player and key. Controls require proximity, line of sight and no combat or direct control/possession of the actor.
+
+Familiars and summons are the game's existing associates, created through normal class abilities and spells. This feature grants no spells, creates no replacement creatures, and leaves their normal dismissal controls in place. Animal profiles default to nonverbal reactions; intelligent profiles can speak. Creators can override or disable each profile. Native combat, heartbeat, spawn and possession scripts remain in place; original dialogue/death handlers are chained. A newer native order, death, ownership or settings change invalidates a pending companion reply.
+
+Companion histories and preferences live in module SQLite, inside the save. Familiar memories use owner/caster/type identity across resummoning; each summon has a distinct instance identity. Party histories follow the authored recruit in that owner's save. Histories are bounded to 6,000 characters and 256 profiles, pruning inactive summons first. This is recent conversational memory, not a full relationship simulation.
+
+Party inventory exchanges move the original unequipped eligible item or whole stack through native Give/Take actions after the owner clicks it. Plot, cursed, unidentified, container and equipped items, and items valued over 5,000 gold, are excluded from that panel. The explicit click replaces the owner's action queue; possession and combat block exchanges. Transfers are checked on the module heartbeat, never cloned or automatically retried. If unconfirmed, inspect both inventories before trying again.
+
+Familiar/summon storage uses an ordinary **owner-held recoverable satchel**, not the disappearing creature's equipment slots. It remains accessible through normal inventory after dismissal or expiry; use **Recover familiar / summon satchels** in the controls. Empty satchels can be discarded from their panel. Familiar type 255 uses its blueprint in the memory key, so different custom blueprints do not share a familiar history. Bags preserve their actual items independently of history pruning.
+
+This release implements the companion foundation. Fetch errands, autonomous collection, NPC visits/social exchanges, relationship scores, healing and AI spell/tactical control remain future work. Compiled native scripts and automated checks have passed; in-game behavior and Aurora opening of this new build still need the user's playtest.
 
 ## Current authoring boundaries
 

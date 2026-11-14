@@ -8,7 +8,7 @@ The module creator supplies a storyline and character details. AI NPCs deliver t
 
 Every generated creature must be eligible for an AI profile, including monsters and incidental characters. Intelligent creatures use spoken dialogue; animals default to nonverbal behavior such as posture, movement, sounds and reactions. Creators retain per-creature AI controls, per profile and encounter template. Disabling conversation does not disable ordinary movement, combat or authored behavior. Encounter templates supply starting personalities; each spawned instance needs its own identity and history.
 
-Companion integration covers both recruitable party members and existing familiars/summons. Party companions need recruitment, dismissal, relationships, owner/party authority and persistent identity integrated with the game's existing party controls. Familiars and summons need their own ownership, possession, resummoning and expiry handling. The server's existing familiar adapter does not yet cover recruitable party members or arbitrary summons; both need additional native adapters.
+Companion integration covers both recruitable party members and existing familiars/summons. Party companions need recruitment, dismissal, relationships, owner/party authority and persistent identity integrated with the game's existing party controls. Familiars and summons need their own ownership, possession, resummoning and expiry handling. The server familiar adapter does not cover recruitable party members or arbitrary summons. Solo 0.4 adds separate native adapters for these three kinds; all await in-game acceptance.
 
 The live AI runs in a local player companion, with configurable provider credentials on the player's computer. No PW server is required. The module contains native conversations, stores, combat, movement, quest logic and its authored AI profiles. Online AI requires the companion and provider access; the native module remains playable when they are unavailable. Creating an AI-authored module and running live AI during play are separate operations.
 
@@ -43,6 +43,10 @@ Implemented source: rwstudio/story_actions.py, rwstudio/authoring_ai.py and rwst
 | Encounter DM | dm_assistant.py, director.py, live_director.py, persistent_director.py | Port scene stages, actors, observations, outcomes, social checks and bounded direction against the compiled storyline. Keep generated quest mechanics and runtime scene state consistent. |
 | Provider controls and language | provider.py, llm_settings.py, translation_service.py | OpenAI/local-provider adapters, request priorities, budgets, latency/error reporting and optional language support; do not copy server passwords or Redis configuration into exports. |
 
+## Companion foundation in 0.4
+
+Implemented native adapters for recruits, familiars and summons, their permissions, follow/stay/guard, save-local recent memory, personality templates and recoverable original-item storage. Native combat and dismissal remain active. Automated checks pass; in-game acceptance remains pending. Errands, social visits, relationship scores and AI spell/healing control are future work.
+
 ## Local architecture
 
 1. **Authoring profiles and policies.** Version and migrate existing projects. Add creator-facing merchant stock, movement destinations, patrol routes, social permissions, companion templates and per-creature conversation controls. AI generation must produce the same editable policies as the manual editor.
@@ -62,7 +66,7 @@ Start a quest through AI, continue through menu dialogue, choose a branch throug
 
 Generate multiple creatures from the same encounter blueprint. Address each separately, test unique histories, enable/disable conversation in the creator, and verify no replies after death/despawn. Reload an earlier save and check that future knowledge disappears. Natural-address routing must never choose arbitrarily between ambiguous actors.
 
-### 3. Native merchants and companion adapters — merchants implemented in 0.3, companion adapters pending
+### 3. Native merchants and companion adapters — merchants implemented in 0.3, companion foundation implemented in 0.4, awaiting playtest
 
 Ship a merchant/companion test area. Buy via menu and chat, check finite stock and actual charged prices, test repeated haggles, cancel an exchange, recruit/dismiss a party companion, dismiss/resummon a familiar, expire a summon, cancel an errand, and recover inventory safely. Test party, familiar and summon authority independently, including existing party-control changes. Verify intelligent creatures speak and ordinary animals react nonverbally. No AI reply may invent payment, stock, delivery or ownership.
 

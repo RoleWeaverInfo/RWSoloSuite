@@ -58,6 +58,8 @@ class FakeProvider:
         self.calls+=1
         if self.hook:self.hook()
         return {'reply':'The cave lies east.','action':'none'}
+    def companion(self,*args):
+        self.calls+=1;return {'reply':'Watches attentively.','action':'none','companion_action':''}
     def dm(self,*args):return {'reply':'Rest first.','encounter_id':'','reason':'Injured party'}
 
 class BridgeTests(unittest.TestCase):
@@ -79,6 +81,16 @@ class BridgeTests(unittest.TestCase):
     def test_single_claim_and_reply(self):
         self.request();self.bridge.process_one();self.bridge.process_one()
         self.assertEqual(self.provider.calls,1);self.assertEqual(self.state(),'ready')
+    def test_companion_requests_use_separate_dispatch(self):
+        from rwstudio.companions import example
+        write_json(self.store.root/'builds'/('a'*20)/'project.json',example())
+        self.request()
+        with self.bridge.connect() as db:
+            db.execute("UPDATE sp_sessions SET project_id='companion_trial'")
+            db.execute("UPDATE sp_requests SET kind='companion',npc_tag='fam_cat'")
+        self.bridge.process_one();self.assertEqual(self.state(),'ready');self.assertEqual(self.provider.calls,1)
+        with self.bridge.connect() as db:response=json.loads(db.execute('SELECT response FROM sp_requests').fetchone()[0])
+        self.assertEqual(response['reply'],'Watches attentively.')
     def test_reload_during_model_request_discards_reply(self):
         self.request()
         def reload():

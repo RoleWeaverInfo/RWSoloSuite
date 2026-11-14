@@ -59,7 +59,7 @@ def build(project,store,game_root,compiler):
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
@@ -68,6 +68,8 @@ def _build(p,store,game_root,compiler):
     game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms)
     escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
     entries['aw_escrow',2051]=write(b'UTM V3.2',escrow)
+    satchel=read(game.get('nw_it_contain001',2025))[1];string(satchel,'Tag','aw_satchel');string(satchel,'TemplateResRef','aw_satchel',11);put(satchel,'LocalizedName',text('Companion satchel'));put(satchel,'PropertiesList',[],15);put(satchel,'Plot',1);put(satchel,'Identified',1);put(satchel,'Cost',0);put(satchel,'AddCost',0);put(satchel,'StackSize',1)
+    put(satchel,'DescIdentified',text('A recoverable companion satchel kept in its owner’s inventory. Its contents remain when a familiar or summon disappears.'));entries['aw_satchel',2025]=write(b'UTI V3.2',satchel)
     areas={};gits={};room_index={r:i for i,r in enumerate(rooms)};enc_index={e['id']:i for i,e in enumerate(p['encounters'])};npcs={n['id']:n for n in p['npcs']};quest_index={q['id']:i for i,q in enumerate(p['quests'])}
     area_template=read(original['mc_hall',2012])[1];git_template=read(original['mc_hall',2023])[1];tile_template=area_template[1]['Tile_List'][1][0]
     for a in p['areas']:
@@ -88,10 +90,11 @@ def _build(p,store,game_root,compiler):
     for k,v in [('Mod_Entry_X',sx),('Mod_Entry_Y',sy),('Mod_Entry_Z',0.),('Mod_Entry_Dir_X',0.),('Mod_Entry_Dir_Y',1.)]:put(module,k,float(v),8)
     for k,s in [('Mod_OnModLoad','aw_load'),('Mod_OnClientEntr','aw_enter'),('Mod_OnHeartbeat','aw_beat'),('Mod_OnAcquirItem','aw_acquire'),('Mod_OnPlrDeath','aw_death'),('Mod_OnSpawnBtnDn','aw_respawn')]:string(module,k,s,11)
     if p['ai_conversations']:string(module,'Mod_OnPlrChat','sp_chat',11)
+    elif p['companions']['enabled']:string(module,'Mod_OnPlrChat','aw_cp_chat',11)
     entries['module',2014]=write(b'IFO V3.2',module)
     scripts={f.stem:f.read_text(encoding='utf-8') for f in (ROOT/'authoring_scripts').glob('*.nss')}
     def script(name,body):scripts[name]=body+'\n';return name
-    def conditional(name,expression):return script(name,'#include "aw_quest"\nint StartingConditional(){return '+expression+';}')
+    def conditional(name,expression,header='aw_quest'):return script(name,'#include "'+header+'"\nint StartingConditional(){return '+expression+';}')
     shops=[];merchant_inventory={}
     item_table=game.get('baseitems',2017).decode('latin1').splitlines()
     item_header=next(line.split() for line in item_table if 'InvSlotWidth' in line and 'InvSlotHeight' in line)
@@ -124,12 +127,14 @@ def _build(p,store,game_root,compiler):
         shop['stock']=stock;shops.append(shop);merchant_inventory[n['id']]=inventory
     def creature(ident,name,base_name,rid=None,appearance=None,enemy=False,enc=None):
         obj=read(game.get(base_name,2027))[1];string(obj,'Tag',ident);string(obj,'TemplateResRef',ident,11);put(obj,'FirstName',text(name));put(obj,'LastName',text(''))
-        string(obj,'Conversation','' if enemy else ident,11);put(obj,'FactionID',1 if enemy else 2);put(obj,'Plot',int(not enemy));put(obj,'IsImmortal',int(not enemy),0)
+        recruitable=not enemy and npcs[ident]['companion']['recruitable']
+        protected=not enemy and (not recruitable or npcs[ident]['companion']['essential'])
+        string(obj,'Conversation','' if enemy else ident,11);put(obj,'FactionID',1 if enemy else 2);put(obj,'Plot',int(protected));put(obj,'IsImmortal',int(protected),0)
         if appearance is not None:put(obj,'Appearance_Type',appearance);put(obj,'Gender',int(appearance==255))
         if enemy:
             local(obj,{'AW_ENC':ident,'AW_BASE_DEATH':obj[1].get('ScriptDeath',(11,b''))[1].decode()});string(obj,'ScriptDeath','aw_dead',11)
         else:
-            put(obj,'Equip_ItemList',[],15);string(obj,'ScriptHeartbeat','',11)
+            if not recruitable:put(obj,'Equip_ItemList',[],15);string(obj,'ScriptHeartbeat','',11)
             if ident in merchant_inventory:
                 put(obj,'ItemList',merchant_inventory[ident],15);string(obj,'ScriptSpawn','',11)
         entries[ident,2027]=write(b'UTC V3.2',obj)
@@ -172,12 +177,23 @@ def _build(p,store,game_root,compiler):
                 if flag and not n['merchant']['haggle_enabled']:continue
                 act=script(f'aw_shop_{ni}_{int(flag)}','#include "aw_merchant"\nvoid main(){AWMOpen(GetPCSpeaker(),OBJECT_SELF,'+('TRUE' if flag else 'FALSE')+');}')
                 topics.insert(0,len(replies));replies.append((label,[],act))
+        if n['companion']['recruitable'] and p['companions']['enabled']:
+            act=script(f'aw_cp_menu_{ni}','#include "aw_cp_ui"\nvoid main(){AWCOpenControl(GetPCSpeaker(),OBJECT_SELF);}')
+            topics.insert(0,len(replies));replies.append(('Companion controls.',[],act))
+            act=script(f'aw_cp_join_{ni}','#include "aw_companion"\nvoid main(){AWCOrder(GetPCSpeaker(),OBJECT_SELF,"recruit");}')
+            topics.insert(0,len(replies));replies.append(('Join my party.',[],act))
         greeting=len(lines);lines.append((n['greeting'],topics,'aw_talk'));starts.append((greeting,''))
         for di,d in enumerate([dict(topic='What can you tell me?',text=n['knowledge'],after_quest='')]+n['dialogue']):
             if not d['text'].strip():continue
             line_index=len(lines);lines.append((d['text'],[farewell]));reply_index=len(replies);replies.append((d['topic'],[line_index]));topics.insert(len(topics)-1,reply_index)
         for entry in choice_entries:lines[entry][1].extend(topics)
         dlg=conversation(lines,replies,starts)
+        if n['companion']['recruitable'] and p['companions']['enabled']:
+            cond=conditional(f'aw_cp_can_{ni}','AWCCanRecruit(GetPCSpeaker(),OBJECT_SELF)','aw_companion')
+            ri=next(i for i,r in enumerate(replies) if r[0]=='Join my party.')
+            for entry in dlg[1]['EntryList'][1]:
+                for edge in entry[1]['RepliesList'][1]:
+                    if edge[1]['Index'][1]==ri:string(edge,'Active',cond,11)
         # Conditional topics are native Aurora dialogue edges, not LLM-only rules.
         ds=[d for d in [dict(topic='What can you tell me?',text=n['knowledge'],after_quest='')]+n['dialogue'] if d['text'].strip()]
         for di,d in enumerate(ds):
@@ -235,15 +251,17 @@ def _build(p,store,game_root,compiler):
     for a in p['areas']:
         ident=a['id'];entries[ident,2012]=write(b'ARE V3.2',areas[ident]);entries[ident,2023]=write(b'GIT V3.2',gits[ident]);entries[ident,2046]=write(b'GIC V3.2',comments_for(gits[ident]))
     native_rooms=[dict(r,area=a['id']) for a in p['areas'] for r in a['rooms']]
-    scripts['aw_config']='\n'.join([json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),'string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
-    ai=p['ai_conversations'];include='#include "sp_inc"' if ai else '#include "aw_merchant"'
-    scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());'+('SPInit();' if ai else '')+'}'
+    companion_cfg={k:v for k,v in p['companions'].items() if k!='templates'};companion_cfg['live_ai']=p['ai_conversations']
+    companion_npcs=[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs'] if n['companion']['recruitable']]
+    scripts['aw_config']='\n'.join([json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),json_function('AWCompanionConfig',[companion_cfg]),json_function('AWCompanionTemplates',p['companions']['templates']),json_function('AWCompanionNPCs',companion_npcs),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
+    ai=p['ai_conversations'];include='#include "sp_inc"' if ai else '#include "aw_cp_ui"'
+    scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());if(AWCEnabled()){AWCInit();SetMaxHenchmen('+str(p['companions']['party_limit'])+');}'+('SPInit();' if ai else '')+'}'
     scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'
-    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}}'
+    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}}'
     if ai:
         for name in ('sp_inc','sp_chat','sp_select'):scripts[name]=(ROOT/'scripts'/(name+'.nss')).read_text(encoding='utf-8')
         scripts['aw_story']=native_story(p,literal)
-        scripts['aw_story']=scripts['aw_story'].replace('#include "aw_quest"','#include "aw_merchant"')
+        scripts['aw_story']=scripts['aw_story'].replace('#include "aw_quest"','#include "aw_cp_ui"')
         inc=scripts['sp_inc'].replace('#include "mc_inc"','#include "aw_story"').replace('MCState()','AQProgress()').replace('GetIsObjectValid(MCSatchel(pc))','FALSE')
         inc=inc.replace('string verb=SPText(result,"action");','string verb=SPText(result,"action"); AWAIAction(pc,tag,SPText(result,"story_action"));')
         inc=inc.replace('j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress()));','j=JsonObjectSet(j,"quest_stage",JsonInt(AQProgress())); j=JsonObjectSet(j,"quests",AQStates());')
@@ -276,6 +294,7 @@ def _build(p,store,game_root,compiler):
         write_json(out/(p['module_name']+'.rwproject.json'),dict(build_id=digest,project=p))
         instructions='Install '+mod.name+' in your Neverwinter Nights/modules folder. Start a NEW single-player game. The complete adventure, authored conversations, quest journal, encounter scaling and ending run without Studio or an API key.\n\nOpen the .mod in Aurora to edit native resources. Keep a separate copy: rebuilding uses the authoring project, not Aurora edits.\n'
         if ai:instructions+='\nOptional freeform NPC chat: run Role Weaver Module Studio’s AI Player companion, import the .rwproject.json file, and use your own OPENAI_API_KEY. Stay near an AI NPC and type !talk <alias> <message>. The ordinary quest does not depend on this service.\n'
+        if p['companions']['enabled']:instructions+='\nCompanions: use !companions, approach an authored recruit and choose Join my party. Summon familiars and creatures normally with your own class abilities. Their profiles attach to those actual native creatures. Use Talk freely with AI, then close the controls and speak in Talk; !companion familiar <message> also works. Follow/stay/guard and inventory do not require an API. Familiar/summon satchels remain in the owner inventory after expiry. Native menus still handle their dismissal.\n'
         (out/'PLAY.txt').write_text(instructions,encoding='utf-8')
         shutil.copy2(ROOT/'ROLE-WEAVER-LICENSE.txt',out/'ROLE-WEAVER-LICENSE.txt')
         with zipfile.ZipFile(out/(p['module_name']+'-aurora.zip'),'w',zipfile.ZIP_DEFLATED) as z:

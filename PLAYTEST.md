@@ -1,4 +1,25 @@
-# Module Studio 0.3 playtest — AI conversations, quests and merchants
+# Module Studio 0.4 playtest — party, familiar and summon companions
+
+The new trial is **The Silent Bell — Companion Trial**, filename **rw_companions.mod**, installed in your NWN user modules folder. It has 3 areas, 5 NPCs, 2 quests and the existing merchant. Start a **new game**; older saves do not acquire these scripts. No NWN or Aurora instance was launched during development.
+
+1. Start **Start AI Player.cmd** (the development instance is already enabled), then start the Companion Trial locally. Seren Ashford, Ilyra and Bram are in the guest hall.
+2. Speak to Seren. Check ordinary dialogue, **Companion controls** and **Join my party**. Alternatively type `!companions` near Seren. Recruit her; check native party membership and portrait. Dismiss and recruit again. Recruitment should not spawn a duplicate. Seren is essential in this trial.
+3. Test Follow, Stand ground and Guard master from the controls, then issue a newer native party command. Check native combat still works. A waiting recruit should stay when you use a generated exit; following recruits should travel with you. Return for anyone left waiting.
+4. Choose **Talk freely with AI**, close the controls, and speak normally in Talk. Try `!companion seren How can you help?`. Verify personality and recent conversation memory. Toggle AI off: no AI requests or late replies should arrive, while normal dialogue and party controls still work. Test brief/detailed replies and tone.
+5. Use a character with a familiar ability and a summon spell. This trial does not grant them: prepare the normal class spells/abilities. Summon normally, then use `!companions` to select the exact body. Test `!companion familiar Hello` and `!companion summon1 Hello`. Cats/bats/ravens/hell hounds default to nonverbal reactions; imps/pixies/mephits/dragons/eyeball kin use speech. Generic summons use the creator profile and their observed intelligence/race.
+6. Give the familiar a memorable harmless fact. Dismiss with its normal game control, resummon and ask about it. Its recent history should persist. Expire/dismiss a summon and create another: the new instance must not inherit the old summon's history or pending orders.
+7. Send an AI movement request, then possess/control that actor, change native orders, dismiss it, enter combat, move away, or change its settings before the response returns. The old reply/action should be discarded. Unpossess and select again to continue. Original familiar death penalties and native summon expiry must still occur.
+8. For inventory, use a spare unequipped mundane item or potion stack. Click Give/Take once and confirm exactly one whole object/stack moves. Check partial failures, merged stacks, full inventory, repeated clicks and equipped/plot/cursed items. The owner may stop their current queued movement when explicitly confirming a transfer. Do not retry an unconfirmed transfer until checking both inventories.
+9. Open familiar/summon inventory to create its owner-held satchel. Put an eligible item in it. Dismiss/expire the creature; recover the same item through **Recover familiar / summon satchels** or normal inventory. No copied/replacement item should appear. Empty satchels may be discarded; nonempty ones must remain recoverable. Native bags are the recovery fallback if the Give/Take engine action cannot complete.
+10. Save before recruitment/chat, continue and save again, then reload the earlier save. Party membership, history, settings, bags and quest state should match that save, without later memories. Test save/reload with a request/transfer pending, familiar death and re-creation, and a summon expiring.
+11. In the editor, test recruitment gates, movement/inventory restrictions and disabled template AI. Rebuild under a distinct module name and start a new game. Owners must never expand creator permissions. AI-disabled builds should still offer native companion commands and authored quests with Studio closed.
+12. Open `rw_companions.mod` in Aurora. Confirm Seren, native dialogues, 3 areas, satchel blueprint and companion scripts; Save As a separate copy. Aurora edits are not imported into the Studio project.
+
+Fetch errands, NPC visits, relationship scores and AI spell/healing control are outside this release. Animal companions/domination are also outside these three adapters. Use the quest/merchant checks below on this trial as regression coverage.
+
+---
+
+## Previous quest and merchant regression procedure
 
 The new trial is **The Silent Bell — AI & Merchant Trial**, filename **rw_ai_market.mod**. It has been compiled and installed in the local NWN user modules folder. It has not yet been played or opened in Aurora. Start a **new** game; older saves do not acquire the new scripts.
 

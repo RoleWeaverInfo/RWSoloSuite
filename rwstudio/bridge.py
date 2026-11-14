@@ -70,6 +70,7 @@ class Bridge:
             payload=json.loads(row['payload'])
             snapshot=payload['game']
             if row['kind']=='npc': response=self.provider.npc(project,row['npc_tag'],payload['message'],snapshot,payload.get('history',''))
+            elif row['kind']=='companion':response=self.provider.companion(project,payload['message'],snapshot,payload.get('history',''))
             elif row['kind']=='dm':
                 proposal=self.provider.dm(project,payload['message'],snapshot)
                 response={'reply':proposal['reply'],'action':'none'}

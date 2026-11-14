@@ -20,6 +20,7 @@ from .bridge import Bridge
 from .builder import ROOT, build_project, install_build
 from . import authoring
 from .merchants import CATALOG as GOODS, defaults as merchant_defaults
+from .companions import defaults as companion_defaults,npc_defaults as npc_companion_defaults
 
 def defaults():
     bundled=ROOT/'vendor/nwnsc/nwnsc.exe'
@@ -53,7 +54,7 @@ class Application:
                 'key_available':bool(os.environ.get('OPENAI_API_KEY')),'usage':self.provider.usage,
                 'bridge':self.bridge.status(),'receipts':self.bridge.receipts(),
                 'catalog':{'creatures':list(CREATURES),'furnishings':list(DECOR),'appearances':list(APPEARANCES)},
-                'authoring_catalog':{'creatures':list(authoring.CREATURES),'furnishings':list(authoring.DECOR),'appearances':list(authoring.APPEARANCES),'area_types':authoring.AREA_TYPES,'merchandise':GOODS,'merchant_defaults':merchant_defaults()}}
+                'authoring_catalog':{'creatures':list(authoring.CREATURES),'furnishings':list(authoring.DECOR),'appearances':list(authoring.APPEARANCES),'area_types':authoring.AREA_TYPES,'merchandise':GOODS,'merchant_defaults':merchant_defaults(),'companion_defaults':companion_defaults(True),'npc_companion_defaults':npc_companion_defaults()}}
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
