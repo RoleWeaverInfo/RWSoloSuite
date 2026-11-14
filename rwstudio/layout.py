@@ -20,7 +20,7 @@ def arrange(area):
     a=dict(area);count=a['room_count'];w=a['width'];h=a['height']
     options=[]
     for cols in range(1,count+1):
-        rows=math.ceil(count/cols);rw=min(5,(w-2-(cols-1)*3)//cols);rh=min(5,(h-2-(rows-1)*3)//rows)
+        rows=math.ceil(count/cols);rw=min(3,(w-2-(cols-1)*3)//cols);rh=min(3,(h-2-(rows-1)*3)//rows)
         if rw>=2 and rh>=2:options.append((abs(cols/rows-w/h),-rw*rh,cols,rows,rw,rh))
     if not options:raise ValueError('The requested rooms do not fit. Increase the area size or reduce the room count.')
     _,_,cols,rows,rw,rh=min(options);old=a['rooms'];result=[]

@@ -1,3 +1,17 @@
+# Module Studio 0.7.1 - reported playtest fixes
+
+Use **Play Adventure.cmd** and choose **New Adventure**. It now selects **rw_playfix.mod / The Silent Bell - Playtest Fixes**. Do not load an old errand-trial save to test these changes; saves retain old native resources. Existing modules/saves are unchanged.
+
+1. Summon Agathos (or another speaking familiar/summon) normally. Type `!companions`, select the creature: **Talk freely with AI** should be the first action. Close the panel and speak. An animal profile should explain nonverbal/visit restrictions.
+2. Near Bram, say `Agathos, go to Bram and ask him how much a sword costs.` Expect the native task-start receipt, physical approach, question/answer, and return/report. Also try `!companion familiar ask bram How much does a sword cost?`. If the actor is a summon, use `summon1` instead of `familiar`.
+3. Check that contractions such as `can't` and `Bram's` display without question marks. Ask several NPCs and check a companion report too.
+4. Open Bram's goods and the companion inventory. Check for JSON errors, scrolling, both inventory columns, pagination and safe transfers. Report the exact error text if any appears; constructor/compile checks cannot prove engine rendering.
+5. Walk each corridor. Each end also has a clickable **Passage to ...** sign; use these to reach every room. Check cross-area walking triggers and return paths. Complete both quests through either normal NPC menus or AI conversation.
+6. Check the smaller quiet rooms, grouped table/chair and clear walking lanes. Furniture still uses a limited stock catalog and conservative footprints; report visual clipping, bad facing or unwanted built-in tile scenery.
+7. Open rw_playfix.mod in Aurora and Save As a separate copy. All resources remain native and editable.
+
+No game/Aurora session was started by the agent. The checks below are historical release test plans.
+
 # Module Studio 0.7 — one launcher for game and AI
 
 Use **Play Adventure.cmd** in the RWSoloSuite folder, or extract the complete `rw_errands-aurora.zip` and use its module-specific launcher. The existing `rw_errands.mod` and your saves are unchanged; no new game is required just for this launcher.

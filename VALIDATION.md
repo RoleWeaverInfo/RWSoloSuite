@@ -1,3 +1,15 @@
+# Module Studio 0.7.1 validation
+
+- All 135 regression tests passed, including native compilation. The installed trial passed launcher readiness/context registration with AI Player 0.7.1; no API request or game launch. Eleven existing module files remained byte-identical.
+
+- Targeted checks: bridge mailbox punctuation conversion without action/ID changes; social/visit display text; furniture footprint and actor clearance; chair/table grouping and orientation; non-mutating scale/repetition review; design-time guidance; merchant visit quotes from native observations rather than generated prices.
+- Compiled module checks: every declared connection has usable native passage objects with valid arrival waypoints; corridor routes contain adjoining full-floor stock tiles; window JSON key contract matches the installed official nw_inc_nui constructor.
+- Native compile and resource checks do not prove GUI rendering, navigation or actual actor behavior. These remain user playtests. The precise reported JSON popup was not yet available when the fix was prepared.
+- New module rw_playfix.mod, build dd3e74dadedbcc925100, SHA-256 fda276592c2d71fc6d4c42e6c0d12ec5ff5aace7d41edb878993d31e65ffb664; 168 resources and 38 compiled scripts. Existing modules and saves preserved.
+- No live OpenAI request, NWN launch or Aurora launch performed for this release.
+
+## Historical validation
+
 # Validation — Module Studio 0.7.0
 
 Added a single Windows Play Adventure launcher that readies AI Player, registers the matching module build and opens NWN. A New Adventure / Load Saved Game choice is offered in the same launcher. Native gameplay scripts/module bytes are unchanged for the existing errand release.

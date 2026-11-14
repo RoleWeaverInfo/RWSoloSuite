@@ -52,7 +52,7 @@ def native_context(module):
     if not build or not project:raise LaunchError('The module AI identifiers are invalid. Export it again from Studio.')
     return dict(build_id=build[1],project_id=project[1])
 
-def plan(module='rw_errands',module_file=None,sidecar=None,game_root=None,user_dir=None,resume=False,offline=False,root=ROOT):
+def plan(module='rw_playfix',module_file=None,sidecar=None,game_root=None,user_dir=None,resume=False,offline=False,root=ROOT):
     root=Path(root);settings=read_json(root/'data/settings.json') if (root/'data/settings.json').is_file() else {}
     if not re.fullmatch(r'[a-z][a-z0-9_]{0,15}(?:\.mod)?',module):raise LaunchError('Use the module filename without a path; --module-file accepts a full file path.')
     name=module.removesuffix('.mod');user=Path(user_dir or settings.get('user_dir') or Path.home()/'Documents/Neverwinter Nights').expanduser().resolve()
@@ -115,8 +115,8 @@ def install(p):
     shutil.copy2(source,target)
 
 def configure(s,p):
-    version=tuple(map(int,re.findall(r'\d+',str(s.get('version','')))[:2]))
-    if version<(0,7):raise LaunchError('AI Player 0.7 or newer is required. Close the older AI Player and run this launcher again.')
+    version=tuple(map(int,re.findall(r'\d+',str(s.get('version','')))[:3]))
+    if version<(0,7,1):raise LaunchError('AI Player 0.7.1 or newer is required. Close the older AI Player and run this launcher again.')
     if not s['key_available']:raise LaunchError('AI Player has no OPENAI_API_KEY. Configure your key and restart AI Player, or launch with -Offline for native play.')
     if Path(s['settings']['user_dir']).resolve()!=Path(p['user_dir']).resolve():raise LaunchError('The running AI Player uses a different NWN user folder. Correct its settings before playing.')
     http('/api/player/register',p['document'],s['csrf'])
@@ -188,7 +188,7 @@ def saved_game_choice(text):
     raise LaunchError('Choose 1 for a new adventure or 2 to load a saved game.')
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--module',default='rw_errands');parser.add_argument('--module-file');parser.add_argument('--sidecar');parser.add_argument('--game-root');parser.add_argument('--user-dir');parser.add_argument('--resume',action='store_true');parser.add_argument('--choose-mode',action='store_true');parser.add_argument('--offline',action='store_true');parser.add_argument('--check-only',action='store_true')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--module',default='rw_playfix');parser.add_argument('--module-file');parser.add_argument('--sidecar');parser.add_argument('--game-root');parser.add_argument('--user-dir');parser.add_argument('--resume',action='store_true');parser.add_argument('--choose-mode',action='store_true');parser.add_argument('--offline',action='store_true');parser.add_argument('--check-only',action='store_true')
     args=vars(parser.parse_args());check=args.pop('check_only');choose=args.pop('choose_mode')
     try:
         if choose and not check and not args['resume'] and sys.stdin.isatty() and not game_running():

@@ -67,6 +67,13 @@ class FakeProvider:
     def dm(self,*args):return {'reply':'Rest first.','encounter_id':'','reason':'Injured party'}
 
 class BridgeTests(unittest.TestCase):
+    def test_bridge_normalizes_display_punctuation_without_changing_actions(self):
+        self.request()
+        with patch.object(self.provider,'npc',return_value=dict(reply='I can\u2019t\u2014ask \u201cBram\u201d\u2026',action='none',story_action='keep_id')):
+            self.bridge.process_one()
+        with self.bridge.connect() as db:result=json.loads(db.execute('SELECT response FROM sp_requests').fetchone()[0])
+        self.assertEqual(result,dict(reply='I can\'t - ask "Bram"...',action='none',story_action='keep_id'))
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.store=Store(self.root/'data');self.provider=FakeProvider()
         self.path=self.root/'rwsp_bridge.sqlite3';self.bridge=Bridge(self.path,self.store,self.provider);self.bridge.enabled=True

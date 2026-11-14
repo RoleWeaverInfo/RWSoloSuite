@@ -289,4 +289,6 @@ def review(p):
     else:layouts={}
     for rid in rooms:
         if not any(o['room']==rid for o in p['furnishings']+p['encounters']+p['npcs']+p['items']):warnings.append(rooms[rid][1]['name']+' is empty; add content or ask AI to populate it.')
+    from .furnishing import warnings as furnishing_warnings
+    warnings.extend(furnishing_warnings(p))
     return {'errors':errors,'warnings':warnings,'ready':not errors,'layouts':layouts,'summary':{'areas':len(p['areas']),'rooms':len(rooms),'connections':len(p['connections']),'npcs':len(p['npcs']),'encounters':len(p['encounters']),'quests':len(p['quests']),'objectives':sum(len(q['steps']) for q in p['quests'])}}

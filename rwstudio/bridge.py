@@ -84,6 +84,8 @@ class Bridge:
             response={'reply':str(exc),'action':'none'};state='failed'
         except (ValueError,KeyError,FileNotFoundError):
             response={'reply':'Studio cannot find the matching adventure build. Import its .rwproject.json companion file, then retry.','action':'none'};state='failed'
+        from .game_text import response_text
+        response=response_text(response)
         # Stop/reload/timeout must not deliver a stale completion or change the quest.
         with self.connect() as db:
             fresh=db.execute('SELECT updated FROM sp_sessions WHERE session_id=?',(row['session_id'],)).fetchone()

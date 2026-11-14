@@ -1,4 +1,19 @@
-# RWSoloSuite — Role Weaver Module Studio 0.7
+# RWSoloSuite — Role Weaver Module Studio 0.7.1
+
+## Playtest fixes (0.7.1)
+
+The current trial is **The Silent Bell - Playtest Fixes** (`rw_playfix.mod`). Run **Play Adventure.cmd**, choose **New Adventure**, and create/select a character. This is a separate module: existing modules, Aurora copies and saves are preserved. Older saved games retain their embedded scripts and layouts and cannot pick up these native fixes.
+
+- Companion controls put **Talk freely with AI** immediately below the name. Nonverbal/disabled profiles explain the restriction. Close the panel and speak in Talk.
+- Native errands recognize `Agathos, go to Bram and ask him how much a sword costs.` and `Agathos. Ask Bram how much a sword costs.` Also use `!companion familiar ask bram How much does a sword cost?` (or `summon1`/a recruit alias). A real task-start message confirms dispatch; an ordinary AI reply alone does not. Creator/player permissions, speech mode, same-area visibility and native control still apply.
+- Visiting merchants report observed stock/prices; there is no purchase or item transfer through errands.
+- The NUI window includes all fields from the installed `nw_inc_nui` constructor, including font and size/edge constraints. Missing row heights are handled explicitly. Inventory and merchant rendering still need an in-game acceptance test.
+- The bridge replaces smart apostrophes, quotes and dashes before sending replies to NWN. Other language text is preserved; this is not a universal font/encoding conversion.
+- Every room connection has named, usable **Passage to ...** markers and destination waypoints. Corridors remain walkable floor paths; clicking their marker offers an explicit transfer. Cross-area exits also have walk-in triggers. These are passage signs, not door-frame models.
+- Automatic arrangement caps new room footprints at 3x3 ten-metre tiles. Author dimensions stay editable. AI furnishing proposals receive purpose/scale/grouping guidance. Stock furniture uses clearance footprints, chairs face tables, wall-side props face inward, and the central travel cross stays clear. Review flags large rooms and repeated/cluttered furnishing. The new trial reduces quiet chambers to 2x2 and removes unnecessary domestic/wilderness clutter.
+
+AI Player **0.7.1+** is required by the updated launcher so a stale worker cannot silently omit the text/companion fixes. No live API call is part of the regression checks.
+
 
 An AI-assisted authoring tool for complete, standalone Neverwinter Nights: Enhanced Edition adventures. Describe a story and its world, review the generated game content, edit it, and export a native Aurora module. No persistent-world server is involved.
 
@@ -51,7 +66,7 @@ Quest decisions and progress use native game rules. AI authoring happens before 
 
 **The Silent Bell — UI & Speech Fix** (`rw_ui_fix.mod`) contains the same adventure with the 0.5.1 speech/inventory/panel fixes. This is the current playtest build.
 
-**The Silent Bell — Companion Errand Trial** (`rw_errands.mod`) enables the new 0.6 inspection and owner-directed visit permissions for testing. This is the current compiled trial.
+**The Silent Bell — Companion Errand Trial** (`rw_errands.mod`) enables the new 0.6 inspection and owner-directed visit permissions for testing. This is the preserved 0.6 trial; use rw_playfix for the current fixes.
 
 All seven are included as editable example projects. Build the other examples from the editor when needed. They compile and pass structural checks; **Aurora and in-game playtesting are still required**. See PLAYTEST.md. The original Missing Courier module, the user's Aurora copy and the previous AI edition were preserved.
 
@@ -61,7 +76,7 @@ For ordinary play, share the .mod or its share ZIP. Players copy the .mod into t
 
 Open the .mod in Aurora to inspect and edit areas, placed objects, conversations, journal and NWScript. The ZIP also contains source resources, a layout plan, validation report and .rwproject.json. Use Save As for an Aurora-edited edition. **Aurora changes are not imported back into Studio**; rebuilding from the project does not preserve separate Aurora edits.
 
-To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.0.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
+To share the authoring tool, distribute Role-Weaver-Module-Studio-0.7.1.zip. The recipient sets their own game paths and API credentials if they want AI generation. No credentials or personal settings are included.
 
 ## One launcher for playing (0.7)
 
@@ -69,7 +84,7 @@ Double-click **Play Adventure.cmd**. Choose **1** for a new adventure or **2** t
 
 Keep the launcher window open while playing. It supervises the AI worker and can restart it if it exits. When NWN closes, it stops only the worker it started; an AI Player already running before launch is left alone. If NWN is already running, it does not open or close another game; it readies AI and asks you to switch back to the game. It refuses to install a different module version while NWN is running.
 
-The workspace launcher defaults to **rw_errands**. Other installed adventures can be selected with `Play Adventure.cmd -Module module_filename`. `-Resume` opens the saved-game menu directly. `-Offline` plays natively without live AI and pauses any running local AI bridge. `-CheckOnly` verifies paths, the module's embedded build ID and matching project without starting the game/service or spending API credit. Game/user folders can be supplied using `-GameRoot` / `-UserDir`; otherwise configured Studio paths or Steam library discovery are used.
+The workspace launcher defaults to **rw_playfix**. Other installed adventures can be selected with `Play Adventure.cmd -Module module_filename`. `-Resume` opens the saved-game menu directly. `-Offline` plays natively without live AI and pauses any running local AI bridge. `-CheckOnly` verifies paths, the module's embedded build ID and matching project without starting the game/service or spending API credit. Game/user folders can be supplied using `-GameRoot` / `-UserDir`; otherwise configured Studio paths or Steam library discovery are used.
 
 Every newly exported share/Aurora ZIP now includes a module-specific **Play Adventure.cmd**, its bootstrap and an **AI Player** runtime folder. Players must extract the whole ZIP and keep those files together. The launcher installs the .mod into the selected NWN user folder if needed, backing up a differing installed version. Player context registration does not overwrite an author's current project draft. The portable helper is for playing; use the full Studio package for authoring.
 

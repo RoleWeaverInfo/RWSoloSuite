@@ -1,5 +1,5 @@
 param(
-    [string]$Module = 'rw_errands',
+    [string]$Module = 'rw_playfix',
     [string]$ModuleFile,
     [string]$Sidecar,
     [string]$GameRoot,

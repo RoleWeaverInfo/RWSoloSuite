@@ -1,0 +1,1154 @@
+{
+  "schema_version": 2,
+  "id": "playfix_trial",
+  "module_name": "rw_playfix",
+  "title": "The Silent Bell - Playtest Fixes",
+  "summary": "Recover the abbey bell’s stolen clapper, learn why it was silenced, and decide its fate.",
+  "story": "The abbey bell once soothed restless dead. Its keeper secretly removed the clapper after hearing a voice demand a living sacrifice. A frightened scout saw the keeper hide it in the old vault. The player must clear the road, investigate the vault, solve its inscription, and choose to restore the bell or seal it away. Both choices conclude the story. The abbey keeper is remorseful, not a combat boss.",
+  "tone": "Adventurous fantasy",
+  "opening": "At dusk, the abbey bell is silent. The road has become dangerous. Elder Ilyra waits in the guest hall, seeking someone willing to learn the truth.",
+  "ending": "Your decision settles the fate of the Silent Bell. The abbey and its travelers can begin again. Your adventure is complete; you may keep exploring or save your game.",
+  "start_room": "guest_hall",
+  "level_min": 1,
+  "level_max": 3,
+  "party_size": 2,
+  "ai_conversations": true,
+  "companions": {
+    "enabled": true,
+    "party_limit": 4,
+    "familiars": true,
+    "summons": true,
+    "templates": [
+      {
+        "id": "fam_default",
+        "name": "Other familiar",
+        "kind": "familiar",
+        "familiar_type": -1,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Loyal, curious and attentive to the owner.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "auto",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "summon_default",
+        "name": "Other summon",
+        "kind": "summon",
+        "familiar_type": -1,
+        "blueprints": [],
+        "role": "Bonded summon",
+        "personality": "Loyal, curious and attentive to the owner.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "auto",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_bat",
+        "name": "Bat",
+        "kind": "familiar",
+        "familiar_type": 0,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Alert, cautious and affectionate; prefers sheltered roosts and soft sounds.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "nonverbal",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_cat",
+        "name": "Cat / panther",
+        "kind": "familiar",
+        "familiar_type": 1,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Proud, inquisitive and quietly affectionate; expresses trust with patient company.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "nonverbal",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_hellhound",
+        "name": "Hell hound",
+        "kind": "familiar",
+        "familiar_type": 2,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Steadfast and protective; reacts to clear intent without inventing speech.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "nonverbal",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_imp",
+        "name": "Imp",
+        "kind": "familiar",
+        "familiar_type": 3,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Wily, sharp-tongued and loyal; enjoys clever bargains without making binding promises.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_fire_mephit",
+        "name": "Fire mephit",
+        "kind": "familiar",
+        "familiar_type": 4,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Animated, boastful and enthusiastic; affectionately enjoys fireside tales.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_ice_mephit",
+        "name": "Ice mephit",
+        "kind": "familiar",
+        "familiar_type": 5,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Composed, observant and dryly amused; values dependable friends.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_pixie",
+        "name": "Pixie",
+        "kind": "familiar",
+        "familiar_type": 6,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Playful, bright and compassionate; never lets teasing endanger someone.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_raven",
+        "name": "Raven",
+        "kind": "familiar",
+        "familiar_type": 7,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Watchful and curious; communicates through calls, attention and body language.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "nonverbal",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_fairy_dragon",
+        "name": "Faerie dragon",
+        "kind": "familiar",
+        "familiar_type": 8,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Whimsical, sociable and mischievously kind.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_pseudodragon",
+        "name": "Pseudodragon",
+        "kind": "familiar",
+        "familiar_type": 9,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Proud, cautious with strangers and deeply affectionate with trusted friends.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      },
+      {
+        "id": "fam_eyeball",
+        "name": "Eyeball / beholder kin",
+        "kind": "familiar",
+        "familiar_type": 10,
+        "blueprints": [],
+        "role": "Bonded familiar",
+        "personality": "Inquisitive and theatrically self-important; many eyes do not make it all-knowing.",
+        "knowledge": "Know your own observed experiences and information shared by your owner. Do not invent world lore or private quest knowledge.",
+        "game_notes": "Follow only the actual owner’s permitted instructions. Native orders and possession take priority. Never claim an action succeeded before game confirmation.",
+        "communication": "speech",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "ai_enabled": true
+      }
+    ]
+  },
+  "ambient": {
+    "patrols": true,
+    "social": true,
+    "social_interval": 120,
+    "social_budget": 6
+  },
+  "areas": [
+    {
+      "id": "abbey",
+      "name": "Emberwake Abbey",
+      "type": "castle",
+      "width": 14,
+      "height": 10,
+      "room_count": 2,
+      "description": "A welcoming old abbey: worn stone, candlelit tables, supplies and a quiet bell sanctuary.",
+      "lighting": "warm",
+      "rooms": [
+        {
+          "id": "guest_hall",
+          "name": "Guest hall",
+          "x": 2,
+          "y": 2,
+          "width": 3,
+          "height": 3,
+          "description": "Tables, beds and warm candles for travelers.",
+          "purpose": "Exploration"
+        },
+        {
+          "id": "sanctuary",
+          "name": "Bell sanctuary",
+          "x": 9,
+          "y": 2,
+          "width": 2,
+          "height": 2,
+          "description": "A solemn chamber with a stand for the missing bell clapper.",
+          "purpose": "Exploration"
+        }
+      ]
+    },
+    {
+      "id": "old_road",
+      "name": "The Old Road",
+      "type": "forest",
+      "width": 14,
+      "height": 10,
+      "room_count": 2,
+      "description": "Wooded clearings connected by a narrow trail. Wolves have driven travelers away.",
+      "lighting": "daylight",
+      "rooms": [
+        {
+          "id": "road_camp",
+          "name": "Scout’s camp",
+          "x": 2,
+          "y": 2,
+          "width": 3,
+          "height": 3,
+          "description": "Supply crates beside a sheltered campsite.",
+          "purpose": "Exploration"
+        },
+        {
+          "id": "wolf_glade",
+          "name": "Wolf glade",
+          "x": 9,
+          "y": 2,
+          "width": 3,
+          "height": 3,
+          "description": "A clearing littered with abandoned caravan supplies.",
+          "purpose": "Exploration"
+        }
+      ]
+    },
+    {
+      "id": "bell_vault",
+      "name": "The Forgotten Vault",
+      "type": "dungeon",
+      "width": 18,
+      "height": 14,
+      "room_count": 3,
+      "description": "Three stone chambers: entrance, inscription room and sealed archive. Furnish with shelves, chests and candles.",
+      "lighting": "cold",
+      "rooms": [
+        {
+          "id": "vault_entry",
+          "name": "Vault entrance",
+          "x": 2,
+          "y": 2,
+          "width": 2,
+          "height": 2,
+          "description": "",
+          "purpose": "Exploration"
+        },
+        {
+          "id": "inscription",
+          "name": "Inscription chamber",
+          "x": 9,
+          "y": 2,
+          "width": 2,
+          "height": 2,
+          "description": "",
+          "purpose": "Exploration"
+        },
+        {
+          "id": "archive",
+          "name": "Sealed archive",
+          "x": 9,
+          "y": 9,
+          "width": 3,
+          "height": 3,
+          "description": "",
+          "purpose": "Exploration"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "hall_to_bell",
+      "name": "Passage",
+      "from_room": "guest_hall",
+      "to_room": "sanctuary",
+      "from_side": "east",
+      "to_side": "west",
+      "kind": "corridor",
+      "two_way": true,
+      "requires_quest": ""
+    },
+    {
+      "id": "abbey_road",
+      "name": "Passage",
+      "from_room": "guest_hall",
+      "to_room": "road_camp",
+      "from_side": "south",
+      "to_side": "west",
+      "kind": "exit",
+      "two_way": true,
+      "requires_quest": ""
+    },
+    {
+      "id": "road_trail",
+      "name": "Passage",
+      "from_room": "road_camp",
+      "to_room": "wolf_glade",
+      "from_side": "east",
+      "to_side": "west",
+      "kind": "corridor",
+      "two_way": true,
+      "requires_quest": ""
+    },
+    {
+      "id": "road_vault",
+      "name": "Passage",
+      "from_room": "wolf_glade",
+      "to_room": "vault_entry",
+      "from_side": "east",
+      "to_side": "west",
+      "kind": "exit",
+      "two_way": true,
+      "requires_quest": ""
+    },
+    {
+      "id": "vault_passage",
+      "name": "Passage",
+      "from_room": "vault_entry",
+      "to_room": "inscription",
+      "from_side": "east",
+      "to_side": "west",
+      "kind": "corridor",
+      "two_way": true,
+      "requires_quest": ""
+    },
+    {
+      "id": "archive_pass",
+      "name": "Passage",
+      "from_room": "inscription",
+      "to_room": "archive",
+      "from_side": "north",
+      "to_side": "south",
+      "kind": "corridor",
+      "two_way": true,
+      "requires_quest": ""
+    }
+  ],
+  "npcs": [
+    {
+      "id": "ilyra",
+      "name": "Elder Ilyra",
+      "alias": "ilyra",
+      "role": "Abbey elder and quest giver",
+      "room": "guest_hall",
+      "appearance": "woman",
+      "ai_enabled": true,
+      "personality": "Patient, practical and kind.",
+      "knowledge": "The bell is silent. Scout Rowan waits along the old road. Keeper Cael tends the sanctuary.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "Protect travelers and learn why the bell stopped.",
+      "game_notes": "",
+      "greeting": "Our bell has fallen silent. Please speak with Rowan on the old road and make the route safe.",
+      "dialogue": [
+        {
+          "topic": "Why does the bell matter?",
+          "text": "Its sound comforted the living and quieted the restless dead. I would rather lose the bell than a person.",
+          "after_quest": ""
+        }
+      ],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": false,
+        "route": [],
+        "mode": "loop",
+        "wait_seconds": 12,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": false,
+        "partners": [],
+        "topic": "The weather, everyday work and the well-being of travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "rowan",
+      "name": "Scout Rowan",
+      "alias": "rowan",
+      "role": "Witness and trail guide",
+      "room": "road_camp",
+      "appearance": "man",
+      "ai_enabled": true,
+      "personality": "Alert, honest and a little ashamed of retreating.",
+      "knowledge": "Wolves occupy the eastern clearing. The eastern exit beyond them leads to the vault. Cael carried a wrapped bronze object there.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "Help the player safely reach the vault.",
+      "game_notes": "",
+      "greeting": "Keep your weapons ready. The wolves are in the eastern glade. I saw Cael take something into the vault beyond it.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": false,
+        "route": [],
+        "mode": "loop",
+        "wait_seconds": 12,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": false,
+        "partners": [],
+        "topic": "The weather, everyday work and the well-being of travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "cael",
+      "name": "Keeper Cael",
+      "alias": "cael",
+      "role": "Remorseful keeper",
+      "room": "sanctuary",
+      "appearance": "man",
+      "ai_enabled": true,
+      "personality": "Careful, fearful and deeply sincere.",
+      "knowledge": "The clapper is in the archive chest in the vault. The inscription asks what can be given without being taken; the answer is trust.",
+      "secret": "A voice in the bell demanded a sacrifice. Cael silenced it rather than risk a life.",
+      "reveal_after": "road_safe",
+      "motivation": "Let the player decide whether to restore or seal the bell.",
+      "game_notes": "",
+      "greeting": "I hid the clapper in the vault archive. The inscription’s answer is trust. Please learn the truth before judging me.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": false,
+        "route": [],
+        "mode": "loop",
+        "wait_seconds": 12,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": false,
+        "partners": [],
+        "topic": "The weather, everyday work and the well-being of travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "bram",
+      "name": "Bram Ironstock",
+      "alias": "bram",
+      "role": "Travelling equipment merchant",
+      "room": "guest_hall",
+      "appearance": "innkeeper",
+      "ai_enabled": true,
+      "personality": "Dry wit, honest prices, and a soft spot for nervous adventurers.",
+      "knowledge": "The abbey elder needs help. Rowan scouts the old road. My goods panel shows my real current stock and prices.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "Earn a fair living and help travelers survive.",
+      "game_notes": "",
+      "greeting": "Welcome. Ask about my goods or browse them from this menu. A fair offer costs nothing to ask for.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": true,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": [
+          {
+            "item": "dagger",
+            "quantity": 2,
+            "price": 2
+          },
+          {
+            "item": "shortsword",
+            "quantity": 2,
+            "price": 10
+          },
+          {
+            "item": "shortbow",
+            "quantity": 1,
+            "price": 30
+          },
+          {
+            "item": "small_shield",
+            "quantity": 2,
+            "price": 3
+          },
+          {
+            "item": "healing_potion",
+            "quantity": 4,
+            "price": 50
+          }
+        ]
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": false,
+        "route": [],
+        "mode": "loop",
+        "wait_seconds": 12,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": false,
+        "partners": [],
+        "topic": "The weather, everyday work and the well-being of travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "seren",
+      "name": "Seren Ashford",
+      "alias": "seren",
+      "role": "Recruitable abbey guardian",
+      "room": "guest_hall",
+      "appearance": "man",
+      "ai_enabled": true,
+      "personality": "Patient, practical and quietly brave. Values mercy and clear plans.",
+      "knowledge": "Elder Ilyra knows the bell history. Rowan scouts the road. Bram sells supplies. The abbey has been troubled by the silent bell.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "Protect the abbey and help the party investigate.",
+      "game_notes": "An essential recruit for this trial. Join without a quest gate. Do not invent undiscovered quest solutions or summon creatures.",
+      "greeting": "I can accompany you. Ask me to join, or use Companion controls. I will follow your lead.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": true,
+        "essential": true,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": true,
+        "social_visits": true,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": false,
+        "route": [],
+        "mode": "loop",
+        "wait_seconds": 12,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": false,
+        "partners": [],
+        "topic": "The weather, everyday work and the well-being of travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "mira",
+      "name": "Mira Fen",
+      "alias": "mira",
+      "role": "Abbey caretaker",
+      "room": "guest_hall",
+      "appearance": "man",
+      "ai_enabled": true,
+      "personality": "Cheerful, practical and welcoming.",
+      "knowledge": "The guest hall shelters travelers. The sanctuary is a quiet place for reflection.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "",
+      "game_notes": "",
+      "greeting": "Greetings, traveler.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": true,
+        "route": [
+          "guest_hall",
+          "sanctuary"
+        ],
+        "mode": "pingpong",
+        "wait_seconds": 30,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": true,
+        "partners": [
+          "tomas"
+        ],
+        "topic": "Keeping the abbey welcoming for travelers.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    },
+    {
+      "id": "tomas",
+      "name": "Tomas Reed",
+      "alias": "tomas",
+      "role": "Abbey groundskeeper",
+      "room": "guest_hall",
+      "appearance": "man",
+      "ai_enabled": true,
+      "personality": "Quietly humorous and fond of gardens.",
+      "knowledge": "The abbey welcomes travelers. The courtyard plants need regular attention.",
+      "secret": "",
+      "reveal_after": "",
+      "motivation": "",
+      "game_notes": "",
+      "greeting": "Greetings, traveler.",
+      "dialogue": [],
+      "merchant": {
+        "enabled": false,
+        "haggle_enabled": true,
+        "haggle_chance": 50,
+        "discount_percent": 5,
+        "offer_seconds": 600,
+        "stock": []
+      },
+      "companion": {
+        "recruitable": false,
+        "essential": false,
+        "requires_quest": "",
+        "movement": true,
+        "inventory": true,
+        "inspect_containers": false,
+        "social_visits": false,
+        "communication": "speech"
+      },
+      "behavior": {
+        "patrol_enabled": true,
+        "route": [
+          "guest_hall",
+          "sanctuary"
+        ],
+        "mode": "pingpong",
+        "wait_seconds": 45,
+        "run": false,
+        "accept_visits": true,
+        "social_enabled": true,
+        "partners": [
+          "mira"
+        ],
+        "topic": "Everyday life in the abbey.",
+        "cooldown": 180,
+        "communication": "speech"
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "road_wolves",
+      "name": "Wolves on the road",
+      "room": "wolf_glade",
+      "kind": "combat",
+      "description": "A small wolf pack blocks the route to the vault.",
+      "creature": "wolf",
+      "count": 2,
+      "maximum": 4,
+      "scale": true,
+      "after_quest": "",
+      "prompt": "",
+      "options": [],
+      "answer": 0,
+      "success": "",
+      "failure": "",
+      "gold": 0,
+      "xp": 0
+    },
+    {
+      "id": "trust_stone",
+      "name": "Inscribed stone",
+      "room": "inscription",
+      "kind": "puzzle",
+      "description": "A stone asks a question before revealing its history.",
+      "creature": "goblin",
+      "count": 1,
+      "maximum": 3,
+      "scale": false,
+      "after_quest": "",
+      "prompt": "What can be freely given, but never taken?",
+      "options": [
+        "Gold",
+        "Trust",
+        "A crown"
+      ],
+      "answer": 1,
+      "success": "The carving glows: the bell must never demand a life. Choose its fate with compassion.",
+      "failure": "The letters darken. You may consider the question again.",
+      "gold": 0,
+      "xp": 30
+    },
+    {
+      "id": "bell_stand",
+      "name": "Restore the bell",
+      "room": "sanctuary",
+      "kind": "story",
+      "description": "The bell stand awaits the recovered clapper.",
+      "creature": "goblin",
+      "count": 1,
+      "maximum": 3,
+      "scale": false,
+      "after_quest": "",
+      "prompt": "You place the clapper in the bell. Its first quiet note carries no demand—only a promise.",
+      "options": [],
+      "answer": 0,
+      "success": "The bell is restored.",
+      "failure": "",
+      "gold": 0,
+      "xp": 0
+    },
+    {
+      "id": "seal_chest",
+      "name": "Seal the clapper",
+      "room": "archive",
+      "kind": "story",
+      "description": "A secure chest for a final decision.",
+      "creature": "goblin",
+      "count": 1,
+      "maximum": 3,
+      "scale": false,
+      "after_quest": "",
+      "prompt": "You seal the clapper among the vault’s records. The abbey will find another way to protect the road.",
+      "options": [],
+      "answer": 0,
+      "success": "The clapper is safely sealed.",
+      "failure": "",
+      "gold": 0,
+      "xp": 0
+    }
+  ],
+  "items": [
+    {
+      "id": "bell_clapper",
+      "name": "Bronze Bell Clapper",
+      "description": "A worn bronze clapper, hidden to keep the abbey safe.",
+      "room": "archive",
+      "container": "",
+      "kind": "quest_token",
+      "quantity": 1
+    },
+    {
+      "id": "road_potions",
+      "name": "Healing supplies",
+      "description": "Potions left for travelers.",
+      "room": "guest_hall",
+      "container": "",
+      "kind": "healing_potion",
+      "quantity": 3
+    }
+  ],
+  "furnishings": [
+    {
+      "id": "prop_0",
+      "name": "Table",
+      "room": "guest_hall",
+      "kind": "table",
+      "placement": "north",
+      "description": "A shared table for travelers to eat and compare road news."
+    },
+    {
+      "id": "prop_1",
+      "name": "Chair",
+      "room": "guest_hall",
+      "kind": "chair",
+      "placement": "north",
+      "description": "A seat pulled up to the nearby table."
+    },
+    {
+      "id": "prop_3",
+      "name": "Candle",
+      "room": "guest_hall",
+      "kind": "candle",
+      "placement": "west",
+      "description": "A small floor candle marking a place of quiet vigil."
+    },
+    {
+      "id": "prop_4",
+      "name": "Barrel",
+      "room": "guest_hall",
+      "kind": "barrel",
+      "placement": "north",
+      "description": "A water barrel stored out of the main walking route."
+    },
+    {
+      "id": "prop_5",
+      "name": "Candle",
+      "room": "sanctuary",
+      "kind": "candle",
+      "placement": "north",
+      "description": "A small floor candle marking a place of quiet vigil."
+    },
+    {
+      "id": "prop_6",
+      "name": "Bookshelf",
+      "room": "sanctuary",
+      "kind": "bookshelf",
+      "placement": "east",
+      "description": "Records kept along the wall for visitors and abbey keepers."
+    },
+    {
+      "id": "prop_7",
+      "name": "Crate",
+      "room": "road_camp",
+      "kind": "crate",
+      "placement": "north",
+      "description": "A compact cache of camp provisions."
+    },
+    {
+      "id": "prop_8",
+      "name": "Barrel",
+      "room": "road_camp",
+      "kind": "barrel",
+      "placement": "east",
+      "description": "A water barrel stored out of the main walking route."
+    },
+    {
+      "id": "prop_10",
+      "name": "Barrel",
+      "room": "vault_entry",
+      "kind": "barrel",
+      "placement": "north",
+      "description": "A water barrel stored out of the main walking route."
+    },
+    {
+      "id": "prop_11",
+      "name": "Candle",
+      "room": "inscription",
+      "kind": "candle",
+      "placement": "north",
+      "description": "A small floor candle marking a place of quiet vigil."
+    },
+    {
+      "id": "prop_12",
+      "name": "Bookshelf",
+      "room": "inscription",
+      "kind": "bookshelf",
+      "placement": "east",
+      "description": "Records kept along the wall for visitors and abbey keepers."
+    },
+    {
+      "id": "prop_13",
+      "name": "Bookshelf",
+      "room": "archive",
+      "kind": "bookshelf",
+      "placement": "north",
+      "description": "Records kept along the wall for visitors and abbey keepers."
+    },
+    {
+      "id": "prop_14",
+      "name": "Chest",
+      "room": "archive",
+      "kind": "chest",
+      "placement": "east",
+      "description": "A lockbox for archived supplies."
+    },
+    {
+      "id": "prop_15",
+      "name": "Candle",
+      "room": "archive",
+      "kind": "candle",
+      "placement": "south",
+      "description": "A small floor candle marking a place of quiet vigil."
+    }
+  ],
+  "quests": [
+    {
+      "id": "road_safe",
+      "name": "A road through the silence",
+      "description": "Learn what happened and make the road safe.",
+      "start_npc": "",
+      "completion": "The road is safe and the keeper has told you where to find the clapper.",
+      "optional": false,
+      "requires": [],
+      "gold": 50,
+      "xp": 100,
+      "steps": [
+        {
+          "id": "meet_ilyra",
+          "name": "Speak with Ilyra",
+          "description": "Speak with Ilyra",
+          "kind": "talk",
+          "target": "ilyra",
+          "next": "find_rowan",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "find_rowan",
+          "name": "Find the scout",
+          "description": "Find the scout",
+          "kind": "talk",
+          "target": "rowan",
+          "next": "clear_wolves",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "clear_wolves",
+          "name": "Clear the wolf glade",
+          "description": "Clear the wolf glade",
+          "kind": "defeat",
+          "target": "road_wolves",
+          "next": "report_cael",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "report_cael",
+          "name": "Speak with the keeper",
+          "description": "Speak with the keeper",
+          "kind": "talk",
+          "target": "cael",
+          "next": "",
+          "consume": false,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "bell_fate",
+      "name": "The fate of the Silent Bell",
+      "description": "Recover the clapper and choose whether the bell should ring again.",
+      "start_npc": "",
+      "completion": "You have chosen the bell’s future and brought the adventure to its conclusion.",
+      "optional": false,
+      "requires": [
+        "road_safe"
+      ],
+      "gold": 100,
+      "xp": 200,
+      "steps": [
+        {
+          "id": "read_stone",
+          "name": "Solve the vault inscription",
+          "description": "Solve the vault inscription",
+          "kind": "interact",
+          "target": "trust_stone",
+          "next": "recover_bell",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "recover_bell",
+          "name": "Recover the bronze clapper",
+          "description": "Recover the bronze clapper",
+          "kind": "retrieve",
+          "target": "bell_clapper",
+          "next": "choose_fate",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "choose_fate",
+          "name": "Discuss the bell’s fate with Ilyra",
+          "description": "Discuss the bell’s fate with Ilyra",
+          "kind": "choice",
+          "target": "ilyra",
+          "next": "",
+          "consume": false,
+          "choices": [
+            {
+              "label": "Restore the bell without sacrifice.",
+              "next": "restore_bell",
+              "text": "Then let its sound remind us to care for one another. Bring it to the sanctuary stand."
+            },
+            {
+              "label": "Keep the bell silent and seal the clapper.",
+              "next": "seal_bell",
+              "text": "Then we will keep the roads safe ourselves. Seal it in the archive chest."
+            }
+          ]
+        },
+        {
+          "id": "restore_bell",
+          "name": "Restore the bell in the sanctuary",
+          "description": "Restore the bell in the sanctuary",
+          "kind": "interact",
+          "target": "bell_stand",
+          "next": "",
+          "consume": false,
+          "choices": []
+        },
+        {
+          "id": "seal_bell",
+          "name": "Seal the clapper in the archive",
+          "description": "Seal the clapper in the archive",
+          "kind": "interact",
+          "target": "seal_chest",
+          "next": "",
+          "consume": false,
+          "choices": []
+        }
+      ]
+    }
+  ]
+}

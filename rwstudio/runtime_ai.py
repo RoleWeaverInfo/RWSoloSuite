@@ -52,9 +52,9 @@ void main(){object pc=GetPCChatSpeaker();string s=GetPCChatMessage();if(!GetIsPC
   SetLocalObject(pc,"SP_FOCUS",GetObjectByTag(tag));SPAsk(pc,"npc",GetSubString(rest,at+1,1200));return;}
  if(s=="!ai" || s=="!dm" || s=="!talk"){SetPCChatMessage("");SendMessageToPC(pc,"Use !talk <alias> <message>, !ai <message>, !dm <request>, or !end.");return;}
  if(GetStringLeft(s,1)=="!" || GetStringLeft(s,1)=="/" || GetStringLeft(s,2)=="((")return;
- int colon=FindSubString(s,":");if(colon>0 && colon<=80){object addressed=SPActorAddress(pc,GetStringLowerCase(GetStringLeft(s,colon)));if(!GetIsObjectValid(addressed)){SPEnd(pc,FALSE);return;}
+ int colon=FindSubString(s,":");int explicitAddress=colon>=0;if(colon<0)colon=FindSubString(s,",");if(colon<0)colon=FindSubString(s,".");if(colon>0 && colon<=80){object addressed=SPActorAddress(pc,GetStringLowerCase(GetStringLeft(s,colon)));if(!GetIsObjectValid(addressed) && explicitAddress){SPEnd(pc,FALSE);return;}if(GetIsObjectValid(addressed)){
   if(GetLocalObject(pc,"SP_FOCUS")!=addressed)SPEnd(pc,FALSE);
-  SetLocalObject(pc,"SP_FOCUS",addressed);SPAsk(pc,"npc",GetSubString(s,colon+1,1200));return;}
+  SetLocalObject(pc,"SP_FOCUS",addressed);string addressedText=GetSubString(s,colon+1,1200);while(GetStringLeft(addressedText,1)==" ")addressedText=GetSubString(addressedText,1,1200);SPAsk(pc,"npc",addressedText);return;}}
  object focus=GetLocalObject(pc,"SP_FOCUS");if(!GetIsObjectValid(focus))return;
  if(GetLocalInt(pc,"AWC_CHAT_ARMED")){SPEnd(pc,FALSE);SetLocalObject(pc,"SP_FOCUS",focus);SetLocalInt(pc,"SP_FOCUS_AT",SPNow());}
  if(!SPNear(pc,focus) || SPNow()-GetLocalInt(pc,"SP_FOCUS_AT")>180){SPEnd(pc,FALSE);return;}

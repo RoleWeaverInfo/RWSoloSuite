@@ -4,6 +4,7 @@ from pathlib import Path
 import copy
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 import tempfile
@@ -21,6 +22,7 @@ from .story_actions import native as native_story
 from .merchants import CATALOG as GOODS
 from .runtime_ai import adapt as adapt_ai
 from .player_package import refresh_share_zip
+from .furnishing import RADII
 
 def local(obj,values):
     table=obj[1].get('VarTable',(15,[]))[1]
@@ -39,7 +41,7 @@ def json_function(name,values):
     return '\n'.join(lines+['return a;}'])
 
 class Placement:
-    def __init__(self,rooms):self.rooms=rooms;self.used={r:[] for r in rooms}
+    def __init__(self,rooms):self.rooms=rooms;self.used={r:[] for r in rooms};self.decor={r:[] for r in rooms};self.footprints={r:[] for r in rooms}
     def take(self,rid,side=None):
         r=self.rooms[rid][1];cx,cy=center(r);candidates=[]
         for y in range(r['y']*10+5,(r['y']+r['height'])*10-3,5):
@@ -54,13 +56,35 @@ class Placement:
             if all((x-ox)**2+(y-oy)**2>=16 for ox,oy in self.used[rid]):self.used[rid].append((x,y));return x,y
         raise ValueError(r['name']+': too crowded for safe object placement; enlarge it or remove content')
 
+    def furnish(self,rid,kind,side):
+        r=self.rooms[rid][1];cx,cy=center(r);radius=RADII[kind];candidates=[]
+        anchors=[(x,y) for k,x,y in self.decor[rid] if k=='table'] if kind=='chair' else []
+        for y in range(r['y']*10+3,(r['y']+r['height'])*10-2,2):
+            for x in range(r['x']*10+3,(r['x']+r['width'])*10-2,2):
+                # The entire footprint stays out of the six-metre travel cross.
+                if abs(x-cx)<3+radius or abs(y-cy)<3+radius:continue
+                if any(math.hypot(x-ox,y-oy)<radius+2 for ox,oy in self.used[rid]):continue
+                if any(math.hypot(x-ox,y-oy)<radius+other+.2 for ox,oy,other in self.footprints[rid]):continue
+                tx,ty=exit_point(r,side,3) if side!='center' else (cx,cy)
+                score=math.hypot(x-tx,y-ty)
+                facing={'north':270,'south':90,'east':180,'west':0,'center':90}[side]
+                if anchors:
+                    ax,ay=min(anchors,key=lambda a:math.hypot(x-a[0],y-a[1]))
+                    distance=math.hypot(x-ax,y-ay)
+                    score=abs(distance-3)*10+score*.1
+                    facing=math.degrees(math.atan2(ay-y,ax-x))
+                candidates.append((score,x,y,facing))
+        if not candidates:raise ValueError(r['name']+': no safe space for '+kind+'; remove clutter or enlarge this room')
+        _,x,y,facing=min(candidates);self.footprints[rid].append((x,y,radius));self.decor[rid].append((kind,x,y))
+        return x,y,facing
+
 def build(project,store,game_root,compiler):
     p=validate(project,complete=True);game_root=Path(game_root);compiler=Path(compiler)
     if not (game_root/'data').is_dir() or not compiler.is_file():raise ValueError('Set the installed NWN folder and NWScript compiler in Settings')
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('furnishing.py'),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
@@ -145,7 +169,7 @@ def _build(p,store,game_root,compiler):
                 x,y=placement.take(rid);inst=copy.deepcopy(obj);position(inst,x,y,270,True);gits[rooms[rid][0]['id']][1]['Creature List'][1].append((4,inst[1]))
         return obj
     pbase=read(original['mc_crate1',2044])[1]
-    def place(ident,name,rid,appearance,usable=False,inventory=None,onused='',onopen='',description='',side=None,gate='',variables=None):
+    def place(ident,name,rid,appearance,usable=False,inventory=None,onused='',onopen='',description='',side=None,gate='',variables=None,decor_kind=None):
         obj=copy.deepcopy(pbase)
         for key in list(obj[1]):
             if key.startswith('On'):put(obj,key,b'')
@@ -157,7 +181,9 @@ def _build(p,store,game_root,compiler):
         if onopen:string(obj,'OnOpen',onopen,11)
         if variables:local(obj,variables)
         entries[ident,2044]=write(b'UTP V3.2',obj)
-        x,y=placement.take(rid,side);position(obj,x,y);gits[rooms[rid][0]['id']][1]['Placeable List'][1].append((9,obj[1]));return x,y
+        if decor_kind:x,y,facing=placement.furnish(rid,decor_kind,side)
+        else:x,y=placement.take(rid,side);facing=90
+        position(obj,x,y,facing);gits[rooms[rid][0]['id']][1]['Placeable List'][1].append((9,obj[1]));return x,y
     for ni,n in enumerate(p['npcs']):
         creature(n['id'],n['name'],'nw_guard',n['room'],APPEARANCES[n['appearance']])
         lines=[];replies=[];starts=[];choice_entries=[]
@@ -227,9 +253,7 @@ def _build(p,store,game_root,compiler):
                     act=script(f'awp_{ei}_{oi}','#include "aw_quest"\nvoid main(){'+body+'}')
                     replies.append((option,[],act))
                 replies.append(('Leave it for now.',[]));entries[e['id'],2029]=write(b'DLG V3.2',conversation([(e['prompt'],list(range(len(replies))))],replies))
-    for f in p['furnishings']:place(f['id'],f['name'],f['room'],DECOR[f['kind']],description=f['description'],side=f['placement'])
     for ci,c in enumerate(p['connections']):
-        if c['kind']!='exit':continue
         legs=[(c['from_room'],c['from_side'],c['to_room'],c['to_side'])]
         if c['two_way']:legs.append((c['to_room'],c['to_side'],c['from_room'],c['from_side']))
         for li,(a,side,b,bside) in enumerate(legs):
@@ -241,8 +265,12 @@ def _build(p,store,game_root,compiler):
             for key in ('XOrientation','YOrientation','ZOrientation'):put(tr,key,0.,8)
             hw,hh=(3.,1.) if side in ('north','south') else (1.,3.)
             put(tr,'Geometry',[node(3,PointX=(8,px),PointY=(8,py),PointZ=(8,0.)) for px,py in [(-hw,-hh),(hw,-hh),(hw,hh),(-hw,hh)]],15)
-            gits[rooms[a][0]['id']][1]['TriggerList'][1].append((1,tr[1]));gits[rooms[a][0]['id']][1]['WaypointList'][1].append(waypoint('aw_sign_'+str(ci)+'_'+str(li),'Exit: '+dr['name'],x,y,map_note=True))
+            if c['kind']=='exit':gits[rooms[a][0]['id']][1]['TriggerList'][1].append((1,tr[1]))
+            gits[rooms[a][0]['id']][1]['WaypointList'][1].append(waypoint('aw_sign_'+str(ci)+'_'+str(li),'Passage: '+dr['name'],x,y,map_note=True))
             place('aw_port_'+str(ci)+'_'+str(li),'Passage to '+dr['name'],a,87,True,onused='aw_exit',description='Use this passage marker, or walk through the marked exit.',side=side,variables={'AW_TARGET':dest,'AW_GATE':c['requires_quest']})
+    # Reserve actors, encounters and usable passage markers before decoration.
+    # Tables precede chairs so related furniture is grouped deterministically.
+    for f in sorted(p['furnishings'],key=lambda f:(f['kind']=='chair',f['id'])):place(f['id'],f['name'],f['room'],DECOR[f['kind']],description=f['description'],side=f['placement'],decor_kind=f['kind'])
     categories=[]
     for qi,q in enumerate(p['quests']):
         journals=[node(si,ID=(4,si+1),End=(2,0),Text=(12,text(s['description']))) for si,s in enumerate(q['steps'])]
