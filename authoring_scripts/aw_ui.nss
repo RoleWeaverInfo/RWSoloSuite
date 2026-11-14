@@ -14,6 +14,9 @@ json AWUIWindow(json root,json title,json geometry,json resizable,json collapsed
 json AWUIWidth(json element,float width){return JsonObjectSet(element,"width",JsonFloat(width));}
 json AWUIText(string text){json out=AWUIElement("text");out=JsonObjectSet(out,"value",JsonString(text));out=JsonObjectSet(out,"border",JsonBool(FALSE));return JsonObjectSet(out,"scrollbars",JsonInt(0));}
 json AWUIScroll(json child){json out=AWUIElement("group");out=JsonObjectSet(out,"children",JsonArrayInsert(JsonArray(),child));out=JsonObjectSet(out,"border",JsonBool(FALSE));return JsonObjectSet(out,"scrollbars",JsonInt(4));}
-json AWUIStack(json children,float width){json rows=JsonArray();int i=0;while(i<JsonGetLength(children)){json child=JsonArrayGet(children,i);json size=JsonObjectGet(child,"height");float height=36.0;if(JsonGetType(size)==JSON_TYPE_FLOAT)height=JsonGetFloat(size);if(height<1.0)height=36.0;
- if(JsonGetString(JsonObjectGet(child,"type"))!="row"){child=AWUIWidth(child,width);child=AWUIRow(JsonArrayInsert(JsonArray(),child));}
- rows=JsonArrayInsert(rows,AWUIWidth(AWUIHeight(child,height),width));i++;}return AWUICol(rows);}
+// Size leaf controls, not both a control and its enclosing row. Equal required
+// parent/child dimensions conflict with the engine's margins and padding.
+// Leave layout widths flexible so resizing and different UI scales can reflow.
+json AWUIStack(json children){json rows=JsonArray();int i=0;while(i<JsonGetLength(children)){json child=JsonArrayGet(children,i);
+ if(JsonGetString(JsonObjectGet(child,"type"))!="row")child=AWUIRow(JsonArrayInsert(JsonArray(),child));
+ rows=JsonArrayInsert(rows,child);i++;}return AWUICol(rows);}

@@ -1,6 +1,15 @@
-# Module Studio 0.7.1 - reported playtest fixes
+# Module Studio 0.7.2 - reported playtest fixes
 
-Use **Play Adventure.cmd** and choose **New Adventure**. It now selects **rw_playfix.mod / The Silent Bell - Playtest Fixes**. Do not load an old errand-trial save to test these changes; saves retain old native resources. Existing modules/saves are unchanged.
+## Window sizing correction (0.7.2)
+
+The reported error from rw_errands.mod was: "Error constructing window from json. The constraint cannot be satisfied". This is a layout-constraint failure, not evidence of missing JSON window fields. The previous 0.7.1 field additions alone did not address that sizing conflict.
+
+Removed equal required widths/heights on both enclosing rows and their leaf controls. Rows/columns now size flexibly, controls retain readable heights, and each inventory column has an independent scrolling viewport. Removed the inventory row's fixed 740-pixel height and fixed column widths. Native UI rendering remains for user acceptance; regression checks cannot execute NWN's layout solver.
+
+Use **Play Adventure.cmd** and choose **New Adventure** to load **rw_uifix.mod / The Silent Bell - Window Fix**. This was installed separately because NWN was running. Existing modules (including rw_playfix.mod and rw_errands.mod), saves and the running game are unchanged. Old saves retain their old embedded layouts.
+
+
+Use **Play Adventure.cmd** and choose **New Adventure**. It now selects **rw_uifix.mod / The Silent Bell - Window Fix**. Do not load an old errand-trial save to test these changes; saves retain old native resources. Existing modules/saves are unchanged.
 
 1. Summon Agathos (or another speaking familiar/summon) normally. Type `!companions`, select the creature: **Talk freely with AI** should be the first action. Close the panel and speak. An animal profile should explain nonverbal/visit restrictions.
 2. Near Bram, say `Agathos, go to Bram and ask him how much a sword costs.` Expect the native task-start receipt, physical approach, question/answer, and return/report. Also try `!companion familiar ask bram How much does a sword cost?`. If the actor is a summon, use `summon1` instead of `familiar`.

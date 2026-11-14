@@ -1,10 +1,19 @@
-# Module Studio 0.7.1 validation
+# Module Studio 0.7.2 validation
+
+## Window sizing correction (0.7.2)
+
+The reported error from rw_errands.mod was: "Error constructing window from json. The constraint cannot be satisfied". This is a layout-constraint failure, not evidence of missing JSON window fields. The previous 0.7.1 field additions alone did not address that sizing conflict.
+
+Removed equal required widths/heights on both enclosing rows and their leaf controls. Rows/columns now size flexibly, controls retain readable heights, and each inventory column has an independent scrolling viewport. Removed the inventory row's fixed 740-pixel height and fixed column widths. Native UI rendering remains for user acceptance; regression checks cannot execute NWN's layout solver.
+
+Use **Play Adventure.cmd** and choose **New Adventure** to load **rw_uifix.mod / The Silent Bell - Window Fix**. This was installed separately because NWN was running. Existing modules (including rw_playfix.mod and rw_errands.mod), saves and the running game are unchanged. Old saves retain their old embedded layouts.
+
 
 - All 135 regression tests passed, including native compilation. The installed trial passed launcher readiness/context registration with AI Player 0.7.1; no API request or game launch. Eleven existing module files remained byte-identical.
 
 - Targeted checks: bridge mailbox punctuation conversion without action/ID changes; social/visit display text; furniture footprint and actor clearance; chair/table grouping and orientation; non-mutating scale/repetition review; design-time guidance; merchant visit quotes from native observations rather than generated prices.
 - Compiled module checks: every declared connection has usable native passage objects with valid arrival waypoints; corridor routes contain adjoining full-floor stock tiles; window JSON key contract matches the installed official nw_inc_nui constructor.
-- Native compile and resource checks do not prove GUI rendering, navigation or actual actor behavior. These remain user playtests. The precise reported JSON popup was not yet available when the fix was prepared.
+- Native compile and resource checks do not prove GUI rendering, navigation or actual actor behavior. These remain user playtests. The exact sizing error is now documented above; the 0.7.1 key-contract check alone was insufficient.
 - New module rw_playfix.mod, build dd3e74dadedbcc925100, SHA-256 fda276592c2d71fc6d4c42e6c0d12ec5ff5aace7d41edb878993d31e65ffb664; 168 resources and 38 compiled scripts. Existing modules and saves preserved.
 - No live OpenAI request, NWN launch or Aurora launch performed for this release.
 
@@ -178,3 +187,7 @@ Priority checks: native goods-panel rendering; exact gold/item transfer; potion 
 
 This first merchant release sells eight catalogue goods to players. Buyback, general barter, restocking, familiar/summon adapters, patrols and NPC-to-NPC conversations are not implemented in this release.
 
+
+Current corrected native build: cb9f5d07b37c8e7f880e; SHA-256 623348ded87a82f81f448b7a625c7832e9a778a1864ca280d949f25551e5cfd7.
+
+Installed window-fix trial: 8002076772c5d7e2bea3; SHA-256 18772a8b7a3ab361a5654e9828129094769a81ac677e70730f5bde3db3cb634d. All 135 tests passed; 12 existing modules remained unchanged.

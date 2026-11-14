@@ -118,10 +118,10 @@ class NativeCompanionTests(unittest.TestCase):
         self.assertIn(b'if(state=="ready")AssignCommand(npc,SpeakString(',runtime)
         self.assertNotIn(b'SendMessageToPC(pc,GetName(npc)+',runtime)
         self.assertIn(b'else SendMessageToPC(pc,reply)',runtime)
-    def test_scrollable_panels_size_rows_and_offer_both_inventories(self):
+    def test_scrollable_panels_avoid_fixed_parent_child_constraints(self):
         ui=self.res['aw_ui',2009];pack=self.res['aw_cp_ui',2009];shop=self.res['aw_merchant',2009];events=self.res['aw_cp_ui_evt',2009]
-        self.assertIn(b'AWUIElement("group")',ui);self.assertIn(b'"scrollbars",JsonInt(4)',ui);self.assertIn(b'AWUIWidth(AWUIHeight(child,height),width)',ui)
-        self.assertIn(b'AWUIScroll(AWUIStack(rows,590.0))',pack);self.assertIn(b'AWUIScroll(AWUIStack(rows,560.0))',shop)
+        self.assertIn(b'AWUIElement("group")',ui);self.assertIn(b'"scrollbars",JsonInt(4)',ui);stack=ui[ui.index(b"json AWUIStack("):];self.assertNotIn(b"AWUIWidth(",stack);self.assertNotIn(b"AWUIHeight(",stack)
+        self.assertNotIn(b"740.0",pack);self.assertIn(b"AWUIScroll(AWCPackColumn(pc,pc,TRUE))",pack);self.assertIn(b"AWUIScroll(AWCPackColumn(pc,storage,FALSE))",pack);self.assertIn(b'AWUIScroll(AWUIStack(rows))',pack);self.assertIn(b'AWUIScroll(AWUIStack(rows))',shop)
         self.assertIn(b'AWCPackColumn(pc,pc,TRUE)',pack);self.assertIn(b'AWCPackColumn(pc,storage,FALSE)',pack)
         self.assertIn(b'GetItemInSlot(slot,holder)',pack);self.assertIn(b'AWCVisibleItems(holder)',pack)
         for reason in (b'protected',b'equipped',b'cursed',b'unidentified',b'container',b'over transfer limit'):self.assertIn(reason,pack)
