@@ -7,5 +7,7 @@ void main(){object pc=GetLocalObject(OBJECT_SELF,"AWT_OWNER");object master=GetM
  if(GetIsInCombat(OBJECT_SELF) || GetIsInCombat(pc) || IsInConversation(OBJECT_SELF))return;
  if(op=="start"){SetLocalInt(OBJECT_SELF,"AWT_PRE_WAIT",GetAssociateState(NW_ASC_MODE_STAND_GROUND));SetLocalInt(OBJECT_SELF,"AWT_PRE_GUARD",GetAssociateState(NW_ASC_MODE_DEFEND_MASTER));SetLocalInt(OBJECT_SELF,"AWT_LEASE",TRUE);ResetHenchmenState();SetAssociateState(NW_ASC_MODE_STAND_GROUND,TRUE);ClearAllActions(TRUE);SetLocalInt(OBJECT_SELF,"AWT_MOVE_OK",TRUE);return;}
  if(op=="pause"){if(GetCurrentAction()==ACTION_WAIT)ClearAllActions(TRUE);return;}object target=GetLocalObject(OBJECT_SELF,"AWT_DEST");if(!GetIsObjectValid(target) || GetArea(target)!=GetArea(OBJECT_SELF))return;
- if(op=="open"){if(GetCurrentAction()==ACTION_INVALID)ActionInteractObject(target);return;}
+ // NPC inspection does not open a player inventory UI. Animate the accessible
+ // container, then let the task controller read its actual contents at arrival.
+ if(op=="open"){if(GetDistanceBetween(OBJECT_SELF,target)<=3.0 && LineOfSightObject(OBJECT_SELF,target) && GetHasInventory(target) && !GetLocked(target) && !GetIsTrapped(target)){AssignCommand(target,PlayAnimation(ANIMATION_PLACEABLE_OPEN));SetLocalInt(OBJECT_SELF,"AWT_ACCESS",TRUE);}return;}
  if(GetCurrentAction()==ACTION_WAIT)ClearAllActions(TRUE);if(GetCurrentAction()==ACTION_INVALID)ActionMoveToObject(target,FALSE,1.5);}

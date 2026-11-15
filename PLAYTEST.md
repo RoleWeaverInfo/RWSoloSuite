@@ -1,6 +1,21 @@
-# Module Studio 0.8.0 - reported playtest fixes
+# Module Studio 0.9.0 - reported playtest fixes
 
-## Current trial: natural companion tasks (0.8)
+## Current trial: companion and passage update (0.9)
+
+Start a **new game** in **The Silent Bell - Companion and Passage Trial** (`rw_companion.mod`) through `Play Adventure.cmd`. Exit NWN and restart an older AI Player first; this trial requires AI Player 0.9.0. Old saves keep their embedded dialogue and area resources.
+
+- Familiar/summon native dialogue now offers **Talk freely with AI**, companion controls, visual inventory and the original companion dialogue. After choosing chat and closing dialogue, speak normally in Talk. `!end` finishes the conversation.
+- Chest inspection reads actual contents after the companion reaches an unlocked, untrapped, permitted container. It no longer waits for a player container window. It does not advance treasure quests.
+- Ask naturally to take or deposit an item. Stand within three metres of the chest for direct handoff. Only one unambiguous, identified, transferable whole item/stack is moved; equipped, protected, cursed, high-value and container items remain excluded. Ask for the whole stack when necessary. No item is cloned or held by an expiring summon. Ownership is checked before a success report.
+- **Open visual inventory** uses NWN's native grid for party members. For familiars/summons, open the named companion satchel in your own inventory to drag items. The custom inventory panel remains available. Merchant purchasing still uses its existing panel.
+- All connection endpoints now have actual exit zones; supported solid interior boundaries also have stock framed native doors. Corridor terrain remains present. Quest conditions still apply. Followers travel; companions ordered to stay remain behind.
+- Under **Encounters → Curated room design**, select a room and a design, preview, then apply. This replaces only that room's decorative furnishings. Story objects and NPCs remain. Presets use sparse purposeful groups; Aurora remains the final visual editor.
+- Character replies receive in-world instructions and a filter for common software/game self-references, including the reported failure text. This reduces immersion breaks; it is not a guarantee against every possible generated phrase.
+
+Please test: native familiar/summon dialogue, free chat, chest inspection and reported contents, one-item take/put and stack clarification, native inventory drag/drop, every room connection in both directions, followers, and the revised furniture arrangements. **NWN/Aurora gameplay has not been run by the agent.**
+
+
+## Previous trial: natural companion tasks (0.8)
 
 Use **Play Adventure.cmd**, choose **New Adventure**, and select a character for **The Silent Bell - Natural Companion Trial** (`rw_natural.mod`). Older modules and saved games keep their embedded scripts; do not use an older save to test this update. AI Player 0.8.0+ is required. Existing modules, Aurora copies and saves are preserved.
 

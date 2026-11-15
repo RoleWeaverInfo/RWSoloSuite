@@ -16,7 +16,7 @@ from .storage import write_json
 from .nwn.gff import read,write,text
 from .nwn.module_copy import resources
 from .nwn.game_assets import GameAssets
-from .nwn.area_tools import node,set_value as put,new_area,empty_objects,waypoint,comments_for,pack_module
+from .nwn.area_tools import node,set_value as put,new_area,empty_objects,waypoint,comments_for,pack_module,door,tile
 from .builder import ROOT,TYPES,BUILD_LOCK,string,position,conversation,literal
 from .story_actions import native as native_story
 from .merchants import CATALOG as GOODS
@@ -120,6 +120,11 @@ def _build(p,store,game_root,compiler):
     scripts={f.stem:f.read_text(encoding='utf-8') for f in (ROOT/'authoring_scripts').glob('*.nss')}
     def script(name,body):scripts[name]=body+'\n';return name
     def conditional(name,expression,header='aw_quest'):return script(name,'#include "'+header+'"\nint StartingConditional(){return '+expression+';}')
+    # This tree is explicitly opened by the familiar/summon OnDialogue hook.
+    cp_replies=[('Talk freely with AI.',[],'aw_cp_talk'),('Companion controls.',[],'aw_cp_panel'),('Open visual inventory.',[],'aw_cp_visual'),('Normal companion dialogue.',[],'aw_cp_orig'),('Farewell.',[])]
+    entries['aw_cp_native',2029]=write(b'DLG V3.2',conversation([('What would you like me to do?',[0,1,2,3,4])],cp_replies))
+    script('aw_cp_panel','#include "aw_cp_ui"\nvoid main(){AWCOpenControl(GetPCSpeaker(),OBJECT_SELF);}')
+    script('aw_cp_visual','#include "aw_cp_ui"\nvoid main(){AWCVisualInventory(GetPCSpeaker(),OBJECT_SELF);}')
     shops=[];merchant_inventory={}
     item_table=game.get('baseitems',2017).decode('latin1').splitlines()
     item_header=next(line.split() for line in item_table if 'InvSlotWidth' in line and 'InvSlotHeight' in line)
@@ -253,6 +258,7 @@ def _build(p,store,game_root,compiler):
                     act=script(f'awp_{ei}_{oi}','#include "aw_quest"\nvoid main(){'+body+'}')
                     replies.append((option,[],act))
                 replies.append(('Leave it for now.',[]));entries[e['id'],2029]=write(b'DLG V3.2',conversation([(e['prompt'],list(range(len(replies))))],replies))
+    native_doors=[]
     for ci,c in enumerate(p['connections']):
         legs=[(c['from_room'],c['from_side'],c['to_room'],c['to_side'])]
         if c['two_way']:legs.append((c['to_room'],c['to_side'],c['from_room'],c['from_side']))
@@ -265,7 +271,23 @@ def _build(p,store,game_root,compiler):
             for key in ('XOrientation','YOrientation','ZOrientation'):put(tr,key,0.,8)
             hw,hh=(3.,1.) if side in ('north','south') else (1.,3.)
             put(tr,'Geometry',[node(3,PointX=(8,px),PointY=(8,py),PointZ=(8,0.)) for px,py in [(-hw,-hh),(hw,-hh),(hw,hh),(-hw,hh)]],15)
-            if c['kind']=='exit':gits[rooms[a][0]['id']][1]['TriggerList'][1].append((1,tr[1]))
+            gits[rooms[a][0]['id']][1]['TriggerList'][1].append((1,tr[1]))
+            # Native framed doors on solid interior boundaries. Corridor openings
+            # retain their continuous terrain; every link also has a trigger.
+            ar,sr=rooms[a];typ=ar['type']
+            if c['kind']=='exit' and typ in ('castle','dungeon','cave'):
+                from .layout import port
+                tx,ty=port(sr,side);tiles=areas[ar['id']][1]['Tile_List'][1];idx=ty*ar['width']+tx
+                old=tiles[idx];rotation={'east':0,'north':1,'west':2,'south':3}[side]
+                if old[1]['Tile_ID'][1] == (29 if typ=='castle' else 1) and old[1]['Tile_Orientation'][1]==rotation:
+                    tiles[idx]=tile(old,121 if typ=='castle' else 6,rotation)
+                    distance=2.49 if typ=='castle' else 5.;angle=math.radians(rotation*90)
+                    door_x=tx*10+5+distance*math.cos(angle);door_y=ty*10+5+distance*math.sin(angle)
+                    dtag='aw_door_'+str(ci)+'_'+str(li)
+                    d=door(dtag,'To '+dr['name'],dest,door_x,door_y,270+rotation*90)
+                    local(d,{'AW_GATE':c['requires_quest']});put(d,'Locked',int(bool(c['requires_quest'])),0)
+                    put(d,'KeyRequired',int(bool(c['requires_quest'])),0)
+                    gits[ar['id']][1]['Door List'][1].append(d);native_doors.append(dict(tag=dtag,gate=c['requires_quest']))
             gits[rooms[a][0]['id']][1]['WaypointList'][1].append(waypoint('aw_sign_'+str(ci)+'_'+str(li),'Passage: '+dr['name'],x,y,map_note=True))
             place('aw_port_'+str(ci)+'_'+str(li),'Passage to '+dr['name'],a,87,True,onused='aw_exit',description='Use this passage marker, or walk through the marked exit.',side=side,variables={'AW_TARGET':dest,'AW_GATE':c['requires_quest']})
     # Reserve actors, encounters and usable passage markers before decoration.
@@ -283,11 +305,11 @@ def _build(p,store,game_root,compiler):
     companion_cfg={k:v for k,v in p['companions'].items() if k!='templates'};companion_cfg['live_ai']=p['ai_conversations']
     companion_npcs=[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs'] if n['companion']['recruitable']]
     behaviors=[dict(n['behavior'],id=n['id'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']]
-    scripts['aw_config']='\n'.join([json_function('AWAConfig',[p['ambient']]),json_function('AWABehaviors',behaviors),json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),json_function('AWCompanionConfig',[companion_cfg]),json_function('AWCompanionTemplates',p['companions']['templates']),json_function('AWCompanionNPCs',companion_npcs),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
+    scripts['aw_config']='\n'.join([json_function('AWItems',[dict(id=i['id'],kind=i['kind'],name=i['name']) for i in p['items']]),json_function('AWDoors',native_doors),json_function('AWAConfig',[p['ambient']]),json_function('AWABehaviors',behaviors),json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),json_function('AWCompanionConfig',[companion_cfg]),json_function('AWCompanionTemplates',p['companions']['templates']),json_function('AWCompanionNPCs',companion_npcs),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
     ai=p['ai_conversations'];include='#include "aw_social"' if ai else '#include "aw_ambient"'
     scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());AWALoad();if(AWCEnabled()){AWCInit();SetMaxHenchmen('+str(p['companions']['party_limit'])+');}'+('SPInit();' if ai else '')+'}'
     scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'
-    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
+    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);json doors=AWDoors();int di=0;while(di<JsonGetLength(doors)){json d=JsonArrayGet(doors,di);object obj=GetObjectByTag(AWText(d,"tag"));if(GetIsObjectValid(obj))SetLocked(obj,!AQDone(AWText(d,"gate")));di++;}object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
     if not ai:
         for name in ('aw_social','aw_ct_request','aw_ct_poll','aw_ct_cancel'):scripts.pop(name,None)
     if ai:

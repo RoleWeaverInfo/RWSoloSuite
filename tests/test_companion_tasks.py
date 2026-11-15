@@ -88,7 +88,7 @@ class NativeCompanionTaskTests(unittest.TestCase):
         self.assertIn(b'JsonDump(taskOptions)',runtime);self.assertIn(b'AWTApplyAI(pc,npc,result)',runtime)
     def test_inspection_reads_only_after_confirmed_open_and_does_not_take_items(self):
         core=self.r['aw_cp_tasks',2009]
-        for text in (b'GetIsOpen(target)',b'!GetLocked(target)',b'!GetIsTrapped(target)',b'GetItemPossessor(item,TRUE)==target',b'AWT_OPEN_UNTIL',b'additional items not listed',b'GetObjectUUID(target)!=GetLocalString(body,"AWT_TARGET_UUID")'):self.assertIn(text,core)
+        for text in (b'AWT_ACCESS',b'!GetLocked(target)',b'!GetIsTrapped(target)',b'GetItemPossessor(item,TRUE)==target',b'AWTMove(body,"open",target)',b'additional items not listed',b'GetObjectUUID(target)!=GetLocalString(body,"AWT_TARGET_UUID")'):self.assertIn(text,core)
         for text in (b'CopyItem(',b'ActionTakeItem(',b'GiveGoldToCreature(',b'AWAIAction('):self.assertNotIn(text,core)
     def test_native_order_and_permission_changes_cancel_without_restore_overwrite(self):
         core=self.r['aw_cp_tasks',2009];move=self.r['aw_ct_move',2009]

@@ -1,5 +1,5 @@
 param(
-    [string]$Module = 'rw_natural',
+    [string]$Module = 'rw_companion',
     [string]$ModuleFile,
     [string]$Sidecar,
     [string]$GameRoot,

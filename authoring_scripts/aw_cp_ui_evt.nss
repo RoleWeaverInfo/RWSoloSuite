@@ -22,6 +22,7 @@ void main(){object pc=NuiGetEventPlayer();if(!GetIsPC(pc) || NuiGetEventWindow()
  else if(id=="toggle_pack"+suffix)AWCSet(pc,identity,"inventory",!AWInt(record,"inventory"));
  else if(id=="reply"+suffix)AWCSet(pc,identity,"reply",(AWInt(record,"reply")+1)%3);
  else if(id=="tone"+suffix)AWCSet(pc,identity,"tone",(AWInt(record,"tone")+1)%5);
+ else if(id=="visual_inventory"+suffix){AWCVisualInventory(pc,body);return;}
  else if(id=="inventory"+suffix){AWCInventory(pc,body);return;}
  else if(id=="recruit"+suffix)AWCOrder(pc,body,"recruit");
  else if(id=="dismiss"+suffix){AWCOrder(pc,body,"dismiss");AWCOpenList(pc);return;}

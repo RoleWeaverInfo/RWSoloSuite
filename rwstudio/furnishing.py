@@ -35,3 +35,28 @@ def warnings(project):
                 result.append(room['name']+': chairs have no table; check that their placement has a purpose.')
             if len(props)>8:result.append(room['name']+': many furnishings; review clutter and keep travel lanes open.')
     return result
+
+# Small, authored arrangements. Applied only as a reviewable creator proposal.
+ROOM_STYLES = {
+    'reading_room': [('bookshelf','north','Reference shelves'),('table','west','Reading desk'),('chair','west','Reader seat'),('candle','north','Reading light')],
+    'bedchamber': [('bed','north','Sleeping alcove'),('chest','east','Personal belongings'),('candle','north','Bedside light')],
+    'merchant': [('table','west','Trade counter'),('chair','west','Merchant seat'),('bookshelf','north','Display shelves'),('crate','east','Reserve supplies')],
+    'dining': [('table','west','Shared dining table'),('chair','west','Dining seat'),('chair','west','Guest seat'),('barrel','north','Drinking water')],
+    'abandoned': [('chest','north','Abandoned strongbox'),('crate','east','Forgotten supplies')],
+    'camp': [('crate','north','Camp provisions'),('barrel','north','Water reserve')],
+}
+
+def room_proposal(project, room_id, style):
+    import copy, hashlib
+    from .authoring import validate, review
+    if style not in ROOM_STYLES:raise ValueError('Choose a room design')
+    p=copy.deepcopy(validate(project));room=next((r for a in p['areas'] for r in a['rooms'] if r['id']==room_id),None)
+    if room is None:raise ValueError('Choose a room')
+    p['furnishings']=[f for f in p['furnishings'] if f['room']!=room_id]
+    used={o['id'] for key in ('npcs','encounters','items','furnishings','quests','connections') for o in p[key]}
+    for i,(kind,side,name) in enumerate(ROOM_STYLES[style]):
+        ident='decor_'+hashlib.sha256((room_id+style+str(i)).encode()).hexdigest()[:10]
+        if ident in used:raise ValueError('Room design ID conflict; rename the room ID before applying')
+        used.add(ident);p['furnishings'].append(dict(id=ident,room=room_id,kind=kind,placement=side,name=name,description=name+' for '+room['name']+'.'))
+    room['purpose']=style.replace('_',' ').capitalize()
+    return dict(proposal=validate(p),review=review(p))

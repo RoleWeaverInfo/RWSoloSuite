@@ -84,6 +84,9 @@ class Application:
         if route=='/api/author/generate':
             from .authoring_ai import generate
             return generate(self.provider,b['project'],str(b.get('instruction','')),b.get('scope','adventure'),b.get('area_id',''))
+        if route=='/api/author/room-design':
+            from .furnishing import room_proposal
+            return room_proposal(b['project'],b['room_id'],b['style'])
         if route=='/api/author/review':return authoring.review(authoring.validate(b['project']))
         if route=='/api/author/arrange':
             from .layout import arrange
