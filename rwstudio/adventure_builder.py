@@ -189,6 +189,12 @@ def _build(p,store,game_root,compiler):
                 x,y=placement.take(rid);inst=copy.deepcopy(obj);position(inst,x,y,270,True);gits[rooms[rid][0]['id']][1]['Creature List'][1].append((4,inst[1]))
         return obj
     pbase=read(original['mc_crate1',2044])[1]
+    pack=copy.deepcopy(pbase)
+    for key in list(pack[1]):
+        if key.startswith('On'):put(pack,key,b'')
+    string(pack,'Tag','aw_cp_pack');string(pack,'TemplateResRef','aw_cp_pack',11);put(pack,'LocName',text('Companion pack'))
+    for key,value in dict(Appearance=13,Static=0,Useable=1,HasInventory=1,Plot=1,Locked=0,Lockable=1,TrapFlag=0).items():put(pack,key,value)
+    put(pack,'ItemList',[],15);entries['aw_cp_pack',2044]=write(b'UTP V3.2',pack)
     def place(ident,name,rid,appearance,usable=False,inventory=None,onused='',onopen='',description='',side=None,gate='',variables=None,decor_kind=None):
         obj=copy.deepcopy(pbase)
         for key in list(obj[1]):
@@ -334,7 +340,7 @@ def _build(p,store,game_root,compiler):
     ai=p['ai_conversations'];include='#include "aw_social"' if ai else '#include "aw_ambient"'
     scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());AWALoad();if(AWCEnabled()){AWCInit();SetMaxHenchmen('+str(p['companions']['party_limit'])+');}'+('SPInit();' if ai else '')+'}'
     scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'
-    scripts['aw_beat']=include+'\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);json doors=AWDoors();int di=0;while(di<JsonGetLength(doors)){json d=JsonArrayGet(doors,di);object obj=GetObjectByTag(AWText(d,"tag"));if(GetIsObjectValid(obj))SetLocked(obj,!AQDone(AWText(d,"gate")));di++;}object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
+    scripts['aw_beat']=include+'\n#include "aw_cp_cargo"\nvoid main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);json doors=AWDoors();int di=0;while(di<JsonGetLength(doors)){json d=JsonArrayGet(doors,di);object obj=GetObjectByTag(AWText(d,"tag"));if(GetIsObjectValid(obj))SetLocked(obj,!AQDone(AWText(d,"gate")));di++;}object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWXTick(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);'+('SPPublish(pc);SPPoll(pc);' if ai else '')+'pc=GetNextPC();}AWATick();'+('AWSTick(GetFirstPC());' if ai else '')+'}'
     if not ai:
         for name in ('aw_social','aw_ct_request','aw_ct_poll','aw_ct_cancel'):scripts.pop(name,None)
     if ai:

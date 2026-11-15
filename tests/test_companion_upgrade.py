@@ -45,22 +45,28 @@ class NativeUpgradeTests(unittest.TestCase):
   self.assertIn(b'aw_cp_talk',[r[1]['Script'][1] for r in dlg[1]['ReplyList'][1]])
   self.assertIn(b'BeginConversation("aw_cp_native",owner)',self.r['aw_cp_dialog',2009])
   ui=self.r['aw_cp_ui',2009]
-  self.assertIn(b'OpenInventory(body,pc)',ui)
+  self.assertIn(b'AWPOpen(pc,pack)',ui)
   self.assertIn(b'void AWCInventory(object pc,object body){AWCVisualInventory(pc,body);}',ui)
   self.assertIn(b'Inventory - text list (fallback)',ui)
   visual=ui[ui.index(b'void AWCVisualInventory('):ui.index(b'void AWCInventory(object')]
   self.assertIn(b'AWC_TRANSFER_PENDING',visual);self.assertIn(b'AWT_TRANSFER_PENDING',visual)
   primary=visual[:visual.index(b'void AWCSatchelGrid(')]
-  self.assertIn(b'AWCKind(body)=="party" || AWCKind(body)=="familiar"',primary)
-  self.assertNotIn(b'OpenInventory(pc,pc)',primary);self.assertIn(b'AWCInventoryList(pc,body)',primary)
+  self.assertIn(b'AWCPersistentPack(pc,AWCIdentity(pc,body)',primary)
+  self.assertNotIn(b'OpenInventory(pc,pc)',primary);self.assertIn(b'AWPOpen(pc,pack)',primary)
   self.assertIn(b'OpenInventory(pc,pc)',visual);self.assertIn(b'AWCSatchel(',visual)
   self.assertIn(b'AWCSatchelGrid(pc,body)',self.r['aw_cp_ui_evt',2009])
   self.assertIn(b'AWCInventoryList(pc,body)',self.r['aw_cp_ui_evt',2009])
  def test_inspect_and_transfer_use_native_contents_not_ui_open_or_cloning(self):
   self.assertNotIn(b'GetIsOpen(target)',self.r['aw_cp_tasks',2009])
   transfer=self.r['aw_ct_transfer',2009]
-  for text in (b'GetDistanceBetween(pc,chest)>3.0',b'matches!=1',b'GetItemStackSize(chosen)!=1',b'GetItemPossessor(item,TRUE)==dest',b'ActionTakeItem(chosen,chest)',b'ActionGiveItem(chosen,chest)'):self.assertIn(text,transfer)
-  self.assertNotIn(b'CopyItem(',transfer);self.assertNotIn(b'DestroyObject(',transfer)
+  for text in (b'matches!=1',b'GetItemStackSize(chosen)!=1',b'AWCPersistentPack(',b'AWXBegin('):self.assertIn(text,transfer)
+  self.assertNotIn(b'GetDistanceBetween(pc,chest)',transfer)
+  cargo=self.r['aw_cp_cargo',2009]
+  for guard in (b'GetItemPossessor(staged,TRUE)!=escrow',b'after==before+amount',b'if(GetIsObjectValid(original))',b'if(GetIsObjectValid(staged))',b'SetLocalInt(pc,"AWX_PHASE",-1)'):self.assertIn(guard,cargo)
+  pack=read(self.r['aw_cp_pack',2044])[1][1]
+  self.assertEqual(pack['HasInventory'][1],1);self.assertEqual(pack['ItemList'][1],[])
+  self.assertEqual(pack['Static'][1],0);self.assertEqual(pack['Useable'][1],1)
+  self.assertIn(b'AWXTick(pc);AWCTransferTick(pc);AWTTick(pc)',self.r['aw_beat',2009])
  def test_native_door_points_to_real_waypoint(self):
   doors=[];tags=set()
   for a in self.p['areas']:

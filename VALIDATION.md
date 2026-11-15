@@ -1,6 +1,18 @@
-# Module Studio 0.10.1 validation
+# Module Studio 0.10.2 validation
 
-## Current trial: familiar inventory and merchant conversation fix (0.10.1)
+## Current trial: companion packs and chest collection (0.10.2)
+
+Validation: the full suite passed **162 tests**. After final recovery-menu and launcher edits, the affected suites passed another **28 checks**. The installed build `bb0a32903a9765136def` contains **44 compiled scripts / 170 resources**. Launcher CheckOnly found the installed module and matching project; AI Player 0.10.2 restarted with its existing key available and bridge enabled. No NWN or Aurora playtest was performed by the agent.
+
+Start a **new game** in **The Silent Bell - Companion Pack Trial** (`rw_packfix.mod`) with AI Player 0.10.2. Older modules and saves are preserved.
+
+The failed potion errand was rejected by an owner-distance check even though the companion had reached the chest. Collection now requires the companion at the accessible chest, not the player. Whole items/stacks go to a persistent companion pack, using a save-local escrow and confirmed destination counts. Item properties and local variables are copied; object identity changes. Ambiguous delivery stops rather than retrying a possible duplicate. Inspection alone never takes items.
+
+**Companion pack - item grid** opens a normal placeable inventory through the player's native chest interaction. It is separate from equipped creature gear and legacy satchels. Use **!companions → Recover companion packs / old satchels** after dismissing a companion. Native merchant stores are unchanged.
+
+Playtest: summon Agathos; open its pack; drag an ordinary item in and out. Stand away from the healing chest, ask Agathos to inspect it, then ask it to collect the entire healing-supplies stack. After the confirmed report, check the chest is empty and the pack contains exactly three supplies. Save/reload and dismiss/resummon to check recovery. Check Bram's shop still opens. GUI interaction, actual transfers and save/reload need the user's in-game verification; compilation alone does not prove them.
+
+## Previous trial: familiar inventory and merchant conversation fix (0.10.1)
 
 Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Familiar and Merchant Fix** (`rw_tradefix.mod`). Existing modules/saves are preserved. The backend merchant correction also applies to existing rw_trade saves; the native familiar menu changes require a new game in this trial.
 
