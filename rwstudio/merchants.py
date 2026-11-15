@@ -12,11 +12,11 @@ CATALOG={
  'small_shield':dict(name='Small shield',resref='nw_ashsw001',price=3),
  'healing_potion':dict(name='Potion of Cure Light Wounds',resref='nw_it_mpotion001',price=50),
 }
-SCHEMA=_obj({'enabled':B,'haggle_enabled':B,'haggle_chance':dict(I,minimum=0,maximum=100),'discount_percent':dict(I,minimum=0,maximum=10),'offer_seconds':dict(I,minimum=60,maximum=3600),
+SCHEMA=_obj({'interface':enum('native','list'),'enabled':B,'haggle_enabled':B,'haggle_chance':dict(I,minimum=0,maximum=100),'discount_percent':dict(I,minimum=0,maximum=10),'offer_seconds':dict(I,minimum=60,maximum=3600),
              'stock':dict(array(_obj({'item':enum(*CATALOG),'quantity':dict(I,minimum=1,maximum=20),'price':dict(I,minimum=1,maximum=100000)})),maxItems=8)})
 
 def defaults():
-    return dict(enabled=False,haggle_enabled=True,haggle_chance=50,discount_percent=5,offer_seconds=600,stock=[])
+    return dict(interface='native',enabled=False,haggle_enabled=True,haggle_chance=50,discount_percent=5,offer_seconds=600,stock=[])
 
 def validate(npc):
     m=npc['merchant'];seen=set()
@@ -33,6 +33,15 @@ def context(npc,snapshot):
     observed=snapshot.get('merchant',{})
     if not isinstance(observed,dict) or observed.get('npc')!=npc['id'] or observed.get('available')!=1:
         return dict(available=False,items=[])
+    if observed.get('price_mode')=='native':
+        if npc['merchant'].get('interface')!='native':return dict(available=False,items=[])
+        grouped={}
+        for item in observed.get('items',[])[:32]:
+            if not isinstance(item,dict):continue
+            name=item.get('name');qty=item.get('quantity')
+            if not isinstance(name,str) or not 1<=len(name)<=100 or type(qty) is not int or not 0<qty<=1000000:continue
+            grouped[name]=grouped.get(name,0)+qty
+        return dict(available=True,price_mode='native',items=[dict(name=n,quantity=q) for n,q in grouped.items()],more_items=observed.get('more_items')==1,haggle_available=observed.get('haggle_available')==1)
     items=[]
     for item in observed.get('items',[])[:8]:
         if not isinstance(item,dict) or item.get('item') not in CATALOG:continue
@@ -44,10 +53,14 @@ def context(npc,snapshot):
 PRICE_QUESTION=re.compile(r'\b(how much|prices?|costs?|wares|stock|sell|selling|available)\b',re.I)
 
 def ground_quote(reply,message,shop):
-    if not PRICE_QUESTION.search(message):return reply
+    if not PRICE_QUESTION.search(message) and not (shop.get('price_mode')=='native' and re.search(r'\d+\s*(gold|gp|coins?)',reply,re.I)):return reply
     if not shop['available']:return 'Please open my goods panel so we can check my current stock and prices.'
     items=[i for i in shop['items'] if i['quantity']>0]
     if not items:return 'My stock is sold out for now.'
+    if shop.get('price_mode')=='native':
+        goods='; '.join(f'{i["name"]} ({i["quantity"]} available)' for i in items[:8])
+        more=' There are more goods to browse.' if shop.get('more_items') or len(items)>8 else ''
+        return 'On my shelves: '+goods+'.'+more+' Browse my goods for your exact buying and selling prices before confirming a trade.'
     return 'My current stock: '+ '; '.join(f'{i["name"]}: {i["price"]} gold each ({i["quantity"]} available)' for i in items)+'. Confirm any purchase in the goods panel.'
 
 def example():
@@ -55,6 +68,6 @@ def example():
     p=seed();p.update(id='ai_market',module_name='rw_ai_market',title='The Silent Bell — AI & Merchant Trial',ai_conversations=True)
     bram=npc('bram','Bram Ironstock','guest_hall')
     bram.update(appearance='innkeeper',role='Travelling equipment merchant',personality='Dry wit, honest prices, and a soft spot for nervous adventurers.',knowledge='The abbey elder needs help. Rowan scouts the old road. My goods panel shows my real current stock and prices.',motivation='Earn a fair living and help travelers survive.',greeting='Welcome. Ask about my goods or browse them from this menu. A fair offer costs nothing to ask for.')
-    bram['merchant']=defaults();bram['merchant'].update(enabled=True,stock=[dict(item=k,quantity=q,price=CATALOG[k]['price']) for k,q in [('dagger',2),('shortsword',2),('shortbow',1),('small_shield',2),('healing_potion',4)]])
+    bram['merchant']=defaults();bram['merchant'].update(interface='list',enabled=True,stock=[dict(item=k,quantity=q,price=CATALOG[k]['price']) for k,q in [('dagger',2),('shortsword',2),('shortbow',1),('small_shield',2),('healing_potion',4)]])
     p['npcs'].append(bram)
     return validate_project(p,True)

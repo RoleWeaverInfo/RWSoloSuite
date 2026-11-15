@@ -104,6 +104,7 @@ def validate(p,complete=False):
     if isinstance(p,dict):
         for n in (p.get('npcs',[]) if isinstance(p.get('npcs'),list) else []):
             if isinstance(n,dict):
+                if isinstance(n.get('merchant'),dict):n['merchant'].setdefault('interface','list')
                 if isinstance(n.get('companion'),dict):
                     n['companion'].setdefault('inspect_containers',False);n['companion'].setdefault('social_visits',False)
                 if isinstance(n.get('behavior'),dict):n['behavior'].setdefault('accept_visits',False)

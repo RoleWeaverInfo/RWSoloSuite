@@ -130,15 +130,15 @@ def _build(p,store,game_root,compiler):
     shops=[];merchant_inventory={}
     item_table=game.get('baseitems',2017).decode('latin1').splitlines()
     item_header=next(line.split() for line in item_table if 'InvSlotWidth' in line and 'InvSlotHeight' in line)
-    item_sizes={}
+    item_sizes={};item_panels={}
     for line in item_table:
         parts=line.split()
         if parts and parts[0].isdigit():
             values=dict(zip(item_header,parts[1:]))
-            if values.get('InvSlotWidth','').isdigit() and values.get('InvSlotHeight','').isdigit():item_sizes[int(parts[0])]=(int(values['InvSlotWidth']),int(values['InvSlotHeight']))
+            if values.get('InvSlotWidth','').isdigit() and values.get('InvSlotHeight','').isdigit():item_sizes[int(parts[0])]=(int(values['InvSlotWidth']),int(values['InvSlotHeight']));item_panels[int(parts[0])]=int(values['StorePanel']) if values.get('StorePanel','').isdigit() else 1
     for ni,n in enumerate(p['npcs']):
         if not n['merchant']['enabled']:continue
-        shop=dict(n['merchant'],id=n['id']);stock=[];inventory=[];occupied=set()
+        shop=dict(n['merchant'],id=n['id']);stock=[];inventory=[];occupied=set();native_stock={i:[] for i in range(5)}
         for si,s in enumerate(shop['stock']):
             good=GOODS[s['item']];ref=f'aw_s_{ni}_{si}'
             obj=read(game.get(good['resref'],2025))[1];string(obj,'Tag',ref);string(obj,'TemplateResRef',ref,11)
@@ -156,7 +156,19 @@ def _build(p,store,game_root,compiler):
                 if position_found is None:raise ValueError(n['name']+': stock cannot fit in the merchant inventory')
                 x,y,cells=position_found;occupied.update(cells)
                 inventory.append(node(len(inventory),InventoryRes=(11,ref.encode()),Repos_PosX=(2,x),Repos_Posy=(2,y)))
-        shop['stock']=stock;shops.append(shop);merchant_inventory[n['id']]=inventory
+                panel=item_panels[obj[1]['BaseItem'][1]];native_stock[panel].append(node(len(native_stock[panel]),InventoryRes=(11,ref.encode()),Repos_PosX=(2,x),Repos_Posy=(2,y),Infinite=(0,0)))
+        shop['stock']=stock
+        if shop['interface']=='native':
+            ref='aw_store_'+str(ni);shop['store']=ref
+            obj=read(game.get('nw_lostitems',2051))[1];string(obj,'ResRef',ref,11);string(obj,'Tag',ref);put(obj,'LocName',text(n['name']+' - Goods'))
+            put(obj,'MarkUp',100,5);put(obj,'MarkDown',35,5);put(obj,'BlackMarket',0,0);string(obj,'OnOpenStore','',11)
+            put(obj,'StoreList',[node(i,ItemList=(15,native_stock[i])) for i in range(5)],15)
+            entries[ref,2051]=write(b'UTM V3.2',obj)
+            x,y=center(rooms[n['room']][1]);position(obj,x,y,creature=True)
+            gits[rooms[n['room']][0]['id']][1]['StoreList'][1].append((11,obj[1]))
+            merchant_inventory[n['id']]=[]
+        else:merchant_inventory[n['id']]=inventory
+        shops.append(shop)
     def creature(ident,name,base_name,rid=None,appearance=None,enemy=False,enc=None):
         obj=read(game.get(base_name,2027))[1];string(obj,'Tag',ident);string(obj,'TemplateResRef',ident,11);put(obj,'FirstName',text(name));put(obj,'LastName',text(''))
         recruitable=not enemy and npcs[ident]['companion']['recruitable']

@@ -5,11 +5,17 @@
 json AWMShop(object actor){return AWFind(AWShops(),GetTag(actor));}
 int AWMClock(){return GetLocalInt(GetModule(),"AWM_CLOCK");}
 int AWMNear(object pc,object actor){return GetIsPC(pc) && GetIsObjectValid(actor) && !GetIsDead(pc) && !GetIsDead(actor) && !GetIsInCombat(pc) && !GetIsInCombat(actor) && !GetIsDMPossessed(actor) && GetArea(pc)==GetArea(actor) && GetDistanceBetween(pc,actor)<=6.0 && LineOfSightObject(pc,actor);}
-object AWMItem(object actor,string tag){object item=GetFirstItemInInventory(actor);while(GetIsObjectValid(item)){if(GetTag(item)==tag && !GetLocalInt(item,"AWM_SOLD"))return item;item=GetNextItemInInventory(actor);}return OBJECT_INVALID;}
-int AWMQuantity(object actor,string tag){int qty=0;object item=GetFirstItemInInventory(actor);while(GetIsObjectValid(item)){if(GetTag(item)==tag && !GetLocalInt(item,"AWM_SOLD"))qty+=GetItemStackSize(item);item=GetNextItemInInventory(actor);}return qty;}
+int AWMNative(object actor){return AWText(AWMShop(actor),"interface")=="native";}
+object AWMStore(object actor){string ref=AWText(AWMShop(actor),"store");if(ref=="")return OBJECT_INVALID;object store=GetObjectByTag(ref);if(!GetIsObjectValid(store) || GetObjectType(store)!=OBJECT_TYPE_STORE || GetResRef(store)!=ref || GetArea(store)!=GetArea(actor))return OBJECT_INVALID;return store;}
+object AWMHolder(object actor){if(AWMNative(actor))return AWMStore(actor);return actor;}
+json AWMNativeContext(object pc,object actor){json out=JsonObject();object store=AWMStore(actor);int valid=GetIsObjectValid(store);out=JsonObjectSet(out,"npc",JsonString(GetTag(actor)));out=JsonObjectSet(out,"available",JsonInt(valid && AWMNear(pc,actor)));out=JsonObjectSet(out,"store_missing",JsonInt(!valid));out=JsonObjectSet(out,"price_mode",JsonString("native"));out=JsonObjectSet(out,"haggle_available",JsonInt(AWInt(AWMShop(actor),"haggle_enabled")));
+ json items=JsonArray();object item=GetFirstItemInInventory(store);int count=0;while(GetIsObjectValid(item) && count<32){json row=JsonObject();row=JsonObjectSet(row,"name",JsonString(GetIdentified(item)?GetStringLeft(GetName(item),100):"Unidentified item"));row=JsonObjectSet(row,"quantity",JsonInt(GetItemStackSize(item)));items=JsonArrayInsert(items,row);item=GetNextItemInInventory(store);count++;}
+ out=JsonObjectSet(out,"items",items);return JsonObjectSet(out,"more_items",JsonInt(GetIsObjectValid(item)));}
+object AWMItem(object actor,string tag){object holder=AWMHolder(actor);object item=GetFirstItemInInventory(holder);while(GetIsObjectValid(item)){if(GetTag(item)==tag && !GetLocalInt(item,"AWM_SOLD"))return item;item=GetNextItemInInventory(holder);}return OBJECT_INVALID;}
+int AWMQuantity(object actor,string tag){int qty=0;object holder=AWMHolder(actor);object item=GetFirstItemInInventory(holder);while(GetIsObjectValid(item)){if(GetTag(item)==tag && !GetLocalInt(item,"AWM_SOLD"))qty+=GetItemStackSize(item);item=GetNextItemInInventory(holder);}return qty;}
 int AWMDiscount(object pc,object actor){string id=GetTag(actor);if(GetLocalInt(pc,"AWM_EXP_"+id)<=AWMClock())return 0;return GetLocalInt(pc,"AWM_DISC_"+id);}
 int AWMPrice(object pc,object actor,json sku){int price=AWInt(sku,"price")*(100-AWMDiscount(pc,actor))/100;if(price<1)price=1;return price;}
-json AWMContext(object pc,object actor){json shop=AWMShop(actor);json out=JsonObject();if(AWText(shop,"id")=="")return out;
+json AWMContext(object pc,object actor){if(AWMNative(actor))return AWMNativeContext(pc,actor);json shop=AWMShop(actor);json out=JsonObject();if(AWText(shop,"id")=="")return out;
  out=JsonObjectSet(out,"npc",JsonString(GetTag(actor)));out=JsonObjectSet(out,"available",JsonInt(AWMNear(pc,actor)));json items=JsonArray();json stock=JsonObjectGet(shop,"stock");int i=0;
  while(i<JsonGetLength(stock)){json sku=JsonArrayGet(stock,i);json row=JsonObject();row=JsonObjectSet(row,"item",JsonString(AWText(sku,"item")));row=JsonObjectSet(row,"quantity",JsonInt(AWMQuantity(actor,AWText(sku,"tag"))));row=JsonObjectSet(row,"price",JsonInt(AWMPrice(pc,actor,sku)));items=JsonArrayInsert(items,row);i++;}
  out=JsonObjectSet(out,"items",items);out=JsonObjectSet(out,"haggle_available",JsonInt(AWInt(shop,"haggle_enabled")));return out;}
@@ -21,7 +27,11 @@ void AWMHaggle(object pc,object actor,json shop){string id=GetTag(actor);if(!AWI
  SetLocalInt(pc,"AWM_EXP_"+id,AWMClock()+AWInt(shop,"offer_seconds"));SetLocalInt(pc,"AWM_DISC_"+id,discount);
  SendMessageToPC(pc,"Haggle roll "+IntToString(roll)+" / "+IntToString(AWInt(shop,"haggle_chance"))+": "+IntToString(discount)+"% discount. This result lasts "+IntToString(AWInt(shop,"offer_seconds"))+" active game seconds.");}
 void AWMOpen(object pc,object actor,int haggle=FALSE){json shop=AWMShop(actor);if(AWText(shop,"id")=="" || !AWMNear(pc,actor)){SendMessageToPC(pc,"Stand within six metres of the merchant, visible and out of combat.");return;}
- AWMClose(pc);if(haggle)AWMHaggle(pc,actor,shop);
+ AWMClose(pc);
+ if(AWMNative(actor)){object store=AWMStore(actor);if(!GetIsObjectValid(store)){SendMessageToPC(pc,"This merchant's store is unavailable. No stock was recreated; reopen the correct module.");return;}
+ if(!GetLocalInt(store,"AWM_INITIALIZED")){SetStoreGold(store,-1);SetStoreMaxBuyPrice(store,5000);SetStoreIdentifyCost(store,100);SetLocalInt(store,"AWM_INITIALIZED",TRUE);}
+ if(haggle)AWMHaggle(pc,actor,shop);OpenStore(store,pc,-AWMDiscount(pc,actor),0);return;}
+ if(haggle)AWMHaggle(pc,actor,shop);
  SetLocalString(pc,"AWM_SESSION",GetLocalString(GetModule(),"AWM_SESSION"));
  int gen=GetLocalInt(pc,"AWM_GEN")+1;SetLocalInt(pc,"AWM_GEN",gen);string prefix=IntToString(gen)+"_";
  SetLocalObject(pc,"AWM_ACTOR",actor);SetLocalInt(pc,"AWM_PANEL_EXP",AWMClock()+120);
@@ -36,7 +46,7 @@ void AWMOpen(object pc,object actor,int haggle=FALSE){json shop=AWMShop(actor);i
  buttons=JsonArrayInsert(buttons,AWUIId(AWUIButton(JsonString("Close")),"close_"+prefix));rows=JsonArrayInsert(rows,AWUIRow(buttons));
  json window=AWUIWindow(AWUIScroll(AWUIStack(rows,550.0)),JsonString("Merchant goods - scroll for all stock"),AWUIRect(-1.0,-1.0,620.0,520.0),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE),JsonBool(FALSE),JsonBool(TRUE));
  int token=NuiCreate(pc,window,"aw_shop_"+IntToString(gen),"aw_shop_evt");SetLocalInt(pc,"AWM_TOKEN",token);if(!token){DeleteLocalObject(pc,"AWM_ACTOR");SendMessageToPC(pc,"The goods panel could not open. Try again after closing another window.");}}
-void AWMBuy(object pc,object actor,int index){if(!AWMNear(pc,actor) || GetLocalInt(pc,"AWM_PANEL_EXP")<=AWMClock()){AWMClose(pc);SendMessageToPC(pc,"This shop offer expired or you moved away. Reopen the goods panel.");return;}
+void AWMBuy(object pc,object actor,int index){if(AWMNative(actor))return;if(!AWMNear(pc,actor) || GetLocalInt(pc,"AWM_PANEL_EXP")<=AWMClock()){AWMClose(pc);SendMessageToPC(pc,"This shop offer expired or you moved away. Reopen the goods panel.");return;}
  json stock=JsonObjectGet(AWMShop(actor),"stock");if(index<0 || index>=JsonGetLength(stock))return;json sku=JsonArrayGet(stock,index);int price=AWMPrice(pc,actor,sku);
  if(GetLocalInt(pc,"AWM_QUOTE_"+IntToString(index))!=price){SendMessageToPC(pc,"The price changed. Review the refreshed panel before buying.");AWMOpen(pc,actor);return;}
  object item=AWMItem(actor,AWText(sku,"tag"));if(!GetIsObjectValid(item)){SendMessageToPC(pc,"That item is sold out.");AWMOpen(pc,actor);return;}

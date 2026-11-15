@@ -1,6 +1,19 @@
-# Module Studio 0.9.2 - reported playtest fixes
+# Module Studio 0.10.0 - reported playtest fixes
 
-## Current trial: native visual companion inventory (0.9.2)
+## Current trial: visual companion storage and merchant trading (0.10.0)
+
+Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Visual Trading Trial** (`rw_trade.mod`). This module needs AI Player 0.10.0+ for live merchant conversation. Old modules and saved games are preserved; start a new game to receive the new store resources.
+
+Companions retain **Inventory - item grid**, **Satchel - item grid**, and the text-list fallback. Speak to Bram and choose **Browse goods**, or ask him through AI chat, to open NWN's native store with item icons and normal buy/sell controls. Use its item drag-and-drop and trade confirmation controls. NWN handles the original stock, player belongings and gold. Test one purchase and one sale, reopen the store, and save/reload to check persistence.
+
+Native store prices use NWN item values and Appraise. Haggling supplies a bounded discount to the native store opening; its displayed prices remain authoritative. A discount applies for that open window; reopening checks the offer timer. AI dialogue lists observed store goods, including player buybacks, but does not invent an exact final price. Stock is finite with no automatic replenishment. These stores have unlimited buying funds, pay at most 5,000 gold per item, and charge 100 gold for native identification; NWN enforces its normal eligibility rules.
+
+In Module Studio, **Characters → Merchant shop → Shop interface** selects **Native visual store - buy and sell** or **Text list - fixed prices, buy only**. New merchant definitions default to native. Existing projects without this field remain list shops to preserve authored prices. The per-item price fields apply only to list shops; native pricing does not silently promise those fixed prices. Switch an existing merchant to native and rebuild to use visual trading.
+
+Validation: **160 tests passed**, including native-store resources, finite quantities without NPC duplicates, guarded custom purchase paths, observed buybacks without fabricated prices, and offline native-store compilation. **43 native scripts compiled**. GUI interaction and actual transactions still need the user's in-game playtest; the agent has not launched NWN or Aurora.
+
+
+## Previous trial: native visual companion inventory (0.9.2)
 
 Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Visual Inventory Trial** (`rw_inventory.mod`). Old saves retain their previous inventory scripts. Existing modules remain intact.
 
