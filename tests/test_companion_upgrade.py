@@ -57,4 +57,6 @@ class NativeUpgradeTests(unittest.TestCase):
    doors+=git[1]['Door List'][1]
    tags|={w[1]['Tag'][1] for w in git[1]['WaypointList'][1]}
   self.assertGreaterEqual(len(doors),1)
-  for door in doors:self.assertIn(door[1]['LinkedTo'][1],tags)
+  for door in doors:
+   if door[1]['LinkedToFlags'][1]:self.assertIn(door[1]['LinkedTo'][1],tags)
+   else:self.assertEqual(door[1]['LinkedTo'][1],b'')

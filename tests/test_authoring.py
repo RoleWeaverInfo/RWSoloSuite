@@ -123,7 +123,7 @@ class NativeAdventureTests(unittest.TestCase):
             for trigger in git[1]['TriggerList'][1]:
                 self.assertEqual(trigger[1]['ScriptOnEnter'][1],b'aw_exit');self.assertEqual(len(trigger[1]['Geometry'][1]),4)
                 targets.extend(v[1]['Value'][1] for v in trigger[1]['VarTable'][1] if v[1]['Name'][1]==b'AW_TARGET')
-        self.assertEqual(len(targets),sum(2 if c['two_way'] else 1 for c in self.p['connections']));self.assertTrue(all(t in markers for t in targets))
+        self.assertEqual(len(targets),sum(2 if c['two_way'] else 1 for c in self.p['connections'] if c['kind']=='exit'));self.assertTrue(all(t in markers for t in targets))
     def test_branch_choices_compile_into_native_conversation(self):
         dlg=read(self.resources['ilyra',2029])[1]
         scripts=[r[1]['Script'][1] for r in dlg[1]['ReplyList'][1]]

@@ -80,7 +80,7 @@ class NativeFixTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):cls.temp.cleanup()
 
-    def test_every_connection_has_usable_markers_and_real_arrival_waypoints(self):
+    def test_only_area_transitions_have_markers_with_real_arrival_waypoints(self):
         markers={};waypoints=set()
         for a in self.p['areas']:
             git=read(self.entries[a['id'],2023])[1][1]
@@ -88,20 +88,22 @@ class NativeFixTests(unittest.TestCase):
             for obj in git['Placeable List'][1]:
                 tag=obj[1]['Tag'][1].decode()
                 if tag.startswith('aw_port_'):markers[tag]=obj[1]
-        self.assertEqual(len(markers),sum(2 if c['two_way'] else 1 for c in self.p['connections']))
+        self.assertEqual(len(markers),sum(2 if c['two_way'] else 1 for c in self.p['connections'] if c['kind']=='exit'))
         for obj in markers.values():
             self.assertEqual(obj['Useable'][1],1);self.assertEqual(obj['Static'][1],0)
             self.assertEqual(obj['OnUsed'][1],b'aw_exit')
             target=next(v[1]['Value'][1].decode() for v in obj['VarTable'][1] if v[1]['Name'][1]==b'AW_TARGET')
             self.assertIn(target,waypoints)
 
-    def test_corridor_cells_are_unbroken_full_floor_tiles(self):
+    def test_corridors_have_contiguous_floor_and_native_doorway_tiles(self):
         layouts=plan(self.p)
         for a in self.p['areas']:
             tiles=read(self.entries[a['id'],2012])[1][1]['Tile_List'][1]
             for corridor in layouts[a['id']]['corridors']:
                 cells=corridor['cells']
-                for x,y in cells:self.assertEqual(tiles[y*a['width']+x][1]['Tile_ID'][1],TILES[a['type']][1])
+                for x,y in cells:
+                    expected=(37 if a['type']=='castle' else 6) if any(tuple(d['outside'])==(x,y) for d in layouts[a['id']]['doorways']) else TILES[a['type']][1]
+                    self.assertEqual(tiles[y*a['width']+x][1]['Tile_ID'][1],expected)
                 for left,right in zip(cells,cells[1:]):self.assertEqual(abs(left[0]-right[0])+abs(left[1]-right[1]),1)
 
     def test_window_contract_has_all_installed_native_fields(self):

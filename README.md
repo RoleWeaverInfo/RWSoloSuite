@@ -1,6 +1,15 @@
-# RWSoloSuite — Role Weaver Module Studio 0.9.0
+# RWSoloSuite — Role Weaver Module Studio 0.9.1
 
-## Current trial: companion and passage update (0.9)
+## Current trial: physical room doorways (0.9.1)
+
+Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Physical Doorway Trial** (`rw_doorways.mod`). Start a new game; older saves retain their old maps. All previous modules are preserved.
+
+Interior corridor connections now have actual paired stock doorway tiles and native doors that open onto continuous walkable terrain. There are no corridor teleport signs or corridor transition zones. Outdoor connections remain trails; separate areas retain their area transitions. Studio's preview marks each physical doorway at its exported position. Door frames in compact rooms are placed to avoid overlapping, and furniture/actors keep clear of their entrances. Existing AI conversation, companion chest handoff and visual inventory features are included.
+
+Validation: **154 tests passed**, **43 native scripts compiled**, and real installed walkmesh triangles checked through every interior doorway in this compact trial. The checks also verify solid wall geometry beside the openings. This is not an in-game playtest: please test walking through the doors with companions, including the vault's adjacent exits.
+
+
+## Previous trial: companion and passage update (0.9)
 
 Start a **new game** in **The Silent Bell - Companion and Passage Trial** (`rw_companion.mod`) through `Play Adventure.cmd`. Exit NWN and restart an older AI Player first; this trial requires AI Player 0.9.0. Old saves keep their embedded dialogue and area resources.
 

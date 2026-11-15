@@ -41,13 +41,14 @@ def json_function(name,values):
     return '\n'.join(lines+['return a;}'])
 
 class Placement:
-    def __init__(self,rooms):self.rooms=rooms;self.used={r:[] for r in rooms};self.decor={r:[] for r in rooms};self.footprints={r:[] for r in rooms}
+    def __init__(self,rooms,doorways=()):self.doorways={rid:[(d["x"],d["y"]) for d in doorways if d["room"]==rid] for rid in rooms};self.rooms=rooms;self.used={r:[] for r in rooms};self.decor={r:[] for r in rooms};self.footprints={r:[] for r in rooms}
     def take(self,rid,side=None):
         r=self.rooms[rid][1];cx,cy=center(r);candidates=[]
         for y in range(r['y']*10+5,(r['y']+r['height'])*10-3,5):
             for x in range(r['x']*10+5,(r['x']+r['width'])*10-3,5):
                 # Keep both central travel lanes clear, including start/arrival points.
                 if abs(x-cx)<3 or abs(y-cy)<3:continue
+                if any(math.hypot(x-dx,y-dy)<5 for dx,dy in self.doorways[rid]):continue
                 score=abs(x-cx)+abs(y-cy)
                 if side in ('north','south','east','west'):
                     tx,ty=exit_point(r,side,5);score=abs(x-tx)+abs(y-ty)
@@ -63,6 +64,7 @@ class Placement:
             for x in range(r['x']*10+3,(r['x']+r['width'])*10-2,2):
                 # The entire footprint stays out of the six-metre travel cross.
                 if abs(x-cx)<3+radius or abs(y-cy)<3+radius:continue
+                if any(math.hypot(x-dx,y-dy)<3+radius for dx,dy in self.doorways[rid]):continue
                 if any(math.hypot(x-ox,y-oy)<radius+2 for ox,oy in self.used[rid]):continue
                 if any(math.hypot(x-ox,y-oy)<radius+other+.2 for ox,oy,other in self.footprints[rid]):continue
                 tx,ty=exit_point(r,side,3) if side!='center' else (cx,cy)
@@ -90,7 +92,7 @@ def _build(p,store,game_root,compiler):
     if (destination/'manifest.json').exists():
         result=json.loads((destination/'manifest.json').read_text(encoding='utf-8'));result['path']=str(destination/result['module']);refresh_share_zip(destination,result);return result
     original={(n,k):b for n,k,b in resources(base)};entries=OrderedDict();entries['repute',2038]=original['repute',2038]
-    game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms)
+    game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms,[d for layout in layouts.values() for d in layout.get('doorways',[])])
     escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
     entries['aw_escrow',2051]=write(b'UTM V3.2',escrow)
     satchel=read(game.get('nw_it_contain001',2025))[1];string(satchel,'Tag','aw_satchel');string(satchel,'TemplateResRef','aw_satchel',11);put(satchel,'LocalizedName',text('Companion satchel'));put(satchel,'PropertiesList',[],15);put(satchel,'Plot',1);put(satchel,'Identified',1);put(satchel,'Cost',0);put(satchel,'AddCost',0);put(satchel,'StackSize',1)
@@ -259,7 +261,17 @@ def _build(p,store,game_root,compiler):
                     replies.append((option,[],act))
                 replies.append(('Leave it for now.',[]));entries[e['id'],2029]=write(b'DLG V3.2',conversation([(e['prompt'],list(range(len(replies))))],replies))
     native_doors=[]
+    for area in p['areas']:
+        for di,opening in enumerate(layouts[area['id']].get('doorways',[])):
+            links=[c for c in p['connections'] if c['kind']=='corridor' and ((c['from_room']==opening['room'] and c['from_side']==opening['side']) or (c['to_room']==opening['room'] and c['to_side']==opening['side']))]
+            gates={c['requires_quest'] for c in links}
+            if len(gates)>1:raise ValueError('Shared doorway has conflicting quest requirements')
+            gate=next(iter(gates),'');tag='aw_walk_'+str(list(areas).index(area['id']))+'_'+str(di)
+            d=door(tag,'Doorway', '',opening['x'],opening['y'],{'east':270,'north':0,'west':90,'south':180}[opening['side']])
+            put(d,'LinkedToFlags',0,0);put(d,'Locked',int(bool(gate)),0);put(d,'Lockable',int(bool(gate)),0);put(d,'KeyRequired',int(bool(gate)),0)
+            local(d,{'AW_GATE':gate});gits[area['id']][1]['Door List'][1].append(d);native_doors.append(dict(tag=tag,gate=gate))
     for ci,c in enumerate(p['connections']):
+        if c['kind']=='corridor':continue
         legs=[(c['from_room'],c['from_side'],c['to_room'],c['to_side'])]
         if c['two_way']:legs.append((c['to_room'],c['to_side'],c['from_room'],c['from_side']))
         for li,(a,side,b,bside) in enumerate(legs):

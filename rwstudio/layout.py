@@ -45,10 +45,45 @@ def route(start,end,blocked,w,h):
             if ng<cost.get(nxt,10**9):cost[nxt]=ng;came[nxt]=cur;heapq.heappush(queue,(ng+abs(nxt[0]-end[0])+abs(nxt[1]-end[1]),ng,nxt))
     raise ValueError('No corridor fits between the chosen exits. Move the rooms, change exit sides, or use an exit transition.')
 
+def doorway_plan(area,connections):
+    """Choose stock doorway slots without letting adjacent frames overlap."""
+    if area['type']=='forest':return {}
+    rooms={r['id']:r for r in area['rooms']};slots=[]
+    for c in connections:
+        if c['kind']!='corridor' or c['from_room'] not in rooms or c['to_room'] not in rooms:continue
+        for rid,side in ((c['from_room'],c['from_side']),(c['to_room'],c['to_side'])):
+            r=rooms[rid];candidates=[];vertical=side in ('east','west');length=r['height'] if vertical else r['width']
+            for offset in sorted(range(length),key=lambda n:abs(n-length//2)):
+                px,py=port(r,side)
+                if vertical:py=r['y']+offset
+                else:px=r['x']+offset
+                vx,vy={'east':(1,0),'west':(-1,0),'north':(0,1),'south':(0,-1)}[side];ix,iy=px-vx,py-vy
+                plane=px if side=='east' else px+1 if side=='west' else py if side=='north' else py+1
+                removed={(plane,py),(plane,py+1)} if vertical else {(px,plane),(px+1,plane)}
+                required={(x+dx,y+dy) for x,y in ((ix,iy),(px,py)) for dx,dy in ((0,0),(0,1),(1,0),(1,1))}-removed
+                d=dict(room=rid,side=side,inside=(ix,iy),outside=(px,py),x=(ix+px+1)*5,y=(iy+py+1)*5)
+                candidates.append((d,removed,required))
+            slots.append(((rid,side),candidates))
+    attempts=0
+    def choose(index,removed,required,chosen):
+        nonlocal attempts
+        attempts+=1
+        if attempts>10000:return None
+        if index==len(slots):return chosen
+        key,candidates=slots[index]
+        for door,cut,keep in candidates:
+            if cut&required or keep&removed:continue
+            found=choose(index+1,removed|cut,required|keep,chosen|{key:door})
+            if found is not None:return found
+        return None
+    result=choose(0,set(),set(),{})
+    if result is None:raise ValueError(area['name']+': not enough wall space for these doorways; enlarge a room or change exit sides')
+    return result
+
 def plan(p):
     result={}
     for a in p['areas']:
-        rooms={r['id']:r for r in a['rooms']};floor=set();paths=[]
+        rooms={r['id']:r for r in a['rooms']};floor=set();paths=[];doorways=doorway_plan(a,p['connections'])
         for r in a['rooms']:
             for other in a['rooms']:
                 if r['id']>=other['id']:continue
@@ -58,7 +93,7 @@ def plan(p):
         room_floor=set(floor)
         for c in p['connections']:
             if c['kind']!='corridor' or c['from_room'] not in rooms or c['to_room'] not in rooms:continue
-            r1=rooms[c['from_room']];r2=rooms[c['to_room']];start=port(r1,c['from_side']);end=port(r2,c['to_side']);blocked=set(room_floor)
+            r1=rooms[c['from_room']];r2=rooms[c['to_room']];start=doorways.get((r1['id'],c['from_side']),{}).get('outside',port(r1,c['from_side']));end=doorways.get((r2['id'],c['to_side']),{}).get('outside',port(r2,c['to_side']));blocked=set(room_floor)
             for r in a['rooms']:
                 if r['id'] not in (r1['id'],r2['id']):
                     blocked|={(x,y) for x in range(r['x']-1,r['x']+r['width']+1) for y in range(r['y']-1,r['y']+r['height']+1)}
@@ -69,7 +104,18 @@ def plan(p):
             path=route(start,end,blocked,a['width'],a['height']);floor.update(path)
             paths.append(dict(id=c['id'],from_room=r1['id'],to_room=r2['id'],cells=path))
         vertices={(x+dx,y+dy) for x,y in floor for dx,dy in ((0,0),(1,0),(0,1),(1,1))}
-        result[a['id']]={'width':a['width'],'height':a['height'],'floor':sorted(floor),'vertices':sorted(vertices),'corridors':paths,'tileset':TILESETS[a['type']]}
+        # Two compatible stock doorway tiles face each other across the room
+        # boundary. Removing their shared terrain vertices creates the wall;
+        # the doorway models then supply its actual walkable opening.
+        for d in doorways.values():
+            x,y=d['outside']
+            if d['side'] in ('east','west'):
+                plane=x if d['side']=='east' else x+1
+                vertices.discard((plane,y));vertices.discard((plane,y+1))
+            else:
+                plane=y if d['side']=='north' else y+1
+                vertices.discard((x,plane));vertices.discard((x+1,plane))
+        result[a['id']]={'doorways':list(doorways.values()),'width':a['width'],'height':a['height'],'floor':sorted(floor),'vertices':sorted(vertices),'corridors':paths,'tileset':TILESETS[a['type']]}
     return result
 
 def native_tiles(template,area,layout):
@@ -86,4 +132,12 @@ def native_tiles(template,area,layout):
                 if found is not None:break
             if found is None:raise ValueError('No stock terrain tile matches the requested room edge')
             result.append(found)
+    for d in layout.get('doorways',[]):
+        rotation={'east':0,'north':1,'west':2,'south':3}[d['side']]
+        for cell,ori in ((d['inside'],rotation),(d['outside'],(rotation+2)%4)):
+            x,y=cell;index=y*area['width']+x;old=result[index]
+            expected=29 if area['type']=='castle' else 1
+            if old[1]['Tile_ID'][1]!=expected or old[1]['Tile_Orientation'][1]!=ori:
+                raise ValueError(area['name']+': doorway overlaps another opening; move the rooms or select a different exit side')
+            result[index]=tile(old,37 if area['type']=='castle' else 6,ori)
     return result
