@@ -1,6 +1,16 @@
-# Module Studio 0.10.3 - reported playtest fixes
+# Module Studio 0.10.4 - reported playtest fixes
 
-## Current trial: direct companion inventory panel (0.10.3)
+## Current trial: inventory selection and placeholder fix (0.10.4)
+
+Start a **new game** in **The Silent Bell - Inventory Click Fix** (`rw_invclick.mod`). AI Player 0.10.2 remains compatible; no backend restart is needed.
+
+The item canvas click handler rebuilt the panel and cleared the selected item. It now ignores the trailing canvas click event after mouse selection, and changing quantity preserves selection. A transfer without a selected item gives an explicit instruction. Busy/unavailable transfers also explain why they cannot proceed.
+
+Innate creature weapons/armor and creature-item abilities are excluded from the companion grid. Ordinary belongings remain visible. The large missing-image placeholder is replaced by an embedded transparent TGA; unknown item icons are omitted instead of drawing an error texture. An empty companion inventory now means there are no ordinary carried items or collected supplies.
+
+Playtest: open the inventory and check there is no large red X, bite or eyeball-ability entry. Click an ordinary item and check its full name appears below the grid. Change quantity and verify the selection remains, then use Transfer selected. Also test dragging in both directions, collecting one potion, and closing/reopening. Protected/equipped belongings still cannot be transferred. Actual GUI interaction requires the user's in-game test.
+
+## Previous trial: direct companion inventory panel (0.10.3)
 
 Start a **new game** in **The Silent Bell - Companion Inventory Trial** (`rw_inventory.mod`). AI Player 0.10.2 remains compatible: these fixes are in the module's native scripts. Existing modules and saves are preserved.
 

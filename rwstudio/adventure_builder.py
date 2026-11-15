@@ -95,6 +95,8 @@ def _build(p,store,game_root,compiler):
     game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms,[d for layout in layouts.values() for d in layout.get('doorways',[])])
     escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
     entries['aw_escrow',2051]=write(b'UTM V3.2',escrow)
+    # Valid transparent 1x1 BGRA TGA; an empty image resref renders an error texture.
+    entries['aw_grid_blank',3]=bytes([0,0,2,0,0,0,0,0,0,0,0,0,1,0,1,0,32,40,0,0,0,0])
     storage=copy.deepcopy(escrow);string(storage,'ResRef','aw_cp_storage',11);string(storage,'Tag','aw_cp_storage');put(storage,'LocName',text('Companion inventory'));entries['aw_cp_storage',2051]=write(b'UTM V3.2',storage)
 
     satchel=read(game.get('nw_it_contain001',2025))[1];string(satchel,'Tag','aw_satchel');string(satchel,'TemplateResRef','aw_satchel',11);put(satchel,'LocalizedName',text('Companion satchel'));put(satchel,'PropertiesList',[],15);put(satchel,'Plot',1);put(satchel,'Identified',1);put(satchel,'Cost',0);put(satchel,'AddCost',0);put(satchel,'StackSize',1)
@@ -366,9 +368,9 @@ def _build(p,store,game_root,compiler):
             entries[name,2009]=(source/(name+'.nss')).read_bytes();ncs=compiled/(name+'.ncs')
             if ('void main(' in body or 'StartingConditional(' in body) and not ncs.exists():raise ValueError('Missing compiled script: '+name)
             if ncs.exists():entries[name,2010]=ncs.read_bytes()
-        types=TYPES|{2032:'utt',2051:'utm'}
+        types=TYPES|{3:'tga',2032:'utt',2051:'utm'}
         for (name,kind),raw in entries.items():
-            if kind not in (2009,2010) and write(*read(raw))!=raw:raise ValueError('Native resource round-trip failed: '+name)
+            if kind not in (3,2009,2010) and write(*read(raw))!=raw:raise ValueError('Native resource round-trip failed: '+name)
             (source/(name+'.'+types[kind])).write_bytes(raw)
         mod=out/(p['module_name']+'.mod');mod.write_bytes(pack_module(base,entries))
         if {(n,k):b for n,k,b in resources(mod.read_bytes())}!=entries:raise ValueError('Module resource index verification failed')

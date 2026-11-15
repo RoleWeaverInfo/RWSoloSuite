@@ -1,6 +1,18 @@
-# Module Studio 0.10.3 validation
+# Module Studio 0.10.4 validation
 
-## Current trial: direct companion inventory panel (0.10.3)
+## Current trial: inventory selection and placeholder fix (0.10.4)
+
+Validation: **165 tests passed**, including native compilation, canvas-click selection guards, creature-slot filtering and the transparent texture resource. Build `43d33c7e4b6c76b64e33` contains **45 compiled scripts / 176 resources**. Rendering and mouse interaction remain for the user's in-game verification.
+
+Start a **new game** in **The Silent Bell - Inventory Click Fix** (`rw_invclick.mod`). AI Player 0.10.2 remains compatible; no backend restart is needed.
+
+The item canvas click handler rebuilt the panel and cleared the selected item. It now ignores the trailing canvas click event after mouse selection, and changing quantity preserves selection. A transfer without a selected item gives an explicit instruction. Busy/unavailable transfers also explain why they cannot proceed.
+
+Innate creature weapons/armor and creature-item abilities are excluded from the companion grid. Ordinary belongings remain visible. The large missing-image placeholder is replaced by an embedded transparent TGA; unknown item icons are omitted instead of drawing an error texture. An empty companion inventory now means there are no ordinary carried items or collected supplies.
+
+Playtest: open the inventory and check there is no large red X, bite or eyeball-ability entry. Click an ordinary item and check its full name appears below the grid. Change quantity and verify the selection remains, then use Transfer selected. Also test dragging in both directions, collecting one potion, and closing/reopening. Protected/equipped belongings still cannot be transferred. Actual GUI interaction requires the user's in-game test.
+
+## Previous trial: direct companion inventory panel (0.10.3)
 
 Validation: **164 tests passed**, including installed icon-resource checks and native compilation. After the final text-list fallback routing adjustment, all **7 companion-upgrade checks** passed again. Build `08791f9aa7bc346f9ef5` contains **45 compiled scripts / 175 resources**. Launcher CheckOnly resolves `rw_inventory` and its matching project. The existing AI Player 0.10.2 is compatible and was left running with the game; the new build was registered successfully. No rendering, mouse interaction or actual item transfer is claimed verified in-game.
 

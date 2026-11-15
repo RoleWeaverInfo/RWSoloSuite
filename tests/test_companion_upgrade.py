@@ -75,6 +75,18 @@ class NativeUpgradeTests(unittest.TestCase):
   for guard in (b'AWCVisibleItems(pc)',b'AWCVisibleItems(storage)',b'AWCVisibleItems(body)',b'AWG_DRAG_EXP',b'kind!="mousedown" && kind!="mouseup"',b'side!=GetLocalInt(pc,"AWG_DRAG_SIDE")'):self.assertIn(guard,grid)
   for guard in (b'GetItemPossessor(item,TRUE)',b'AWCOwner(body)!=pc',b'AWCItemSafe(item,src)',b'AWXBegin(pc,OBJECT_INVALID'):self.assertIn(guard,give)
   self.assertNotIn(b'OpenInventory(',grid);self.assertNotIn(b'ActionInteractObject(',grid)
+ def test_grid_click_keeps_selection_and_excludes_creature_abilities(self):
+  grid=self.r['aw_cp_grid',2009]
+  self.assertIn(b'if(id=="aw_grid_canvas")return;',grid)
+  self.assertIn(b'AWGSelect(pc,selected,selectedSide)',grid)
+  self.assertIn(b'GetBaseItemType(item)==BASE_ITEM_CREATUREITEM',grid)
+  self.assertIn(b'slot<=INVENTORY_SLOT_CARMOUR',grid)
+  self.assertIn(b'AWGIsBelonging(GetObjectByUUID(id),body)',grid)
+  self.assertNotIn(b'NuiImage(JsonString("")',grid)
+  self.assertIn(b'if(icon!="")draw=',grid)
+  texture=self.r['aw_grid_blank',3]
+  self.assertEqual(texture[2],2);self.assertEqual(texture[12:18],bytes([1,0,1,0,32,40]))
+  self.assertEqual(texture[18:],bytes(4))
  def test_native_door_points_to_real_waypoint(self):
   doors=[];tags=set()
   for a in self.p['areas']:
