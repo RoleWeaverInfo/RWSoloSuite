@@ -1,4 +1,10 @@
-# Module Studio 0.10.4 validation
+# Module Studio 0.10.5 validation
+
+## Selected-item highlight (0.10.5)
+
+The updated `rw_invclick.mod` highlights the selected item with a bright yellow 3-pixel border and translucent yellow fill. Highlight bindings update without rebuilding the window or changing item transfers. Existing saves retain their embedded scripts; see the change in a new game when convenient. AI Player does not need restarting.
+
+User playtest confirmed the preceding build's companion inventory, chest collection into companion storage, and transfer from companion to player. This cosmetic change still needs visual confirmation in-game.
 
 ## Current trial: inventory selection and placeholder fix (0.10.4)
 
