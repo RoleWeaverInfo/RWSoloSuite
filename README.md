@@ -1,6 +1,17 @@
-# RWSoloSuite — Role Weaver Module Studio 0.10.0
+# RWSoloSuite — Role Weaver Module Studio 0.10.1
 
-## Current trial: visual companion storage and merchant trading (0.10.0)
+## Current trial: familiar inventory and merchant conversation fix (0.10.1)
+
+Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Familiar and Merchant Fix** (`rw_tradefix.mod`). Existing modules/saves are preserved. The backend merchant correction also applies to existing rw_trade saves; the native familiar menu changes require a new game in this trial.
+
+The merchant error was a conversation-processing bug, not a missing build: merchant policy was removed from the NPC profile before native stock context read it. The profile is now sanitized after stock context is prepared. Bridge errors distinguish build-loading failures from failures processing a conversation; sanitized diagnostics contain request/build identifiers and exception type, never dialogue or credentials.
+
+**Companion inventory - item grid** now targets the actual party member or familiar (including Agathos), rather than redirecting familiars to the player's inventory. **Recoverable satchel - in your inventory** is a separate, explicitly labelled option; open the named bag in your own inventory. Items placed directly on a familiar are not covered by satchel recovery. Summons use the paired storage list instead of unexpectedly opening only the player inventory. A native summon two-pane item grid is not implemented.
+
+Validation: **162 tests passed**, including a regression through native merchant dialogue, error classification, familiar-versus-satchel dispatch and native compilation (**44 scripts**). The recorded failed rw_trade merchant payload was replayed locally with a stubbed provider: it reached the provider request step successfully; no API call was made and no game state changed. Native familiar inventory rendering and trading still need the user's in-game check.
+
+
+## Previous trial: visual companion storage and merchant trading (0.10.0)
 
 Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Visual Trading Trial** (`rw_trade.mod`). This module needs AI Player 0.10.0+ for live merchant conversation. Old modules and saved games are preserved; start a new game to receive the new store resources.
 

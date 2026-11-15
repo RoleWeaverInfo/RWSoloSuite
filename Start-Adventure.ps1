@@ -1,5 +1,5 @@
 param(
-    [string]$Module = 'rw_trade',
+    [string]$Module = 'rw_tradefix',
     [string]$ModuleFile,
     [string]$Sidecar,
     [string]$GameRoot,

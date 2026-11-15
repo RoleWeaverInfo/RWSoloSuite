@@ -1,4 +1,6 @@
 import copy,json,tempfile,unittest
+from unittest.mock import patch
+from rwstudio.provider import Provider
 from pathlib import Path
 from rwstudio.authoring import validate
 from rwstudio.merchants import example,context,ground_quote,defaults
@@ -20,6 +22,14 @@ class NativeStoreContextTests(unittest.TestCase):
   self.assertNotIn('price',shop['items'][0]);answer=ground_quote('A dagger costs 999 gold','How much are daggers?',shop)
   self.assertNotIn('999',answer);self.assertIn('Returned silver ring',answer);self.assertIn('exact buying and selling prices',answer)
   self.assertNotIn('999',ground_quote('999 gold','Hello',shop))
+ def test_native_merchant_dialogue_keeps_policy_until_observation_is_read(self):
+  p=example();p['npcs'][-1]['merchant']['interface']='native';provider=Provider('unused')
+  snapshot=dict(quests={},merchant=dict(npc='bram',available=1,price_mode='native',items=[dict(name='Short sword',quantity=2)]))
+  with patch.object(provider,'request',return_value=dict(reply='A sword costs 999 gold.',action='none',story_action='',merchant_action='',companion_action='')) as request:
+   result=provider.npc(p,'bram','What swords do you sell?',snapshot)
+  ctx=request.call_args.args[1]
+  self.assertEqual(ctx['merchant_stock']['price_mode'],'native')
+  self.assertNotIn('merchant',ctx['npc']);self.assertIn('Short sword',result['reply']);self.assertNotIn('999',result['reply'])
  def test_no_shop_on_missing_native_observation(self):
   n=example()['npcs'][-1];n['merchant']['interface']='native'
   self.assertFalse(context(n,dict(merchant=dict(npc='bram',available=0,price_mode='native',items=[])))['available'])

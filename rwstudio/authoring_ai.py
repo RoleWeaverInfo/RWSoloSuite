@@ -86,8 +86,9 @@ def npc_reply(provider,project,tag,message,snapshot,history=''):
         elif 0<state<=len(q['steps']):current.append({'quest':q['name'],'objective':q['steps'][state-1]['description']})
     choices=story_actions(project,tag,states)
     allowed={c['id'] for c in choices}
-    merchant=n.pop('merchant',{})
+    merchant=n.get('merchant',{})
     shop=merchant_context(n,snapshot) if merchant.get('enabled') else dict(available=False,items=[])
+    n.pop('merchant',None)
     merchant_actions=['','browse'] if merchant.get('enabled') else ['']
     if merchant.get('enabled') and merchant.get('haggle_enabled'):merchant_actions.append('haggle')
     companion=companion_context(project,snapshot,tag)

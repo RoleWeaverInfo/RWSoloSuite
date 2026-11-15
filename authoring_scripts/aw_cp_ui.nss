@@ -19,9 +19,11 @@ void AWCOpenControl(object pc,object body){if((!AWCReady(pc,body,FALSE) && !(AWT
  if(AWTOwned(pc,body) && AWCMode(body)=="nonverbal")rows=JsonArrayInsert(rows,AWCLabel("Nonverbal companion: AI uses gestures. Asking NPCs questions requires a speech profile set by the creator."));
  if(AWCOwner(body)!=pc){rows=JsonArrayInsert(rows,AWCButton(pc,"Join my party","recruit",AWCHas(allowed,"recruit")));if(!AWCHas(allowed,"recruit"))rows=JsonArrayInsert(rows,AWCLabel("Recruitment requires its quest condition and a free party slot."));}
  else {json orders=JsonArray();orders=JsonArrayInsert(orders,AWCButton(pc,"Follow","follow",AWCHas(allowed,"follow")));orders=JsonArrayInsert(orders,AWCButton(pc,"Stand ground","stay",AWCHas(allowed,"stay")));orders=JsonArrayInsert(orders,AWCButton(pc,"Guard master","guard",AWCHas(allowed,"guard")));rows=JsonArrayInsert(rows,AWUIRow(orders));
- rows=JsonArrayInsert(rows,AWCButton(pc,AWCKind(body)=="party"?"Inventory - item grid":"Satchel - item grid","inventory",AWCHas(allowed,"inventory")));
+ rows=JsonArrayInsert(rows,AWCButton(pc,AWCKind(body)=="summon"?"Companion storage - two lists":"Companion inventory - item grid","inventory",AWCHas(allowed,"inventory")));
  if(AWCKind(body)=="party")rows=JsonArrayInsert(rows,AWCButton(pc,"Leave my party","dismiss"));else rows=JsonArrayInsert(rows,AWCLabel("Use the normal game menu to dismiss this familiar or summon."));}
  if(AWTOwned(pc,body)){rows=JsonArrayInsert(rows,AWCLabel("Task: "+(GetLocalString(body,"AWT_STATUS")==""?"idle":GetLocalString(body,"AWT_STATUS"))));rows=JsonArrayInsert(rows,AWCButton(pc,"Inspect a nearby container","task_inspect",AWTPermitted(pc,body,"inspect") && !GetLocalInt(body,"AWT_ACTIVE")));rows=JsonArrayInsert(rows,AWCButton(pc,"Visit an AI NPC and report back","task_visit",AWTPermitted(pc,body,"visit") && !GetLocalInt(body,"AWT_ACTIVE")));rows=JsonArrayInsert(rows,AWCButton(pc,"Cancel current task","task_cancel",GetLocalInt(body,"AWT_ACTIVE")));rows=JsonArrayInsert(rows,AWCLabel("Task orders in Talk: !companion <alias/slot> inspect <chest name>; !companion <alias/slot> ask <npc alias> <question>."));}
+ if(AWCKind(body)=="familiar")rows=JsonArrayInsert(rows,AWCLabel("The familiar item grid is separate from its satchel. Items placed directly on the familiar are not covered by satchel recovery."));
+ if(AWCKind(body)!="party")rows=JsonArrayInsert(rows,AWCButton(pc,"Recoverable satchel - in your inventory","satchel",AWCHas(allowed,"inventory")));
  rows=JsonArrayInsert(rows,AWCButton(pc,"Inventory - text list (fallback)","inventory_list",AWCHas(allowed,"inventory")));
  rows=JsonArrayInsert(rows,AWCButton(pc,"AI conversation: "+(AWInt(record,"ai")?"on":"off"),"toggle_ai",live));
  rows=JsonArrayInsert(rows,AWCButton(pc,"AI movement: "+(AWInt(record,"movement")?"on":"off"),"toggle_move",AWInt(policy,"movement")));rows=JsonArrayInsert(rows,AWCButton(pc,"Inventory permission: "+(AWInt(record,"inventory")?"on":"off"),"toggle_pack",AWInt(policy,"inventory")));
@@ -57,7 +59,10 @@ void AWCInventoryList(object pc,object body){if(!AWCReady(pc,body) || !AWCObserv
 void AWCVisualInventory(object pc,object body){if(!AWCReady(pc,body) || !AWCObserve(pc,body))return;
  if(!AWCHas(AWCAllowed(pc,body,AWCRecord(pc,AWCIdentity(pc,body))),"inventory"))return;
  if(GetLocalInt(pc,"AWC_TRANSFER_PENDING") || GetLocalInt(pc,"AWT_TRANSFER_PENDING")){SendMessageToPC(pc,"Wait for the current item transfer to finish before opening the item grid.");return;}
- AWCUIClose(pc);if(AWCKind(body)=="party"){OpenInventory(body,pc);return;}
+ AWCUIClose(pc);if(AWCKind(body)=="party" || AWCKind(body)=="familiar"){OpenInventory(body,pc);return;}
+ AWCInventoryList(pc,body);SendMessageToPC(pc,"Summon storage uses this paired list: your belongings and the recoverable companion storage are shown side by side.");}
+void AWCSatchelGrid(object pc,object body){if(!AWCReady(pc,body) || !AWCObserve(pc,body) || AWCKind(body)=="party")return;
+ if(!AWCHas(AWCAllowed(pc,body,AWCRecord(pc,AWCIdentity(pc,body))),"inventory") || GetLocalInt(pc,"AWC_TRANSFER_PENDING") || GetLocalInt(pc,"AWT_TRANSFER_PENDING"))return;AWCUIClose(pc);
  object bag=AWCSatchel(pc,AWCIdentity(pc,body),GetName(body),TRUE);if(!GetIsObjectValid(bag))return;
  OpenInventory(pc,pc);SendMessageToPC(pc,"Open "+GetName(bag)+" in your inventory to drag items into or out of its native item grid.");}
 void AWCInventory(object pc,object body){AWCVisualInventory(pc,body);}

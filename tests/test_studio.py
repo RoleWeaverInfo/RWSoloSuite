@@ -143,6 +143,14 @@ class BridgeTests(unittest.TestCase):
     def test_closed_transactions_leave_no_lock(self):
         for _ in range(20):self.bridge.sessions()
         with closing(sqlite3.connect(self.path,timeout=.1)) as db:db.execute('BEGIN EXCLUSIVE');db.rollback()
+    def test_conversation_key_error_does_not_report_missing_build(self):
+        self.request()
+        with patch.object(self.provider,'npc',side_effect=KeyError('merchant')):
+            with self.assertLogs(level='ERROR') as logs:self.bridge.process_one()
+        self.assertEqual(self.state(),'failed')
+        with self.bridge.connect() as db:reply=json.loads(db.execute('SELECT response FROM sp_requests').fetchone()[0])['reply']
+        self.assertIn('build is loaded',reply);self.assertNotIn('Import',reply)
+        self.assertTrue(any('stage=conversation' in line for line in logs.output))
     def test_missing_build_is_a_safe_failed_reply(self):
         self.request()
         with self.bridge.connect() as db:db.execute('UPDATE sp_sessions SET build_id=?',('b'*20,))

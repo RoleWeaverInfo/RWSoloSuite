@@ -50,7 +50,11 @@ class NativeUpgradeTests(unittest.TestCase):
   self.assertIn(b'Inventory - text list (fallback)',ui)
   visual=ui[ui.index(b'void AWCVisualInventory('):ui.index(b'void AWCInventory(object')]
   self.assertIn(b'AWC_TRANSFER_PENDING',visual);self.assertIn(b'AWT_TRANSFER_PENDING',visual)
+  primary=visual[:visual.index(b'void AWCSatchelGrid(')]
+  self.assertIn(b'AWCKind(body)=="party" || AWCKind(body)=="familiar"',primary)
+  self.assertNotIn(b'OpenInventory(pc,pc)',primary);self.assertIn(b'AWCInventoryList(pc,body)',primary)
   self.assertIn(b'OpenInventory(pc,pc)',visual);self.assertIn(b'AWCSatchel(',visual)
+  self.assertIn(b'AWCSatchelGrid(pc,body)',self.r['aw_cp_ui_evt',2009])
   self.assertIn(b'AWCInventoryList(pc,body)',self.r['aw_cp_ui_evt',2009])
  def test_inspect_and_transfer_use_native_contents_not_ui_open_or_cloning(self):
   self.assertNotIn(b'GetIsOpen(target)',self.r['aw_cp_tasks',2009])

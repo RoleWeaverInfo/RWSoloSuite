@@ -1,5 +1,6 @@
 """Shared SQLite mailbox, never edits NWN's built-in campaign tables."""
 import json
+import logging
 import sqlite3
 import threading
 import time
@@ -63,10 +64,11 @@ class Bridge:
             # Atomic claim; more than one Studio worker cannot process the same turn.
             if db.execute("UPDATE sp_requests SET state='working',updated=? WHERE request_id=? AND state='queued'",(now,row['request_id'])).rowcount!=1: return
         response={'reply':'The connection is unavailable. You can continue using the authored conversation.','action':'none'}
-        state='ready'
+        state='ready';build_loaded=False
         try:
             project=self.store.built_project(row['build_id'])
             if project['id']!=row['project_id']: raise ValueError('Build/project mismatch')
+            build_loaded=True
             payload=json.loads(row['payload'])
             snapshot=payload['game']
             if row['kind']=='npc': response=self.provider.npc(project,row['npc_tag'],payload['message'],snapshot,payload.get('history',''))
@@ -82,8 +84,10 @@ class Bridge:
             else: raise ValueError('Unsupported request kind')
         except AIError as exc:
             response={'reply':str(exc),'action':'none'};state='failed'
-        except (ValueError,KeyError,FileNotFoundError):
-            response={'reply':'Studio cannot find the matching adventure build. Import its .rwproject.json companion file, then retry.','action':'none'};state='failed'
+        except (ValueError,KeyError,FileNotFoundError) as exc:
+            logging.error('Request processing failed: type=%s kind=%s build=%s request=%s stage=%s',type(exc).__name__,row['kind'],row['build_id'],row['request_id'],'conversation' if build_loaded else 'build')
+            message='The adventure build is loaded, but AI Player could not process this conversation. Use the normal NPC menu for now and report this error.' if build_loaded else 'Studio cannot load the matching adventure build. Import its .rwproject.json companion file, then retry.'
+            response={'reply':message,'action':'none'};state='failed'
         from .game_text import response_text
         if state!='failed':response=response_text(response)
         # Stop/reload/timeout must not deliver a stale completion or change the quest.

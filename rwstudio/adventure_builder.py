@@ -123,10 +123,11 @@ def _build(p,store,game_root,compiler):
     def script(name,body):scripts[name]=body+'\n';return name
     def conditional(name,expression,header='aw_quest'):return script(name,'#include "'+header+'"\nint StartingConditional(){return '+expression+';}')
     # This tree is explicitly opened by the familiar/summon OnDialogue hook.
-    cp_replies=[('Talk freely with AI.',[],'aw_cp_talk'),('Companion controls.',[],'aw_cp_panel'),('Open visual inventory.',[],'aw_cp_visual'),('Normal companion dialogue.',[],'aw_cp_orig'),('Farewell.',[])]
-    entries['aw_cp_native',2029]=write(b'DLG V3.2',conversation([('What would you like me to do?',[0,1,2,3,4])],cp_replies))
+    cp_replies=[('Talk freely with AI.',[],'aw_cp_talk'),('Companion controls.',[],'aw_cp_panel'),('Open companion inventory.',[],'aw_cp_visual'),('Open recoverable satchel in my inventory.',[],'aw_cp_bag'),('Normal companion dialogue.',[],'aw_cp_orig'),('Farewell.',[])]
+    entries['aw_cp_native',2029]=write(b'DLG V3.2',conversation([('What would you like me to do?',[0,1,2,3,4,5])],cp_replies))
     script('aw_cp_panel','#include "aw_cp_ui"\nvoid main(){AWCOpenControl(GetPCSpeaker(),OBJECT_SELF);}')
     script('aw_cp_visual','#include "aw_cp_ui"\nvoid main(){AWCVisualInventory(GetPCSpeaker(),OBJECT_SELF);}')
+    script('aw_cp_bag','#include "aw_cp_ui"\nvoid main(){AWCSatchelGrid(GetPCSpeaker(),OBJECT_SELF);}')
     shops=[];merchant_inventory={}
     item_table=game.get('baseitems',2017).decode('latin1').splitlines()
     item_header=next(line.split() for line in item_table if 'InvSlotWidth' in line and 'InvSlotHeight' in line)
