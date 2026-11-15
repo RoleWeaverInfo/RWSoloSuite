@@ -1,6 +1,17 @@
-# Module Studio 0.9.1 - reported playtest fixes
+# Module Studio 0.9.2 - reported playtest fixes
 
-## Current trial: physical room doorways (0.9.1)
+## Current trial: native visual companion inventory (0.9.2)
+
+Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Visual Inventory Trial** (`rw_inventory.mod`). Old saves retain their previous inventory scripts. Existing modules remain intact.
+
+Select a companion with `!companions`, then choose **Inventory - item grid** for a recruited party member or **Satchel - item grid** for a familiar/summon. Party members use NWN's native inventory. For a familiar/summon, your inventory opens: open its named satchel and drag item icons between the bag and your inventory. The satchel remains yours when the creature disappears. Use NWN's native item controls for examining and arranging items.
+
+**Inventory - text list (fallback)** retains the working custom transfer panel. `!companion <alias> inventory` also opens the visual interface; append `inventory list` for the fallback. The AI inventory action uses the visual interface too. Opening through the suite still requires companion ownership and inventory permission; the native panel follows engine item rules. Pending custom handoffs must finish before opening it.
+
+Merchant trading retains the existing purchase panel. This update covers companion storage. Physical room doors and previous AI companion features are included. Native GUI behavior and drag-and-drop still require the user's in-game playtest.
+
+
+## Previous trial: physical room doorways (0.9.1)
 
 Use **Play Adventure.cmd → New Adventure** for **The Silent Bell - Physical Doorway Trial** (`rw_doorways.mod`). Start a new game; older saves retain their old maps. All previous modules are preserved.
 

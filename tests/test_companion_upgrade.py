@@ -44,7 +44,14 @@ class NativeUpgradeTests(unittest.TestCase):
   dlg=read(self.r['aw_cp_native',2029])[1]
   self.assertIn(b'aw_cp_talk',[r[1]['Script'][1] for r in dlg[1]['ReplyList'][1]])
   self.assertIn(b'BeginConversation("aw_cp_native",owner)',self.r['aw_cp_dialog',2009])
-  self.assertIn(b'OpenInventory(body,pc)',self.r['aw_cp_ui',2009])
+  ui=self.r['aw_cp_ui',2009]
+  self.assertIn(b'OpenInventory(body,pc)',ui)
+  self.assertIn(b'void AWCInventory(object pc,object body){AWCVisualInventory(pc,body);}',ui)
+  self.assertIn(b'Inventory - text list (fallback)',ui)
+  visual=ui[ui.index(b'void AWCVisualInventory('):ui.index(b'void AWCInventory(object')]
+  self.assertIn(b'AWC_TRANSFER_PENDING',visual);self.assertIn(b'AWT_TRANSFER_PENDING',visual)
+  self.assertIn(b'OpenInventory(pc,pc)',visual);self.assertIn(b'AWCSatchel(',visual)
+  self.assertIn(b'AWCInventoryList(pc,body)',self.r['aw_cp_ui_evt',2009])
  def test_inspect_and_transfer_use_native_contents_not_ui_open_or_cloning(self):
   self.assertNotIn(b'GetIsOpen(target)',self.r['aw_cp_tasks',2009])
   transfer=self.r['aw_ct_transfer',2009]
