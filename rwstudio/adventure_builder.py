@@ -86,7 +86,7 @@ def build(project,store,game_root,compiler):
     with BUILD_LOCK:return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    source_files=[Path(__file__),Path(__file__).with_name('furnishing.py'),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
+    source_files=[Path(__file__),Path(__file__).with_name('furnishing.py'),Path(__file__).with_name('inventory_icons.py'),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
     base=(ROOT/'assets/base.mod').read_bytes();digest=hashlib.sha256(canonical(p).encode()+base+b''.join(f.read_bytes() for f in source_files)).hexdigest()[:20]
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').exists():
@@ -95,6 +95,8 @@ def _build(p,store,game_root,compiler):
     game=GameAssets(game_root);layouts=plan(p);rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};placement=Placement(rooms,[d for layout in layouts.values() for d in layout.get('doorways',[])])
     escrow=read(game.get('nw_lostitems',2051))[1];string(escrow,'ResRef','aw_escrow',11);string(escrow,'Tag','aw_escrow');put(escrow,'LocName',text('Temporary item transfer'))
     entries['aw_escrow',2051]=write(b'UTM V3.2',escrow)
+    storage=copy.deepcopy(escrow);string(storage,'ResRef','aw_cp_storage',11);string(storage,'Tag','aw_cp_storage');put(storage,'LocName',text('Companion inventory'));entries['aw_cp_storage',2051]=write(b'UTM V3.2',storage)
+
     satchel=read(game.get('nw_it_contain001',2025))[1];string(satchel,'Tag','aw_satchel');string(satchel,'TemplateResRef','aw_satchel',11);put(satchel,'LocalizedName',text('Companion satchel'));put(satchel,'PropertiesList',[],15);put(satchel,'Plot',1);put(satchel,'Identified',1);put(satchel,'Cost',0);put(satchel,'AddCost',0);put(satchel,'StackSize',1)
     put(satchel,'DescIdentified',text('A recoverable companion satchel kept in its owner’s inventory. Its contents remain when a familiar or summon disappears.'));entries['aw_satchel',2025]=write(b'UTI V3.2',satchel)
     areas={};gits={};room_index={r:i for i,r in enumerate(rooms)};enc_index={e['id']:i for i,e in enumerate(p['encounters'])};npcs={n['id']:n for n in p['npcs']};quest_index={q['id']:i for i,q in enumerate(p['quests'])}
@@ -189,12 +191,6 @@ def _build(p,store,game_root,compiler):
                 x,y=placement.take(rid);inst=copy.deepcopy(obj);position(inst,x,y,270,True);gits[rooms[rid][0]['id']][1]['Creature List'][1].append((4,inst[1]))
         return obj
     pbase=read(original['mc_crate1',2044])[1]
-    pack=copy.deepcopy(pbase)
-    for key in list(pack[1]):
-        if key.startswith('On'):put(pack,key,b'')
-    string(pack,'Tag','aw_cp_pack');string(pack,'TemplateResRef','aw_cp_pack',11);put(pack,'LocName',text('Companion pack'))
-    for key,value in dict(Appearance=13,Static=0,Useable=1,HasInventory=1,Plot=1,Locked=0,Lockable=1,TrapFlag=0).items():put(pack,key,value)
-    put(pack,'ItemList',[],15);entries['aw_cp_pack',2044]=write(b'UTP V3.2',pack)
     def place(ident,name,rid,appearance,usable=False,inventory=None,onused='',onopen='',description='',side=None,gate='',variables=None,decor_kind=None):
         obj=copy.deepcopy(pbase)
         for key in list(obj[1]):
@@ -337,6 +333,9 @@ def _build(p,store,game_root,compiler):
     companion_npcs=[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs'] if n['companion']['recruitable']]
     behaviors=[dict(n['behavior'],id=n['id'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']]
     scripts['aw_config']='\n'.join([json_function('AWItems',[dict(id=i['id'],kind=i['kind'],name=i['name']) for i in p['items']]),json_function('AWDoors',native_doors),json_function('AWAConfig',[p['ambient']]),json_function('AWABehaviors',behaviors),json_function('AWQuests',p['quests']),json_function('AWRooms',native_rooms),json_function('AWEncounters',native_enc),json_function('AWShops',shops),json_function('AWCompanionConfig',[companion_cfg]),json_function('AWCompanionTemplates',p['companions']['templates']),json_function('AWCompanionNPCs',companion_npcs),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return '+literal(p['ending'])+';}','int AWLevelMax(){return '+str(p['level_max'])+';}'])
+    from .inventory_icons import native_icons
+    scripts['aw_g_icons']=native_icons(game,literal)
+    scripts['nw_inc_nui']=game.get('nw_inc_nui',2009).decode('latin1')
     ai=p['ai_conversations'];include='#include "aw_social"' if ai else '#include "aw_ambient"'
     scripts['aw_load']=include+'\nvoid main(){SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());AWALoad();if(AWCEnabled()){AWCInit();SetMaxHenchmen('+str(p['companions']['party_limit'])+');}'+('SPInit();' if ai else '')+'}'
     scripts['aw_enter']=include+'\nvoid main(){object pc=GetEnteringObject();if(!GetIsPC(pc))return;if(!GetLocalInt(pc,"AW_WELCOME")){SetLocalInt(pc,"AW_WELCOME",TRUE);SendMessageToPC(pc,'+literal(p['opening'])+');}AQStart(pc);AWArea(pc);'+('SPReset(pc);SPPublish(pc);SendMessageToPC(pc,"AI: choose Talk freely with AI and then speak normally, or type !talk <alias> <message>. Use !end to finish.");' if ai else '')+'}'

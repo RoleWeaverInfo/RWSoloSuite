@@ -45,28 +45,36 @@ class NativeUpgradeTests(unittest.TestCase):
   self.assertIn(b'aw_cp_talk',[r[1]['Script'][1] for r in dlg[1]['ReplyList'][1]])
   self.assertIn(b'BeginConversation("aw_cp_native",owner)',self.r['aw_cp_dialog',2009])
   ui=self.r['aw_cp_ui',2009]
-  self.assertIn(b'AWPOpen(pc,pack)',ui)
+  self.assertIn(b'AWCGridOpen(pc,pack)',ui)
   self.assertIn(b'void AWCInventory(object pc,object body){AWCVisualInventory(pc,body);}',ui)
   self.assertIn(b'Inventory - text list (fallback)',ui)
   visual=ui[ui.index(b'void AWCVisualInventory('):ui.index(b'void AWCInventory(object')]
   self.assertIn(b'AWC_TRANSFER_PENDING',visual);self.assertIn(b'AWT_TRANSFER_PENDING',visual)
   primary=visual[:visual.index(b'void AWCSatchelGrid(')]
   self.assertIn(b'AWCPersistentPack(pc,AWCIdentity(pc,body)',primary)
-  self.assertNotIn(b'OpenInventory(pc,pc)',primary);self.assertIn(b'AWPOpen(pc,pack)',primary)
+  self.assertNotIn(b'OpenInventory(pc,pc)',primary);self.assertIn(b'AWCGridOpen(pc,pack)',primary)
   self.assertIn(b'OpenInventory(pc,pc)',visual);self.assertIn(b'AWCSatchel(',visual)
   self.assertIn(b'AWCSatchelGrid(pc,body)',self.r['aw_cp_ui_evt',2009])
   self.assertIn(b'AWCInventoryList(pc,body)',self.r['aw_cp_ui_evt',2009])
- def test_inspect_and_transfer_use_native_contents_not_ui_open_or_cloning(self):
+ def test_inspect_and_transfer_validate_native_contents_and_split_stacks(self):
   self.assertNotIn(b'GetIsOpen(target)',self.r['aw_cp_tasks',2009])
   transfer=self.r['aw_ct_transfer',2009]
-  for text in (b'matches!=1',b'GetItemStackSize(chosen)!=1',b'AWCPersistentPack(',b'AWXBegin('):self.assertIn(text,transfer)
+  for text in (b'matches!=1',b'AWCPersistentPack(',b'AWXBegin('):self.assertIn(text,transfer)
   self.assertNotIn(b'GetDistanceBetween(pc,chest)',transfer)
   cargo=self.r['aw_cp_cargo',2009]
-  for guard in (b'GetItemPossessor(staged,TRUE)!=escrow',b'after==before+amount',b'if(GetIsObjectValid(original))',b'if(GetIsObjectValid(staged))',b'SetLocalInt(pc,"AWX_PHASE",-1)'):self.assertIn(guard,cargo)
-  pack=read(self.r['aw_cp_pack',2044])[1][1]
-  self.assertEqual(pack['HasInventory'][1],1);self.assertEqual(pack['ItemList'][1],[])
-  self.assertEqual(pack['Static'][1],0);self.assertEqual(pack['Useable'][1],1)
+  for guard in (b'GetItemPossessor(staged,TRUE)!=escrow',b'after==before+amount',b'GetItemStackSize(original)==remaining',b'if(GetIsObjectValid(staged))',b'SetLocalInt(pc,"AWX_PHASE",-1)'):self.assertIn(guard,cargo)
+  self.assertIn(('aw_cp_storage',2051),self.r)
+  self.assertNotIn(('aw_cp_pack',2044),self.r)
+  self.assertNotIn(b'ActionInteractObject(',self.r['aw_cp_pack',2009])
+  self.assertIn(b'OBJECT_TYPE_STORE',self.r['aw_cp_pack',2009])
+  self.assertIn(b'GetObjectType(holder)==OBJECT_TYPE_CREATURE && !GetDroppableFlag(item)',self.r['aw_cp_ui',2009])
+  self.assertIn(b'SetItemStackSize(item,originalCount-amount)',cargo)
   self.assertIn(b'AWXTick(pc);AWCTransferTick(pc);AWTTick(pc)',self.r['aw_beat',2009])
+ def test_visual_grid_uses_owned_items_and_revalidates_drag_transfers(self):
+  grid=self.r['aw_cp_grid',2009];give=self.r['aw_cp_give',2009]
+  for guard in (b'AWCVisibleItems(pc)',b'AWCVisibleItems(storage)',b'AWCVisibleItems(body)',b'AWG_DRAG_EXP',b'kind!="mousedown" && kind!="mouseup"',b'side!=GetLocalInt(pc,"AWG_DRAG_SIDE")'):self.assertIn(guard,grid)
+  for guard in (b'GetItemPossessor(item,TRUE)',b'AWCOwner(body)!=pc',b'AWCItemSafe(item,src)',b'AWXBegin(pc,OBJECT_INVALID'):self.assertIn(guard,give)
+  self.assertNotIn(b'OpenInventory(',grid);self.assertNotIn(b'ActionInteractObject(',grid)
  def test_native_door_points_to_real_waypoint(self):
   doors=[];tags=set()
   for a in self.p['areas']:

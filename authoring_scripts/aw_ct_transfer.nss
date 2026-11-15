@@ -9,7 +9,7 @@ void main(){object body=OBJECT_SELF;object pc=GetLocalObject(body,"AWT_OWNER");o
  object src=kind=="take"?chest:pc;object dest=kind=="take"?AWCPersistentPack(pc,AWCIdentity(pc,body),GetName(body),TRUE):chest;string query=GetStringLowerCase(GetLocalString(body,"AWT_ITEM_QUERY"));object item=GetFirstItemInInventory(src);object chosen=OBJECT_INVALID;int matches=0;int scan=0;
  while(GetIsObjectValid(item) && scan<2048){if(query!="" && GetIdentified(item) && GetItemPossessor(item,TRUE)==src && AWTItemMatches(item,query)){chosen=item;matches++;}item=GetNextItemInInventory(src);scan++;}
  if(matches!=1){AWTFinish(pc,body,matches>1?"More than one item matches. Tell me the exact name of the one you want.":"I could not find that item among the accessible belongings. Ask me to inspect the container for its item names.");return;}
- if(!AWCItemSafe(chosen,src)){AWTFinish(pc,body,"I cannot safely move that item. You may need to handle it yourself.");return;}
- if(GetLocalString(body,"AWT_QUANTITY")!="all" && GetItemStackSize(chosen)!=1){AWTFinish(pc,body,"Those items are bundled together. Ask for the whole stack, or separate one yourself.");return;}
- string result=kind=="take"?"I collected "+GetName(chosen)+" x"+IntToString(GetItemStackSize(chosen))+" in my pack.":"I placed "+GetName(chosen)+" x"+IntToString(GetItemStackSize(chosen))+" in "+GetName(chest)+".";
- if(!AWXBegin(pc,body,chosen,src,dest,result)){AWTFinish(pc,body,"I could not arrange safe storage. The requested items have not been moved.");SendMessageToPC(pc,"The companion could not arrange safe storage; no items were moved.");}}
+ if(!AWCItemSafe(chosen,src)){AWTFinish(pc,body,"I cannot move "+GetName(chosen)+": "+AWCItemLock(chosen,src)+".");return;}
+ int amount=GetLocalString(body,"AWT_QUANTITY")=="all"?GetItemStackSize(chosen):1;
+ string result=kind=="take"?"I collected "+GetName(chosen)+" x"+IntToString(amount)+" in my pack.":"I placed "+GetName(chosen)+" x"+IntToString(amount)+" in "+GetName(chest)+".";
+ if(!AWXBegin(pc,body,chosen,src,dest,result,amount)){AWTFinish(pc,body,"I could not arrange safe storage. The requested items have not been moved.");SendMessageToPC(pc,"The companion could not arrange safe storage; no items were moved.");}}

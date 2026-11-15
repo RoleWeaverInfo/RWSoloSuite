@@ -1,5 +1,5 @@
 param(
-    [string]$Module = 'rw_packfix',
+    [string]$Module = 'rw_inventory',
     [string]$ModuleFile,
     [string]$Sidecar,
     [string]$GameRoot,

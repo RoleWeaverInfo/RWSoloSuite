@@ -1,6 +1,20 @@
-# Module Studio 0.10.2 validation
+# Module Studio 0.10.3 validation
 
-## Current trial: companion packs and chest collection (0.10.2)
+## Current trial: direct companion inventory panel (0.10.3)
+
+Validation: **164 tests passed**, including installed icon-resource checks and native compilation. After the final text-list fallback routing adjustment, all **7 companion-upgrade checks** passed again. Build `08791f9aa7bc346f9ef5` contains **45 compiled scripts / 175 resources**. Launcher CheckOnly resolves `rw_inventory` and its matching project. The existing AI Player 0.10.2 is compatible and was left running with the game; the new build was registered successfully. No rendering, mouse interaction or actual item transfer is claimed verified in-game.
+
+Start a **new game** in **The Silent Bell - Companion Inventory Trial** (`rw_inventory.mod`). AI Player 0.10.2 remains compatible: these fixes are in the module's native scripts. Existing modules and saves are preserved.
+
+**!companions → select your companion → Companion inventory - visual panel**, or ask the companion to show its inventory. This opens a custom native NUI panel with both inventories; it does not open your normal inventory or place a bag on the ground. Companion contents combine persistent carried storage with the actual creature's belongings. Equipped/protected gear appears with a red frame and cannot be transferred. Click an icon for its full name, count and restriction. Icons represent the item's base type, not its exact composite armor/weapon appearance; custom types without an installed icon retain their names.
+
+Drag an item icon from one side to the other, or select it and press **Transfer selected**. **Quantity: one / whole stack** controls the amount. The panel refreshes after the native transfer confirms, usually within two module heartbeats. The native merchant shop is unchanged. Old player-held satchels remain separately accessible.
+
+Chest errands no longer use the creature-only droppable-on-death flag for chest contents. Plot, cursed, unidentified, equipped and over-limit goods are still guarded. Ask for **one healing potion**: one should enter companion storage and two remain in the trial chest. Ask for the remaining stack to collect both. Item properties and local variables survive the escrow copy; item object identity changes. Inspection alone takes nothing.
+
+Playtest the panel opening without a dropped object; item selection; dragging in both directions; the transfer button; one/whole-stack mode; chest counts; save/reload; companion dismissal and recovery; and Bram's shop. Native compilation and regression checks do not verify rendering or mouse coordinates: those still require the user's in-game test. If drag does not register, report whether the transfer button works.
+
+## Previous trial: companion packs and chest collection (0.10.2)
 
 Validation: the full suite passed **162 tests**. After final recovery-menu and launcher edits, the affected suites passed another **28 checks**. The installed build `bb0a32903a9765136def` contains **44 compiled scripts / 170 resources**. Launcher CheckOnly found the installed module and matching project; AI Player 0.10.2 restarted with its existing key available and bridge enabled. No NWN or Aurora playtest was performed by the agent.
 

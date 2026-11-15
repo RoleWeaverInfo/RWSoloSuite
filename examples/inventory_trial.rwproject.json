@@ -2,7 +2,7 @@
   "schema_version": 2,
   "id": "inventory_trial",
   "module_name": "rw_inventory",
-  "title": "The Silent Bell - Visual Inventory Trial",
+  "title": "The Silent Bell - Companion Inventory Trial",
   "summary": "Recover the abbey bell’s stolen clapper, learn why it was silenced, and decide its fate.",
   "story": "The abbey bell once soothed restless dead. Its keeper secretly removed the clapper after hearing a voice demand a living sacrifice. A frightened scout saw the keeper hide it in the old vault. The player must clear the road, investigate the vault, solve its inscription, and choose to restore the bell or seal it away. Both choices conclude the story. The abbey keeper is remorseful, not a combat boss.",
   "tone": "Adventurous fantasy",
@@ -453,7 +453,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": false,
@@ -501,7 +502,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": false,
@@ -549,7 +551,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": false,
@@ -623,7 +626,8 @@
             "quantity": 4,
             "price": 50
           }
-        ]
+        ],
+        "interface": "native"
       },
       "companion": {
         "recruitable": false,
@@ -671,7 +675,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": true,
@@ -719,7 +724,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": false,
@@ -772,7 +778,8 @@
         "haggle_chance": 50,
         "discount_percent": 5,
         "offer_seconds": 600,
-        "stock": []
+        "stock": [],
+        "interface": "list"
       },
       "companion": {
         "recruitable": false,
