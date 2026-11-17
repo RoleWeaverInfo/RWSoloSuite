@@ -6,7 +6,7 @@ from collections import Counter
 RADII = {'table': 1.8, 'chair': .7, 'barrel': .9, 'bookshelf': 1.5,
          'crate': 1., 'chest': 1.1, 'sign': .8, 'candle': .4, 'bed': 1.8}
 DESIGN_GUIDE = {
-    'scale': 'One tile is 10 metres. Prefer 2x2 rooms; 3x3 for halls/combat. Larger rooms need an explicit purpose. Preserve author dimensions.',
+    'scale': 'One tile is 10 metres. Use 1x1 or 1x2 for vestibules, alcoves and small chambers with sparse contents; 2x2 for larger rooms, 3x3 for large halls/combat. Larger rooms need an explicit purpose. Preserve author dimensions.',
     'composition': 'Give each room one purpose and one focal point. Use 3-7 purposeful props, not a repeated prop in every corner. Empty space is intentional.',
     'groups': {
         'dining': 'one table, one or two chairs; place the chairs on the same side as the table to group them',

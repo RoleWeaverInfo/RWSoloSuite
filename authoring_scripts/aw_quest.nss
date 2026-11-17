@@ -13,7 +13,7 @@ object AWItem(object pc,string tag) {
 }
 int AWInRoom(object pc,string id) {
     json r=AWFind(AWRooms(),id);if(AWText(r,"area")!=GetTag(GetArea(pc)))return FALSE;
-    vector v=GetPosition(pc);return v.x>=IntToFloat(AWInt(r,"x")*10) && v.x<=IntToFloat((AWInt(r,"x")+AWInt(r,"width"))*10) && v.y>=IntToFloat(AWInt(r,"y")*10) && v.y<=IntToFloat((AWInt(r,"y")+AWInt(r,"height"))*10);
+    vector v=GetPosition(pc);return v.x>=IntToFloat(AWInt(r,"x")*10) && v.x<=(IntToFloat(AWInt(r,"x")*10)+JsonGetFloat(JsonObjectGet(r,"width_m"))) && v.y>=IntToFloat(AWInt(r,"y")*10) && v.y<=(IntToFloat(AWInt(r,"y")*10)+JsonGetFloat(JsonObjectGet(r,"depth_m")));
 }
 void AQJournal(object pc,json q,int state){AddJournalQuestEntry(AWText(q,"id"),state==-1?999:state,pc,TRUE,FALSE,TRUE);}
 void AQStart(object pc,string speaker="") {

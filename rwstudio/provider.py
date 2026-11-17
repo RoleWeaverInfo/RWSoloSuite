@@ -13,37 +13,84 @@ DM_SCHEMA=_obj({'reply':S,'encounter_id':S,'reason':S})
 
 class AIError(ValueError): pass
 
+def provider_error(exc,provider):
+    """Classify bounded error metadata; never expose raw provider text or secrets."""
+    try:
+        body=json.loads(exc.read(50000));error=body.get('error',{})
+        if not isinstance(error,dict):error={}
+    except (ValueError,OSError,AttributeError):error={}
+    code=error.get('code');kind=error.get('type')
+    if provider=='openai':
+        specific={
+            'credit_balance_exhausted':'OpenAI API credits are exhausted for the organization associated with this key. Add credits in OpenAI Platform → Billing. Retrying or replacing the key will not restore the balance.',
+            'project_spend_limit_exceeded':'This OpenAI project reached its spending limit. Check the project’s limits in OpenAI Platform.',
+            'organization_spend_limit_exceeded':'This OpenAI organization reached its spending limit. Check organization billing and limits in OpenAI Platform.',
+            'organization_usage_limit_exceeded':'This OpenAI organization reached its approved API usage limit. Check organization limits in OpenAI Platform.',
+            'billing_not_active':'OpenAI API billing is not active for this key’s organization. Check OpenAI Platform → Billing.',
+        }
+        if isinstance(code,str) and code in specific:return specific[code]
+        if code=='insufficient_quota' or kind=='insufficient_quota':return 'OpenAI reports insufficient API quota. Check the key’s organization credit balance and project spending limits in OpenAI Platform. This is not a temporary request-rate limit.'
+        if code in ('rate_limit_exceeded','slow_down') or kind=='rate_limit_error':
+            delay=exc.headers.get('Retry-After','') if exc.headers else ''
+            wait=(' Wait at least '+delay+' seconds before trying again.') if delay.isdigit() and len(delay)<=6 else ' Wait before trying again.'
+            return 'OpenAI temporarily limited the request rate or token volume.'+wait+' Check the authoring model’s project rate limits if it continues.'
+    messages={400:'The provider rejected this request. Check model image/JSON support and the project size.',401:'The configured key was rejected.',403:'The configured key cannot access this model.',429:'The provider returned HTTP 429 without a recognized limit code. Check provider billing and model rate limits.'}
+    return messages.get(exc.code,f'{provider} returned HTTP {exc.code}. Check the configured model and try again.')
+
 
 class Provider:
-    def __init__(self, model):
-        self.model=model
+    def __init__(self, model, provider="openai", credentials=None, reasoning_effort=None):
+        self.model=model;self.provider=provider;self.credentials=credentials
+        self.reasoning_effort=reasoning_effort
         self.lock=threading.Lock()
         self.calls=[]
         self.usage={'requests':0,'input_tokens':0,'output_tokens':0,'last_seconds':0}
 
-    def request(self,system,context,schema,max_tokens=1400):
-        key=os.environ.get('OPENAI_API_KEY','')
-        if not key: raise AIError('OPENAI_API_KEY is not available to Studio. Restart the launcher after configuring the environment.')
+    def request(self,system,context,schema,max_tokens=1400,images=None):
+        provider=self.provider;model=self.model;effort=self.reasoning_effort
+        key=self.credentials.get(provider) if self.credentials else os.environ.get('GEMINI_API_KEY' if provider=='gemini' else 'OPENAI_API_KEY','')
+        if not key:raise AIError('No key is configured for '+provider+'. Add it in Studio Settings or configure its environment variable.')
+        from .reference_images import image_data
+        images=images or []
+        for image in images:image_data(image)
+
         with self.lock:
             now=time.monotonic()
             self.calls=[t for t in self.calls if now-t<3600]
             if len(self.calls)>=60: raise AIError('Studio has reached its 60-request hourly limit. Try again later.')
             self.calls.append(now)
-        payload={'model':self.model,'store':False,'max_output_tokens':max_tokens,
-                 'input':[{'role':'system','content':system},{'role':'user','content':json.dumps(context,ensure_ascii=False)}],
-                 'text':{'format':{'type':'json_schema','name':'roleweaver_result','strict':True,'schema':schema}}}
-        request=urllib.request.Request('https://api.openai.com/v1/responses',data=json.dumps(payload).encode(),
-            headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'})
+        if provider=='gemini':
+            parts=[{'text':json.dumps(context,ensure_ascii=False)}]
+            for image in images:
+                mime,data=image_data(image);parts.append({'inlineData':{'mimeType':mime,'data':data}})
+            payload={'systemInstruction':{'parts':[{'text':system}]},'contents':[{'role':'user','parts':parts}],
+                     'generationConfig':{'maxOutputTokens':max_tokens,'responseMimeType':'application/json','responseJsonSchema':schema}}
+            url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent'
+            headers={'x-goog-api-key':key,'Content-Type':'application/json'}
+        else:
+            content=[{'type':'input_text','text':json.dumps(context,ensure_ascii=False)}]+[{'type':'input_image','image_url':image} for image in images]
+            payload={'model':model,'store':False,'max_output_tokens':max_tokens,
+                     'input':[{'role':'system','content':system},{'role':'user','content':content if images else json.dumps(context,ensure_ascii=False)}],
+                     'text':{'format':{'type':'json_schema','name':'roleweaver_result','strict':True,'schema':schema}}}
+            if effort:
+                payload['reasoning']={'effort':effort}
+                payload['max_output_tokens']=max(32000,max_tokens)
+            url='https://api.openai.com/v1/responses';headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'}
+        request=urllib.request.Request(url,data=json.dumps(payload).encode(),headers=headers)
         start=time.monotonic()
         try:
-            with urllib.request.urlopen(request,timeout=120 if max_tokens>10000 else 65) as response:
+            with urllib.request.urlopen(request,timeout=300 if effort else 120 if max_tokens>10000 else 65) as response:
                 data=json.loads(response.read(2_000_000))
         except urllib.error.HTTPError as exc:
-            # Never forward provider bodies, request headers or credentials to the UI/logs.
-            messages={401:'The configured OpenAI key was rejected.',403:'The configured key cannot access this model.',429:'OpenAI reported a rate or quota limit. Check your API billing and limits.'}
-            raise AIError(messages.get(exc.code,f'OpenAI returned HTTP {exc.code}. Check the configured model and try again.')) from None
+            raise AIError(provider_error(exc,provider)) from None
         except (TimeoutError,OSError,ValueError):
             raise AIError('The AI request did not finish. Check the connection and try again; the authored quest remains available.') from None
+        if provider=='gemini':
+            candidates=data.get('candidates',[])
+            if not candidates or candidates[0].get('finishReason')!='STOP':raise AIError('Gemini did not complete the response. Shorten the request or check model settings.')
+            parts=[p.get('text','') for p in candidates[0].get('content',{}).get('parts',[]) if not p.get('thought')]
+            usage=data.get('usageMetadata',{})
+            data={'status':'completed','usage':{'input_tokens':usage.get('promptTokenCount',0),'output_tokens':usage.get('candidatesTokenCount',0)},'output':[{'content':[{'type':'output_text','text':''.join(parts)}]}]}
         with self.lock:
             self.usage['requests']+=1
             for field in ('input_tokens','output_tokens'): self.usage[field]+=data.get('usage',{}).get(field,0)

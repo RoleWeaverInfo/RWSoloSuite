@@ -1,0 +1,25 @@
+'use strict';
+function originalLook(){return {material:'original',lighting:'legacy',brightness:1,fog:0,weather:'preset'};}
+function reconcileAreaLook(a){
+ if(!a.look||!app.area_presets)return;const catalog=app.area_presets;
+ if(a.look.material!=='original'&&!catalog.materials[a.look.material]?.types.includes(a.type))a.look.material='original';
+ if(a.look.lighting!=='legacy'&&!catalog.lighting[a.look.lighting]?.types.includes(a.type)){a.look.lighting='legacy';a.look.brightness=1;a.look.fog=0;a.look.weather='preset';}
+ if(!['forest','desert','winter'].includes(a.type)&&['rain','snow'].includes(a.look.weather))a.look.weather='clear';
+}
+function presetPanel(a){
+ const catalog=app.area_presets;if(!catalog)return '';const look=a.look||originalLook(),outdoor=['forest','desert','winter'].includes(a.type),m=catalog.materials[look.material],l=catalog.lighting[look.lighting];
+ const choices=(key,label,entries,original)=>`<label class="field"><span>${label}</span><select data-look="${key}"><option value="${original[0]}" ${look[key]===original[0]?'selected':''}>${original[1]}</option>${Object.entries(entries).filter(([id,p])=>p.types.includes(a.type)).map(([id,p])=>`<option value="${id}" ${id===look[key]?'selected':''}>${E(p.name)}</option>`).join('')}</select></label>`;
+ const chip=(name,color)=>`<span class="preset-swatch"><i style="background:${E(color)}"></i>${E(name)}</span>`;
+ const scaled=color=>'#'+color.slice(1).match(/../g).map(c=>Math.min(255,Math.round(parseInt(c,16)*look.brightness)).toString(16).padStart(2,'0')).join('');
+ return `<section class="card"><h3>Materials and lighting</h3><p>Choose a surface finish and lighting mood for this area. Mix them independently, then update the generated area.</p><div class="row">${choices('material','Surface finish',catalog.materials,['original','Original surfaces'])}${choices('lighting','Lighting mood',catalog.lighting,['legacy','Use basic lighting'])}</div><div class="preset-swatches">${m?chip(outdoor?'Ground':'Floor',m.floor)+chip(a.geometry?'Walls':'Rock / walls',m.wall)+(a.geometry?chip('Wooden doors',m.wood):''):''}${l?chip('Ambient light',scaled(l.ambient))+chip(l.night?'Moonlight':'Main light',scaled(l.diffuse))+chip('Fog',l.fog_color):''}</div><p class="hint">Color preview. Check the final atmosphere in Aurora and the game.${a.geometry?' Finishes apply to the measured floor, walls, stairs and fitted wooden doors.':' Native ground and rock textures keep their detail and terrain shapes.'} Existing furnishings and carpet colors keep their authored choices.</p>${l?`<div class="row"><label class="field"><span>Brightness · ${Number(look.brightness).toFixed(2)}×</span><input data-look="brightness" type="range" min=".35" max="1.6" step=".05" value="${look.brightness}"></label><label class="field"><span>Fog density · %</span><input data-look="fog" type="number" min="0" max="80" step="1" value="${look.fog}"></label><label class="field"><span>Weather</span><select data-look="weather">${[['preset','Preset weather'],['clear','Clear'],...(outdoor?[['rain','Chance of rain'],['snow','Chance of snow']]:[])].map(([id,label])=>`<option value="${id}" ${look.weather===id?'selected':''}>${label}</option>`).join('')}</select></label></div><p class="hint">${l.night?'Fixed moonlight':'Fixed lighting'} · Weather uses a 65% chance when enabled; it may start or stop during play.</p>`:''}<div class="actions"><button data-look-action="recommended">Use recommended combination</button><button data-look-action="reset">Restore original look</button></div></section>`;
+}
+function bindPresets(){
+ async function edit(fn){const a=area();if(a.rooms.some(r=>(project.locked_rooms||[]).includes(r.id)))throw Error('Unlock this area’s rooms before changing their shared materials or lighting.');const before=clone(project);try{fn(a);if(a.design_plan?.area?.type===a.type){if(a.look)a.design_plan.area.look=clone(a.look);else delete a.design_plan.area.look;}previousDraft=before;change();report=await api('/api/author/review',{project});render();if(report.errors.length)notify(report.errors.join('\n'),true);}catch(e){project=before;render();throw e;}}
+ document.querySelectorAll('[data-look]').forEach(el=>el.onchange=()=>task(el,()=>edit(a=>{
+  a.look??=originalLook();const key=el.dataset.look;a.look[key]=['brightness','fog'].includes(key)?Number(el.value):el.value;
+  if(key==='lighting'){a.look.brightness=1;a.look.fog=app.area_presets.lighting[el.value]?.fog||0;a.look.weather='preset';}
+ })));
+ document.querySelectorAll('[data-look-action]').forEach(el=>el.onclick=()=>task(el,()=>edit(a=>{
+  if(el.dataset.lookAction==='reset'){delete a.look;return;}const [material,lighting]=app.area_presets.defaults[a.type];a.look={material,lighting,brightness:1,fog:app.area_presets.lighting[lighting].fog,weather:'preset'};
+ })));
+}

@@ -1,2 +1,2 @@
 """Role Weaver Solo Studio: local authoring and a native NWN:EE bridge."""
-VERSION = '0.10.5'
+VERSION = '0.20.0-rc1'

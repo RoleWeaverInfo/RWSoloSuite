@@ -7,7 +7,7 @@ from .companions import SCHEMA as COMPANION_SCHEMA, NPC_SCHEMA as NPC_COMPANION_
 
 from .ambient import SCHEMA as AMBIENT_SCHEMA,NPC_SCHEMA as BEHAVIOR_SCHEMA,defaults as ambient_defaults,npc_defaults as behavior_defaults,errors as behavior_errors
 
-AREA_TYPES={'castle':'Castle interior','dungeon':'Stone dungeon','cave':'Cave / mine','forest':'Forest / wilderness'}
+AREA_TYPES={'castle':'Castle interior','dungeon':'Stone dungeon','cave':'Cave / mine','forest':'Forest / wilderness','desert':'Desert','winter':'Winter / snow'}
 SIDES=('north','east','south','west')
 CREATURES={'goblin':'nw_goblina','goblin_boss':'nw_goblinboss','rat':'nw_rat001','wolf':'nw_wolf','dire_wolf':'nw_direwolf','skeleton':'nw_skeleton','zombie':'nw_zombie01','orc':'nw_orca','orc_shaman':'nw_orcwiza','bandit':'nw_bandit001','spider':'nw_spidgiant','troll':'nw_troll','ogre':'nw_ogre01','kobold':'nw_kobold001','ghoul':'nw_ghoul','bear':'nw_bearbrwn'}
 DECOR={'table':97,'chair':179,'barrel':49,'bookshelf':1,'crate':4,'chest':7,'sign':87,'candle':383,'bed':50}
@@ -110,7 +110,8 @@ def validate(p,complete=False):
                 if isinstance(n.get('behavior'),dict):n['behavior'].setdefault('accept_visits',False)
         for t in (p['companions'].get('templates',[]) if isinstance(p.get('companions'),dict) and isinstance(p['companions'].get('templates'),list) else []):
             if isinstance(t,dict):t.setdefault('inspect_containers',False);t.setdefault('social_visits',False)
-    schema_check(p,SCHEMA)
+    from .design_extensions import base_project,validate_extensions
+    validate_extensions(p);schema_check(base_project(p),SCHEMA)
     validate_companions(p)
     if not 60<=p['ambient']['social_interval']<=3600 or not 1<=p['ambient']['social_budget']<=12:raise ValueError('Ambient exchanges use 60–3600 seconds and 1–12 attempts per active hour.')
     for n in p['npcs']:
@@ -134,7 +135,7 @@ def validate(p,complete=False):
         if not 6<=a['width']<=32 or not 6<=a['height']<=32:raise ValueError(a['name']+': area dimensions must be 6–32 tiles')
         if not 1<=a['room_count']<=16 or len(a['rooms'])>16:raise ValueError(a['name']+': use 1–16 rooms')
         for r in a['rooms']:
-            if not (2<=r['width']<=16 and 2<=r['height']<=16 and r['x']>=1 and r['y']>=1 and r['x']+r['width']<a['width'] and r['y']+r['height']<a['height']):raise ValueError(r['name']+': room must fit inside the area with a one-tile border')
+            if not (1<=r['width']<=16 and 1<=r['height']<=16 and r['x']>=1 and r['y']>=1 and r['x']+r['width']<a['width'] and r['y']+r['height']<a['height']):raise ValueError(r['name']+': room must fit inside the area with a one-tile border')
     aliases=set()
     for n in p['npcs']:
         validate_merchant(n)
@@ -161,11 +162,12 @@ def review(p):
     errors=[];warnings=[]
     rooms={r['id']:(a,r) for a in p['areas'] for r in a['rooms']};npcs={n['id']:n for n in p['npcs']};quests={q['id']:q for q in p['quests']};items={i['id']:i for i in p['items']};encs={e['id']:e for e in p['encounters']}
     if not p['areas']:errors.append('Add at least one area.')
-    if not p['quests'] or not any(not q['optional'] for q in p['quests']):errors.append('Add at least one main quest with a complete path to an ending.')
+    if p.get('design_mode')!='area' and (not p['quests'] or not any(not q['optional'] for q in p['quests'])):errors.append('Add at least one main quest with a complete path to an ending.')
     if p['start_room'] not in rooms:errors.append('Choose an existing starting room.')
-    if not p['opening'].strip() or not p['ending'].strip():errors.append('Write the opening and ending narration.')
+    if p.get('design_mode')!='area' and (not p['opening'].strip() or not p['ending'].strip()):errors.append('Write the opening and ending narration.')
     for a in p['areas']:
         if len(a['rooms'])!=a['room_count']:errors.append(f"{a['name']}: requested {a['room_count']} rooms, but {len(a['rooms'])} are defined. Generate or edit the layout.")
+        if a.get('design_plan') and not a.get('geometry') and a['type'] in ('castle','dungeon','cave') and any(not r.get('native_group') for r in a['rooms']):warnings.append(a['name']+': room dimensions describe the nominal floor-tile footprint. Surrounding wall tiles extend the actual interior. This is not yet an exact wall-to-wall match to the measured reference.')
     graph={r:[] for r in rooms};ports=set()
     for c in p['connections']:
         if c['from_room'] not in rooms or c['to_room'] not in rooms or c['from_room']==c['to_room']:errors.append(c['name']+': select two different existing rooms.');continue
@@ -292,4 +294,23 @@ def review(p):
         if not any(o['room']==rid for o in p['furnishings']+p['encounters']+p['npcs']+p['items']):warnings.append(rooms[rid][1]['name']+' is empty; add content or ask AI to populate it.')
     from .furnishing import warnings as furnishing_warnings
     warnings.extend(furnishing_warnings(p))
+    if p.get('object_positions'):
+        try:
+            from .floorplan_design import validate_positions
+            validate_positions(p)
+        except ValueError as exc:errors.append(str(exc))
+    for area in p['areas']:
+        compact={r['id'] for r in area['rooms'] if min(r['width'],r['height'])==1}
+        open_rooms={d['room'] for d in layouts.get(area['id'],{}).get('openings',[])}&compact
+        if open_rooms and not area.get('geometry') and area['type'] not in ('forest','desert','winter'):warnings.append(area['name']+': narrow rooms use open corridor passages; stock doorway frames are retained in larger rooms.')
+        if area.get('look',{}).get('material','original')!='original' and not area.get('geometry'):
+            warnings.append(area['name']+': its material finish includes a generated HAK; share the complete ZIP with the module.')
+        if area.get('geometry'):
+            warnings.append(area['name']+': measured geometry includes a generated HAK; share the complete ZIP or install its HAK alongside the module.')
+            connected={(c[k],c[side]) for c in p['connections'] for k,side in (('from_room','from_side'),('to_room','to_side'))}
+            for r in area['rooms']:
+                if any((r['id'],o['side']) not in connected for o in r.get('openings',[])):warnings.append(r['name']+': unconnected drawn openings are doorway recesses. Add destination connections to make them exits.')
+        if area.get('design_plan'):
+            from .floorplan_design import native_scale
+            _,scale_notes=native_scale(area['design_plan']);warnings.extend(scale_notes)
     return {'errors':errors,'warnings':warnings,'ready':not errors,'layouts':layouts,'summary':{'areas':len(p['areas']),'rooms':len(rooms),'connections':len(p['connections']),'npcs':len(p['npcs']),'encounters':len(p['encounters']),'quests':len(p['quests']),'objectives':sum(len(q['steps']) for q in p['quests'])}}

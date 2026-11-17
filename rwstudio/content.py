@@ -92,7 +92,7 @@ def schema_check(value, spec, path='project'):
         if not isinstance(value,list) or len(value)>100: raise ValueError(f'{path}: invalid list')
         for i,v in enumerate(value): schema_check(v,spec['items'],f'{path}[{i}]')
     elif kind == 'string':
-        if not isinstance(value,str) or len(value)>12000 or '\x00' in value: raise ValueError(f'{path}: invalid text')
+        if not isinstance(value,str) or len(value)>spec.get('maxLength',12000) or '\x00' in value: raise ValueError(f'{path}: invalid text')
         if 'enum' in spec and value not in spec['enum']: raise ValueError(f'{path}: unsupported choice')
         if 'pattern' in spec and not re.fullmatch(spec['pattern'],value):raise ValueError(f'{path}: invalid identifier {value!r}; follow the lowercase resource-name limit')
     elif kind == 'boolean':

@@ -234,5 +234,7 @@ def install_build(store,ident,user_dir):
         digest=hashlib.sha256(target.read_bytes()).hexdigest()[:12]
         backup=target.parent/'RoleWeaverBackups'/(target.stem+'-'+digest+'.mod')
         backup.parent.mkdir(exist_ok=True);shutil.copy2(target,backup)
+    from .custom_assets import install_dependencies
+    install_dependencies(folder,user_dir)
     shutil.copy2(source,target)
     return {'installed':str(target),'backup':str(backup) if backup else None,'sha256':manifest['sha256']}

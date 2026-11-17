@@ -18,7 +18,9 @@ class Store:
     def __init__(self,root):
         self.root=Path(root);self.lock=threading.RLock()
         for name in ('projects','builds'): (self.root/name).mkdir(parents=True,exist_ok=True)
-        if not list((self.root/'projects').glob('*.json')): self.save(seed())
+        if not list((self.root/'projects').glob('*.json')):
+            from .authoring import blank
+            p=blank('area_workshop','Untitled area');p['design_mode']='area';self.save(p)
 
     def path(self,ident):
         if not isinstance(ident,str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',ident): raise ValueError('Invalid project ID')
@@ -34,7 +36,7 @@ class Store:
 
     def list(self):
         with self.lock:
-            return [{'id':p['id'],'title':p['title'],'module_name':p['module_name'],'schema_version':p['schema_version']} for p in
+            return [{'id':p['id'],'title':p['title'],'module_name':p['module_name'],'schema_version':p['schema_version'],'design_mode':p.get('design_mode','adventure')} for p in
                     (json.loads(f.read_text(encoding='utf-8')) for f in sorted((self.root/'projects').glob('*.json')))]
 
     def register_player_build(self,build,project):

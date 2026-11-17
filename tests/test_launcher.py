@@ -142,8 +142,9 @@ class PlayerContextTests(unittest.TestCase):
             (folder/'AI Player/data').mkdir(parents=True);(folder/'AI Player/data/settings.json').write_text('PRIVATE_SETTINGS_SENTINEL');(folder/'AI Player/data/.env').write_text('PRIVATE_CREDENTIAL_SENTINEL')
             archive=refresh_share_zip(folder,manifest)
             with zipfile.ZipFile(archive) as z:
-                self.assertIsNone(z.testzip());self.assertIn('Play Adventure.cmd',z.namelist());self.assertIn('AI Player/play.py',z.namelist());self.assertIn('AI Player/rwstudio/launcher.py',z.namelist());self.assertFalse(any('/data/' in n for n in z.namelist()))
-                self.assertIn(b'-Module "sample"',z.read('Play Adventure.cmd'))
+                self.assertIsNone(z.testzip());self.assertIn('Start Role Weaver.cmd',z.namelist());self.assertIn('AI Player/service.py',z.namelist());self.assertIn('AI Player/rwstudio/service.py',z.namelist());self.assertFalse(any('/data/' in n for n in z.namelist()))
+                self.assertIn(b'-AdventurePath "%~dp0sample.mod"',z.read('Start Role Weaver.cmd'))
+                self.assertIn('AI Player/web/branding/splash.png',z.namelist());self.assertNotIn('Play Adventure.cmd',z.namelist());self.assertNotIn('Start-Adventure.ps1',z.namelist());self.assertNotIn('AI Player/play.py',z.namelist())
             self.assertFalse(any('AI Player/data' in str(f) for f in package_build_files(folder,manifest)))
 
 if __name__=='__main__':unittest.main()

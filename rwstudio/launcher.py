@@ -105,6 +105,8 @@ def install(p):
     source=Path(p['source']);target=Path(p['installed'])
     if source==target:return
     if target.name=='mc_courier.mod' and target.exists() and source.read_bytes()!=target.read_bytes():raise LaunchError('The original courier module is protected; use a separate module filename.')
+    from .custom_assets import install_dependencies
+    install_dependencies(source.parent,p['user_dir'])
     raw=source.read_bytes();target.parent.mkdir(parents=True,exist_ok=True)
     if target.is_file():
         old=target.read_bytes()
@@ -117,7 +119,7 @@ def install(p):
 def configure(s,p):
     version=tuple(map(int,re.findall(r'\d+',str(s.get('version','')))[:3]))
     if version<(0,10,2):raise LaunchError('AI Player 0.10.2 or newer is required. Close the older AI Player and run this launcher again.')
-    if not s['key_available']:raise LaunchError('AI Player has no OPENAI_API_KEY. Configure your key and restart AI Player, or launch with -Offline for native play.')
+    if not s['key_available']:raise LaunchError('AI Player has no key for the selected provider. Save one in Module Studio Settings, or launch with -Offline for native play.')
     if Path(s['settings']['user_dir']).resolve()!=Path(p['user_dir']).resolve():raise LaunchError('The running AI Player uses a different NWN user folder. Correct its settings before playing.')
     http('/api/player/register',p['document'],s['csrf'])
     http('/api/bridge',dict(enabled=True),s['csrf'])
@@ -130,7 +132,10 @@ def game_running():
 def run(p,popen=subprocess.Popen,check_state=state,check_game=game_running,sleep=time.sleep):
     bridge=None;logs=[];started_game=None;restarts=0
     def start_bridge():
-        if not os.environ.get('OPENAI_API_KEY'):raise LaunchError('OPENAI_API_KEY is missing. Configure your own API key or use -Offline to play without live AI.')
+        from .credentials import Credentials
+        config_path=Path(p['data'])/'settings.json'
+        configured=read_json(config_path) if config_path.exists() else {}
+        if not Credentials(Path(p['data'])).get(configured.get('provider','openai')):raise LaunchError('No API key is configured for the selected provider. Save one in Module Studio Settings, or use -Offline.')
         data=Path(p['data']);data.mkdir(parents=True,exist_ok=True)
         from .storage import write_json
         settings=read_json(data/'settings.json') if (data/'settings.json').is_file() else {}
@@ -201,7 +206,7 @@ def main():
             args['resume']=saved_game_choice(input('Choose [1]: '))
         p=plan(**args)
         if check:
-            safe={k:v for k,v in p.items() if k!='document'};safe['matching_project_available']=p['document'] is not None;safe['key_available']=bool(os.environ.get('OPENAI_API_KEY'));print(json.dumps(safe,indent=2));return
+            safe={k:v for k,v in p.items() if k!='document'};safe['matching_project_available']=p['document'] is not None;config_path=Path(p['data'])/'settings.json';configured=read_json(config_path) if config_path.exists() else {};from .credentials import Credentials;safe['key_available']=bool(Credentials(Path(p['data'])).get(configured.get('provider','openai')));print(json.dumps(safe,indent=2));return
         run(p)
     except KeyboardInterrupt:print('Launcher closed. NWN was left running. Only a worker started by this launcher was stopped; pre-existing AI Players were left alone.')
     except (LaunchError,ValueError,OSError,KeyError) as e:

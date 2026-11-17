@@ -18,7 +18,7 @@ void AWAPatrol(object body){json p=AWAPolicy(body);if(!AWInt(AWACfg(),"patrols")
  if(!AWANearPlayer(body) || GetLocalInt(body,"AWA_SOCIAL_LOCK"))return;
  json route=JsonObjectGet(p,"route");int count=JsonGetLength(route);if(count<2)return;int index=GetLocalInt(body,"AWA_STOP");if(index<0 || index>=count)index=0;
  string room=JsonGetString(JsonArrayGet(route,index));json r=AWFind(AWRooms(),room);if(AWText(r,"area")!=GetTag(GetArea(body)))return;
- vector pos=Vector(IntToFloat(AWInt(r,"x")*10+AWInt(r,"width")*5),IntToFloat(AWInt(r,"y")*10+AWInt(r,"height")*5),0.0);location destination=Location(GetArea(body),pos,0.0);
+ vector pos=Vector(JsonGetFloat(JsonObjectGet(r,"entry_x")),JsonGetFloat(JsonObjectGet(r,"entry_y")),JsonGetFloat(JsonObjectGet(r,"entry_z")));location destination=Location(GetArea(body),pos,0.0);
  if(GetDistanceBetweenLocations(GetLocation(body),destination)<=2.5){AWAStop(body);int direction=GetLocalInt(body,"AWA_DIRECTION");if(direction==0)direction=1;
  if(AWText(p,"mode")=="pingpong"){if(index==count-1)direction=-1;else if(index==0)direction=1;index+=direction;}else index=(index+1)%count;
  SetLocalInt(body,"AWA_DIRECTION",direction);SetLocalInt(body,"AWA_STOP",index);SetLocalInt(body,"AWA_WAIT",AWMClock()+AWInt(p,"wait_seconds"));SetLocalString(body,"AWA_STATUS","Arrived at "+room);return;}
