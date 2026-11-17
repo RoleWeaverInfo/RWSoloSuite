@@ -3,9 +3,12 @@ import argparse
 import re
 import sys
 import webbrowser
+import json
 from pathlib import Path
 from . import launcher
+from . import VERSION
 from .content import validate_project
+from .paths import default_data
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,8 +49,8 @@ def startup_url(player=False, port=8766):
 
 def reuse(existing, module=None, player=False, open_browser=True):
     version = tuple(int(n) for n in re.findall(r'\d+', str(existing.get('version', '')))[:3])
-    if version < (0, 20, 0):
-        raise ValueError('An older Role Weaver service is running. Close its service window, then start this release again.')
+    if version < (0, 20, 0) or existing.get('version') != VERSION:
+        raise ValueError('An older or different Role Weaver version is running. Close its service window, then start this release again.')
     if module:
         document = adventure_document(module)
         launcher.http('/api/player/register', document, existing['csrf'])
@@ -61,10 +64,15 @@ def reuse(existing, module=None, player=False, open_browser=True):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--adventure', type=Path)
-    parser.add_argument('--data', type=Path, default=ROOT/'data')
+    parser.add_argument('--data', type=Path, default=default_data())
     parser.add_argument('--player', action='store_true')
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--version', action='version', version=VERSION)
+    parser.add_argument('--runtime-info', action='store_true', help='Print local runtime paths without starting the service')
     args = parser.parse_args(argv)
+    if args.runtime_info:
+        print(json.dumps(dict(version=VERSION,python=sys.version.split()[0],executable=sys.executable,application=str(ROOT),data=str(args.data)),indent=2))
+        return
     try:
         existing = launcher.state()
         if existing:

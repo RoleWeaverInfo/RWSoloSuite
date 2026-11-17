@@ -1,4 +1,13 @@
-# 0.20.0-rc1 — release preparation
+# 0.20.0-rc2 — Windows installer
+
+- Windows Setup includes an isolated 64-bit Python runtime. End users do not need to install Python, pip or development tools.
+- A Start-menu entry and optional desktop shortcut start the service through `Role Weaver Module Studio.exe`. NWN remains a separate, manual launch.
+- The installer runs for the current user. Projects, builds, downloaded asset caches, settings and encrypted keys live in `%LOCALAPPDATA%\RoleWeaver\ModuleStudio`, outside the installed program. Upgrades and uninstall leave that workspace intact.
+- Shared-adventure launchers detect the installed Studio through its per-user registration. The source ZIP remains available for developers using their own Python.
+- Setup checks the service mutex before upgrades or uninstall, rather than terminating a running service. Runtime versions and download hashes are pinned in `installer/runtime-lock.json`; build instructions are in `installer/README.md`.
+- This is an unsigned release candidate. Code signing and distribution are separate release steps.
+
+## 0.20.0-rc1 — release preparation
 
 - Blue dashboard theme, readable focus states and responsive branding using the supplied Role Weaver Module Studio artwork.
 - Browser startup splash with service readiness, a four-second transition and an option to stay on the splash.

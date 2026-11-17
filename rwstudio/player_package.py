@@ -25,8 +25,9 @@ def write_player_bundle(folder,module):
 
 def export_keys():
     from .credentials import Credentials,ENV
+    from .paths import default_data
     keys={os.environ.get(name,'').encode() for name in ENV.values()}
-    credentials=Credentials(ROOT/'data')
+    credentials=Credentials(default_data(ROOT))
     for provider in ENV:
         try:keys.add(credentials.get(provider).encode())
         except ValueError:pass  # Encrypted records themselves are never in the allowlist.

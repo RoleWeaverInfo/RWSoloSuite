@@ -34,7 +34,8 @@ class ServiceStartupTests(unittest.TestCase):
 
     def test_old_service_is_rejected_before_registration_or_installation(self):
         with patch.object(service.launcher,'http') as http,patch.object(service,'install_adventure') as install:
-            with self.assertRaisesRegex(ValueError,'older'):service.reuse(dict(self.state(),version='0.19.0'))
+            for version in ('0.19.0','0.20.0-rc1'):
+                with self.assertRaisesRegex(ValueError,'older'):service.reuse(dict(self.state(),version=version))
         http.assert_not_called();install.assert_not_called()
 
     def test_fresh_server_enables_bridge_and_closes_resources_without_spawning_nwn(self):

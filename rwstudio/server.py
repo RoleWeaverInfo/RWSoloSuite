@@ -18,6 +18,8 @@ from .storage import Store, write_json
 from .provider import Provider
 from .bridge import Bridge
 from .builder import ROOT, build_project, install_build
+from .paths import default_data
+from .installation import service_lock
 from . import authoring
 from .merchants import CATALOG as GOODS, defaults as merchant_defaults
 from .ambient import defaults as ambient_defaults,npc_defaults as behavior_defaults
@@ -287,11 +289,11 @@ def serve(data,port=8766,open_browser=False,player=False,adventure=None):
         app.bridge.enabled=True
         print('Role Weaver service '+VERSION+': '+url+'\nKeep this service window open while playing. Start NWN separately.',flush=True)
         if open_browser:webbrowser.open(startup_url(player,server.server_port))
-        server.serve_forever()
+        with service_lock(server.server_port):server.serve_forever()
     except KeyboardInterrupt:pass
     finally:app.bridge.stop.set();server.server_close()
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8766);parser.add_argument('--data',type=Path,default=ROOT/'data');parser.add_argument('--open',action='store_true');parser.add_argument('--player',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8766);parser.add_argument('--data',type=Path,default=default_data());parser.add_argument('--open',action='store_true');parser.add_argument('--player',action='store_true');args=parser.parse_args()
     serve(args.data,args.port,args.open,args.player)

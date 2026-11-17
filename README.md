@@ -1,14 +1,14 @@
-# Role Weaver Module Studio 0.20.0-rc1
+# Role Weaver Module Studio 0.20.0-rc2
 
 Create single-player Neverwinter Nights: Enhanced Edition adventures, edit them in Aurora, and add optional AI conversations, companions and merchants.
 
 ## Start Role Weaver
 
-1. Extract the whole ZIP into a writable folder, such as Documents\Role Weaver. Do not run it from inside the ZIP or put it under Program Files.
-2. Install **Python 3.10 or newer** if it is not already installed. No additional Python packages are required. This release candidate does not include a Python runtime or Windows installer.
-3. Double-click **Start Role Weaver.cmd**. The service opens a browser splash screen and then Module Studio at **http://127.0.0.1:8766**. Keep the service window open while authoring or playing with AI. Closing a browser tab leaves the service running; closing the service window stops it.
+1. Run **Role-Weaver-Module-Studio-0.20.0-rc2-Setup-x64.exe** on Windows 10/11 (64-bit). Setup installs Role Weaver and its private Python runtime for your Windows account. You do not need to install Python separately.
+2. Choose whether to add a desktop shortcut. Start **Role Weaver Module Studio** from the Start menu or that shortcut. The browser shows the splash and then the dashboard at **http://127.0.0.1:8766**.
+3. Keep the Role Weaver service window open while authoring or playing with AI. Closing a browser tab leaves the service running; closing the service window stops it. The installer does not start NWN.
 4. Open **Local settings**. Check the NWN installation and user folders. Steam installs are detected where possible. Use your own installed NWN:EE game; no game installation is included. The Aurora editor is required to inspect/edit exports. The NWScript compiler is included.
-5. Select OpenAI or Gemini, save your own API key, and choose separate models for authoring and in-game conversations. Keys are encrypted for your Windows account and kept in local `data/credentials.json`. You can also use `OPENAI_API_KEY` or `GEMINI_API_KEY` environment variables. API features require internet access and available provider credit.
+5. Select OpenAI or Gemini, save your own API key, and choose separate models for authoring and in-game conversations. Keys are encrypted for your Windows account and kept in the workspace file `credentials.json`. You can also use `OPENAI_API_KEY` or `GEMINI_API_KEY` environment variables. API features require internet access and available provider credit.
 
 The service never starts NWN. Open NWN yourself after starting Role Weaver, then select your module or saved game. Clicking Start Role Weaver again reuses the running service. The splash uses the included Role Weaver artwork; the dashboard uses a blue theme.
 
@@ -20,7 +20,7 @@ Create an adventure when ready to add story, NPCs, quests and encounters. Use **
 
 ## Play a shared adventure
 
-1. Start NWN once to establish its user folder, then close it. Extract the **entire adventure ZIP**.
+1. Install Role Weaver Module Studio using Windows Setup. Start NWN once to establish its user folder, then close it. Extract the **entire adventure ZIP**.
 2. Run **Start Role Weaver.cmd** from the adventure folder while NWN is closed. This starts/reuses the service, registers that exact AI profile, and installs the module and included HAKs. It backs up a differing installed module. If a separate service is already running, its configured NWN user folder is used.
 3. Configure your provider key in **Module Studio → Local settings**, if needed. The AI service status page links back to Studio. Keep the service window open.
 4. Open NWN separately, start a new single-player game in the module, or load a compatible save. Older saves retain their embedded area/script resources; start a new game to test a newly rebuilt module.
@@ -29,18 +29,22 @@ For manually installed modules, copy `.mod` into your NWN user `modules` folder 
 
 ## Updating and troubleshooting
 
-Close the old service before upgrading, and extract this release into a **new folder**. Keep a backup of your previous `data` folder. To retain settings, credentials, projects and build profiles, copy that whole folder to the new installation while both services are stopped. Encrypted keys work only for the same Windows user. Retained compiler paths may point to the old folder; check Settings after moving an installation. Do not distribute your `data` folder.
+Close the service before running a newer Setup. Projects, builds, asset caches, settings and saved keys are stored in **%LOCALAPPDATA%\RoleWeaver\ModuleStudio**, separately from the program files. Setup updates the application and bundled runtime. Uninstall removes the application and shortcuts while preserving this workspace. Keys remain encrypted for the same Windows account. You can back up the workspace folder while the service is stopped.
+
+To migrate from a previous source ZIP, close both services and copy that ZIP's entire `data` folder into the installed workspace location above before first launch. If a workspace already exists there, back it up before merging. Check game/user folders and the compiler path in Settings afterward. Do not distribute your workspace or saved keys.
+
+The **source ZIP** is still available for developers: extract it to a writable folder and use **Start Role Weaver.cmd** with Python 3.10+. Source checkouts keep `data` beside the source; installed copies use the per-user location. `ROLEWEAVER_DATA_DIR` is an optional explicit workspace override for testing or a separate workspace.
 
 - **Older service running:** close its service window, then start this release. Do not close NWN without saving.
-- **Python not found:** install Python 3.10+ for Windows, then retry the launcher.
+- **Python not found:** use the Windows Setup installer, which includes Python. Only the source ZIP needs a separate Python installation.
 - **No AI response:** check AI service status, provider key/model, provider credit, the NWN user-folder setting and the imported build profile. Loading a `.mod` alone does not start Role Weaver.
 - **Missing HAK:** extract the complete adventure ZIP and run its service launcher while NWN is closed, or copy the included HAKs manually.
 - **Port 8766 occupied:** close the other Role Weaver service or conflicting application before retrying.
 
-Release candidate checks cover code, native export and packaging. Final visuals, pathfinding and gameplay still need an author playtest. This ZIP contains no personal projects, saved API keys, downloaded content packs or saved games. See RELEASE-NOTES.md and ROLE-WEAVER-LICENSE.txt; the bundled compiler's license is under vendor/nwnsc.
+Release candidate checks cover code, native export and packaging. Final visuals, pathfinding and gameplay still need an author playtest. The installer and source ZIP contain no personal projects, saved API keys, downloaded content packs or saved games. See RELEASE-NOTES.md and ROLE-WEAVER-LICENSE.txt; the bundled compiler's license is under vendor/nwnsc.
 
 ## Development
 
-Run `python -m unittest discover -s tests` for the test suite. Native export tests need an installed NWN game and the included compiler. Build the clean release with `python package.py`; ZIP and SHA-256 files are written to `dist/`. No example builds are included by default.
+Run `python -m unittest discover -s tests` for tests. Native export tests need installed NWN assets and the included compiler. Build the Windows installer using [installer/README.md](installer/README.md). `python package.py` builds the source ZIP. Neither package includes personal workspaces or example builds by default.
 
-See [VALIDATION.md](VALIDATION.md) for verified behavior and [development history](docs/DEVELOPMENT-HISTORY.md) for earlier milestones. Launcher instructions in that historical document describe older versions; use the service-only instructions above for this release.
+See [VALIDATION.md](VALIDATION.md) and [development history](docs/DEVELOPMENT-HISTORY.md) for checks and earlier milestones.
