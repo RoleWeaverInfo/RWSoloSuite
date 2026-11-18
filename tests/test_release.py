@@ -77,9 +77,9 @@ class ReleasePackageTests(unittest.TestCase):
             result=release.package(output=tmp);path=Path(result['package'])
             with zipfile.ZipFile(path) as archive:
                 names=archive.namelist();prefix='Role-Weaver-Module-Studio/'
-                for name in ('Start Role Weaver.cmd','Start-RoleWeaver.ps1','service.py','web/branding/splash.png','web/startup.html','vendor/nwnsc/nwnsc.exe'):
+                for name in ('Start Role Weaver.cmd','Start-RoleWeaver.ps1','service.py','web/branding/splash.png','web/startup.html','vendor/nwnsc/nwnsc.exe','requirements-guardrails.txt','GUARDRAILS-AND-USAGE.md','rwstudio/guardrails_sdk.py','rwstudio/usage.py','web/safety.js'):
                     self.assertIn(prefix+name,names)
-                self.assertFalse(any(n.startswith(prefix+'data/') or n.startswith(prefix+'examples/') or n.endswith(('credentials.json','settings.json','Play Adventure.cmd','Start-Adventure.ps1','/play.py')) for n in names))
+                self.assertFalse(any(n.startswith(prefix+'data/') or n.startswith(prefix+'examples/') or n.endswith(('credentials.json','settings.json','guardrails.json','.sqlite3','Play Adventure.cmd','Start-Adventure.ps1','/play.py')) for n in names))
                 self.assertEqual(len(names),len(set(names)));self.assertIsNone(archive.testzip());self.assertIn(b'Python 3.10',archive.read(prefix+'README.md'))
                 self.assertEqual(archive.read(prefix+'web/branding/splash.png'),(ROOT/'web/branding/splash.png').read_bytes())
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),result['sha256']);self.assertIn(result['sha256'],path.with_suffix('.zip.sha256').read_text())

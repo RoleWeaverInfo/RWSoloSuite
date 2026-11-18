@@ -39,14 +39,16 @@ def provider_error(exc,provider):
 
 
 class Provider:
-    def __init__(self, model, provider="openai", credentials=None, reasoning_effort=None):
+    def __init__(self, model, provider="openai", credentials=None, reasoning_effort=None, *, scope='gameplay', guardrails=None, usage_store=None):
         self.model=model;self.provider=provider;self.credentials=credentials
         self.reasoning_effort=reasoning_effort
+        self.scope=scope;self.guardrails=guardrails;self.usage_store=usage_store
         self.lock=threading.Lock()
         self.calls=[]
         self.usage={'requests':0,'input_tokens':0,'output_tokens':0,'last_seconds':0}
 
-    def request(self,system,context,schema,max_tokens=1400,images=None):
+    def _transport(self,system,context,schema,max_tokens=1400,images=None,attempt=None,limits=None):
+        attempt=attempt if attempt is not None else {}
         provider=self.provider;model=self.model;effort=self.reasoning_effort
         key=self.credentials.get(provider) if self.credentials else os.environ.get('GEMINI_API_KEY' if provider=='gemini' else 'OPENAI_API_KEY','')
         if not key:raise AIError('No key is configured for '+provider+'. Add it in Studio Settings or configure its environment variable.')
@@ -57,7 +59,7 @@ class Provider:
         with self.lock:
             now=time.monotonic()
             self.calls=[t for t in self.calls if now-t<3600]
-            if len(self.calls)>=60: raise AIError('Studio has reached its 60-request hourly limit. Try again later.')
+            if len(self.calls)>=60 and not (self.scope=='gameplay' and self.usage_store): raise AIError('Studio has reached its 60-request hourly limit. Try again later.')
             self.calls.append(now)
         if provider=='gemini':
             parts=[{'text':json.dumps(context,ensure_ascii=False)}]
@@ -74,10 +76,19 @@ class Provider:
                      'text':{'format':{'type':'json_schema','name':'roleweaver_result','strict':True,'schema':schema}}}
             if effort:
                 payload['reasoning']={'effort':effort}
-                payload['max_output_tokens']=max(32000,max_tokens)
+                payload['max_output_tokens']=max_tokens if limits else max(32000,max_tokens)
             url='https://api.openai.com/v1/responses';headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'}
         request=urllib.request.Request(url,data=json.dumps(payload).encode(),headers=headers)
         start=time.monotonic()
+        if self.usage_store:
+            ident,blocked=self.usage_store.begin(self.scope,provider,model,limits=limits)
+            attempt.update(id=ident,blocked=bool(blocked),category=blocked)
+            if blocked:
+                message={'requests_per_minute':'Gameplay AI reached its per-minute request limit. Wait a minute.',
+                    'requests_per_hour':'Gameplay AI reached its hourly request limit.',
+                    'daily_token_limit':'Gameplay AI reached its daily token stop.',
+                    'unknown_usage_budget':'Gameplay AI paused because a provider call has unreported token usage and a daily token stop is enabled.'}.get(blocked,'Gameplay AI is paused.')
+                raise AIError(message+' See Guardrails & usage in Studio. Native NPC menus remain available.')
         try:
             with urllib.request.urlopen(request,timeout=300 if effort else 120 if max_tokens>10000 else 65) as response:
                 data=json.loads(response.read(2_000_000))
@@ -85,16 +96,19 @@ class Provider:
             raise AIError(provider_error(exc,provider)) from None
         except (TimeoutError,OSError,ValueError):
             raise AIError('The AI request did not finish. Check the connection and try again; the authored quest remains available.') from None
+        from .usage import counts
+        attempt['usage']=counts(data,provider)
+        if not isinstance(data,dict):raise AIError('The provider returned an invalid response. Nothing was applied.')
+        with self.lock:
+            self.usage['requests']+=1
+            for field in ('input_tokens','output_tokens'):self.usage[field]+=attempt['usage'][field] or 0
+            self.usage['last_seconds']=round(time.monotonic()-start,1)
         if provider=='gemini':
             candidates=data.get('candidates',[])
             if not candidates or candidates[0].get('finishReason')!='STOP':raise AIError('Gemini did not complete the response. Shorten the request or check model settings.')
             parts=[p.get('text','') for p in candidates[0].get('content',{}).get('parts',[]) if not p.get('thought')]
             usage=data.get('usageMetadata',{})
             data={'status':'completed','usage':{'input_tokens':usage.get('promptTokenCount',0),'output_tokens':usage.get('candidatesTokenCount',0)},'output':[{'content':[{'type':'output_text','text':''.join(parts)}]}]}
-        with self.lock:
-            self.usage['requests']+=1
-            for field in ('input_tokens','output_tokens'): self.usage[field]+=data.get('usage',{}).get(field,0)
-            self.usage['last_seconds']=round(time.monotonic()-start,1)
         if data.get('status')!='completed': raise AIError('The model did not complete its response. Shorten the request or choose another model.')
         parts=[]
         for output in data.get('output',[]):
@@ -105,6 +119,40 @@ class Provider:
             result=json.loads(''.join(parts)); schema_check(result,schema,'AI response')
         except (ValueError,TypeError): raise AIError('The model returned an invalid response. Nothing was applied.') from None
         return result
+
+    def request(self,system,context,schema,max_tokens=1400,images=None):
+        attempt={};start=time.monotonic();status='failed';category=''
+        policy=self.guardrails.snapshot() if self.scope=='gameplay' and self.guardrails else None
+        try:
+            if policy:
+                from .guardrails import text_content
+                context=self.guardrails.prepare(context,policy)
+                category=self.guardrails.check(text_content(context),'input',policy)
+                if len(json.dumps(context,ensure_ascii=False))>policy['input_char_limit']:category='text_size'
+                if category:
+                    if self.usage_store:self.usage_store.begin(self.scope,self.provider,self.model,blocked=category)
+                    from .guardrails import safe_result
+                    return safe_result(schema,context)
+                max_tokens=min(max_tokens,policy['max_output_tokens'])
+            result=self._transport(system,context,schema,max_tokens,images,attempt,policy)
+            if policy:
+                from .guardrails import safe_result,SECRET
+                text='\n'.join(str(v) for k,v in result.items() if k in ('reply','line','line_a','line_b','reason','task_question','task_item') and v)
+                category=self.guardrails.check(text,'output',policy,system)
+                if SECRET.search(json.dumps(result,ensure_ascii=False)):category='credential_text'
+                if category:status='replaced';return safe_result(schema,context)
+            status='success'
+            return result
+        except ValueError as exc:
+            if not isinstance(exc,AIError):raise AIError(str(exc)) from None
+            raise
+        finally:
+            if self.usage_store:
+                if attempt.get('id') and not attempt.get('blocked'):
+                    self.usage_store.finish(attempt['id'],status,attempt.get('usage'),time.monotonic()-start,category)
+                elif not attempt.get('id') and status=='failed' and not category:
+                    ident,_=self.usage_store.begin(self.scope,self.provider,self.model,blocked='request_unavailable')
+                    self.usage_store.finish(ident,'failed',seconds=time.monotonic()-start,category='request_unavailable')
 
     def npc(self,project,tag,prompt,snapshot,history=''):
         if project.get('schema_version')==2:
@@ -130,6 +178,9 @@ class Provider:
         return reply(self,project,payload)
 
     def social(self,project,payload,can_continue=lambda:True):
+        if self.guardrails and not self.guardrails.snapshot()['ambient_enabled']:
+            if self.usage_store:self.usage_store.begin(self.scope,self.provider,self.model,blocked='ambient_disabled')
+            raise AIError('Ambient AI conversations are paused in Guardrails settings.')
         from .ambient import reply
         return reply(self,project,payload,can_continue)
 

@@ -195,6 +195,18 @@ class HTTPTests(unittest.TestCase):
     def test_static_dashboard_assets(self):
         for url in ['/','/app.js','/style.css']:
             status,raw=self.request(url);self.assertEqual(status,200);self.assertGreater(len(raw),100)
+    def test_project_delete_requires_confirmation_and_csrf(self):
+        ident='area_workshop';path=self.app.store.path(ident)
+        for headers,body,status in [({'X-Studio-Token':'bad'},{'id':ident,'confirm':True},403),({}, {'id':ident},400),({}, {'id':'../settings','confirm':True},400)]:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.request('/api/project/delete',body,headers)
+            self.assertEqual(error.exception.code,status);self.assertTrue(path.is_file())
+        status,raw=self.request('/api/project/delete',{'id':ident,'confirm':True})
+        self.assertEqual(status,200);self.assertFalse(path.exists());self.assertEqual(json.loads(raw)['projects'],[])
+        with self.assertRaises(urllib.error.HTTPError) as error:self.request('/api/project/delete',{'id':ident,'confirm':True})
+        self.assertEqual(error.exception.code,400)
+        status,raw=self.request('/api/project/new',{'id':'fresh_area','title':'Fresh area','design_mode':'area'})
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw)['project']['id'],'fresh_area')
+        self.assertFalse(path.exists());self.assertEqual(len(self.app.store.list()),1)
 
 class ExportTests(unittest.TestCase):
     def test_three_area_native_export(self):

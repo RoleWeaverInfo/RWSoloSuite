@@ -11,7 +11,7 @@ def write_player_bundle(folder,module):
     folder=Path(folder);name=Path(module).stem
     if not re.fullmatch('[a-z][a-z0-9_]{0,15}',name):raise ValueError('Invalid module launcher filename')
     player=folder/'AI Player';player.mkdir(exist_ok=True);copied=[]
-    for filename in ('studio.py','service.py','ROLE-WEAVER-LICENSE.txt'):
+    for filename in ('studio.py','service.py','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','GUARDRAILS-AND-USAGE.md'):
         shutil.copy2(ROOT/filename,player/filename);copied.append(player/filename)
     for directory in ('rwstudio','web','assets'):
         for source in (ROOT/directory).rglob('*'):
@@ -65,7 +65,7 @@ def package_build_files(folder,manifest):
     explicit += list((folder/'geometry-source').glob('*'))
     explicit += [f for f in [folder/'dependencies.json',*(folder/'hak').glob('*.hak')] if f.is_file()]
     runtime=folder/'AI Player'
-    explicit += [runtime/f for f in ('studio.py','service.py','ROLE-WEAVER-LICENSE.txt')]
+    explicit += [runtime/f for f in ('studio.py','service.py','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','GUARDRAILS-AND-USAGE.md')]
     for directory in ('rwstudio','web','assets'):
         explicit += [runtime/f.relative_to(ROOT) for f in (ROOT/directory).rglob('*') if f.is_file() and '__pycache__' not in f.parts and f.suffix!='.pyc']
     return [f for f in explicit if f.is_file()]

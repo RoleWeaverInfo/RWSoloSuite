@@ -125,6 +125,48 @@ const choose={dataset:{lookAction:'recommended'}},reset={dataset:{lookAction:'re
 """
         r=subprocess.run(['node','-e',script,json.dumps(native_project()),json.dumps(catalog())],cwd=ROOT,capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr)
 
+    def test_dropdown_changes_keep_options_and_submit_valid_presets_with_real_task(self):
+        script=r"""
+const vm=require('vm'),fs=require('fs'),assert=require('assert'),elements={},submitted=[],notices=[];
+const initial=JSON.parse(process.argv[1]),catalog=JSON.parse(process.argv[2]);
+const ctx={project:initial,app:{area_presets:catalog},clone:o=>JSON.parse(JSON.stringify(o)),area:()=>ctx.project.areas[0],previousDraft:null,report:null,dirty:false,$:s=>elements[s]??={},render:()=>{},notify:(...args)=>notices.push(args),api:async(path,body)=>{assert.equal(path,'/api/author/review');submitted.push(ctx.clone(body.project));return {errors:[]};},document:{querySelectorAll:s=>elements[s]||[]}};
+vm.createContext(ctx);const editor=fs.readFileSync('web/editor.js','utf8');
+vm.runInContext(editor.slice(editor.indexOf('async function task('),editor.indexOf('function value(')),ctx);
+vm.runInContext(editor.slice(editor.indexOf('function change()'),editor.indexOf('function roomOptions()')),ctx);
+vm.runInContext(fs.readFileSync('web/presets.js','utf8'),ctx);
+function control(tagName,key,value){
+ const el={tagName,dataset:{look:key},value,disabled:false,options:tagName==='SELECT'?[{value}]:[]};let text='Original label';
+ // A real select loses its option nodes and selected value on textContent assignment.
+ Object.defineProperty(el,'textContent',{get:()=>text,set:v=>{text=v;if(tagName==='SELECT'){el.options=[];el.value='';}}});return el;
+}
+(async()=>{
+ for(const type of Object.keys(catalog.defaults)){
+  ctx.project=ctx.clone(initial);ctx.area().type=type;delete ctx.area().look;
+  const material=Object.keys(catalog.materials).filter(id=>catalog.materials[id].types.includes(type)).at(-1);
+  const lighting=Object.keys(catalog.lighting).filter(id=>catalog.lighting[id].types.includes(type)).at(-1);
+  const weather=['forest','desert','winter'].includes(type)?'snow':'clear';
+  for(const [key,value] of [['material',material],['lighting',lighting],['weather',weather],['fog','24'],['brightness','1.25'],['lighting','legacy'],['material','original']]){
+   const input=control(['fog','brightness'].includes(key)?'INPUT':'SELECT',key,value),options=input.options;
+   elements['[data-look]']=[input];ctx.bindPresets();await input.onchange();
+   assert.equal(ctx.area().look[key],['fog','brightness'].includes(key)?Number(value):value,type+' / '+key);
+   assert.equal(input.value,value);assert.strictEqual(input.options,options);assert.equal(input.disabled,false);assert.equal(input.textContent,'Original label');
+  }
+ }
+ assert.deepEqual(notices,[]);
+ const select=control('SELECT','lighting','castle_warm'),options=select.options;
+ await ctx.task(select,async()=>{assert(select.disabled);throw Error('Review unavailable');});
+ assert.equal(select.value,'castle_warm');assert.strictEqual(select.options,options);assert.equal(select.disabled,false);assert.equal(notices.at(-1)[0],'Review unavailable');
+ const button=control('BUTTON','',null);await ctx.task(button,async()=>{assert(button.disabled);assert.equal(button.textContent,'Working…');});
+ assert.equal(button.textContent,'Original label');assert.equal(button.disabled,false);
+ button.disabled=true;await ctx.task(button,async()=>{});assert.equal(button.disabled,true);
+ await ctx.task(null,async()=>{});console.log(JSON.stringify(submitted));
+})().catch(e=>{console.error(e);process.exitCode=1;});
+"""
+        result=subprocess.run(['node','-e',script,json.dumps(native_project()),json.dumps(catalog())],cwd=ROOT,capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+        projects=json.loads(result.stdout);self.assertEqual(len(projects),len(TILESETS)*7)
+        for project in projects:validate(project)
+
     @unittest.skipUnless(GAME.exists() and COMPILER.exists(),'NWN/compiler required')
     def test_real_native_build_packages_terrain_materials_and_light_fields(self):
         p=native_project('winter');p['areas'][0]['look'].update(material='winter_blue',lighting='winter_flurry',fog=30)

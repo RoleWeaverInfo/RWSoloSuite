@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const els={},settings={sdk_enabled:true,requests_per_minute:12,requests_per_hour:60,daily_token_limit:0,max_output_tokens:1400,input_char_limit:60000,output_char_limit:1200,blocked_terms:'<script>bad</script>'};
+let controls=[],posted,refresh=[];
+const ctx={console,document:{querySelectorAll:()=>controls},$:s=>els[s],E:s=>String(s??'').replaceAll('<','&lt;').replaceAll('>','&gt;'),app:{guardrails:{settings,active:true,backend:'Guardrails AI',version:'0.11.0'}},task:async(el,fn)=>fn(),render:()=>{},api:async(path,body)=>{if(body){posted={path,body};return {settings:body.settings};}return new Promise(resolve=>refresh.push(resolve));}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/safety.js','utf8'),ctx);
+const panel=ctx.guardrailsPanel();assert(panel.includes('Guardrails AI'));assert(panel.includes('Daily token stop'));assert(panel.includes('Module creation'));assert(!panel.includes('<script>bad'));
+for(const name of ['#saveGuardrails','#guardrailsStatus','#usagePeriod','#refreshUsage','#usageReport'])els[name]={};
+controls=[{dataset:{guardrail:'requests_per_minute'},type:'number',value:'8'},{dataset:{guardrail:'sdk_enabled'},type:'checkbox',checked:false}];
+ctx.bindSafety();
+const total={input_tokens:100,output_tokens:50,cached_tokens:30,reasoning_tokens:20,api_calls:2,blocked:1,replaced:1,failed:0,unknown_usage:1,pending:1};
+const report={scopes:{gameplay:total,authoring:{...total,input_tokens:200}},models:[{scope:'authoring',provider:'openai',model:'<model>',...total}],daily:[{day:'2026-11-17',gameplay:150,authoring:250}],events:[]};
+(async()=>{await els['#saveGuardrails'].onclick({target:els['#saveGuardrails']});assert.equal(posted.path,'/api/guardrails');assert.equal(posted.body.settings.requests_per_minute,8);assert.strictEqual(posted.body.settings.sdk_enabled,false);assert(els['#guardrailsStatus'].textContent.includes('saved'));
+const html=ctx.usageReportHtml(report);assert(html.includes('150'));assert(html.includes('250'));assert(html.includes('partial'));assert(html.includes('Cached input · included above'));assert(html.includes('&lt;model&gt;'));
+const first=ctx.loadUsage(),old=els['#usageReport'];els['#usageReport']={};const second=ctx.loadUsage();refresh[1](report);await second;refresh[0]({...report,scopes:{}});await first;assert(els['#usageReport'].innerHTML.includes('Gameplay'));assert.equal(old.innerHTML,undefined);
+els['#usagePeriod'].onchange({target:{value:'7d'}});assert.equal(vm.runInContext('usagePeriod',ctx),'7d');refresh[2](report);
+})().catch(error=>{console.error(error);process.exitCode=1;});

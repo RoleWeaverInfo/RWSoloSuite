@@ -1,15 +1,18 @@
 'use strict';
-let catalogPage=0;
+let catalogPage=0,catalogQuery='',catalogSelected='';
 function bindAssetCatalog(){
- const input=$('#assetSearch'),select=$('#customAsset');catalogPage=0;
+ const input=$('#assetSearch'),select=$('#customAsset');input.value=catalogQuery;
  function draw(){const terms=input.value.toLowerCase().split(/\s+/).filter(Boolean);const matches=assetLibrary.assets.filter(a=>terms.every(t=>(a.name+' '+a.model+' '+a.pack).toLowerCase().includes(t)));const pages=Math.max(1,Math.ceil(matches.length/12));catalogPage=Math.min(catalogPage,pages-1);const visible=matches.slice(catalogPage*12,catalogPage*12+12);
   select.innerHTML=visible.map(a=>`<option value="${E(a.id)}">${E(a.name)} · ${a.pack==='builtin'?'Installed NWN':E(a.pack)}</option>`).join('');
+  if(visible.some(a=>a.id===catalogSelected))select.value=catalogSelected;catalogSelected=select.value;
   $('#visualAssetGrid').innerHTML=visible.map(a=>`<div class="asset-card"><button data-pick-asset="${E(a.id)}" title="Select ${E(a.name)}"><img loading="lazy" src="/api/assets/preview?id=${encodeURIComponent(a.id)}" alt="Static model shape: ${E(a.name)}"><strong>${E(a.name)}</strong></button><small>${E(a.model)} · ${a.pack==='builtin'?'Installed NWN':'HAK'}</small><button data-detail-asset="${E(a.id)}">Dimensions and preview</button></div>`).join('')||'<p>No matching assets.</p>';
   $('#assetPageLabel').textContent=`${matches.length} matches · page ${catalogPage+1} of ${pages}`;$('#assetPrev').disabled=catalogPage===0;$('#assetNext').disabled=catalogPage>=pages-1;
-  document.querySelectorAll('[data-pick-asset]').forEach(b=>b.onclick=()=>{select.value=b.dataset.pickAsset;document.querySelectorAll('.asset-card').forEach(c=>c.classList.remove('selected'));b.closest('.asset-card').classList.add('selected');});
+  function highlight(){document.querySelectorAll('[data-pick-asset]').forEach(b=>b.closest('.asset-card').classList.toggle('selected',b.dataset.pickAsset===select.value));}
+  select.onchange=()=>{catalogSelected=select.value;highlight();};
+  document.querySelectorAll('[data-pick-asset]').forEach(b=>b.onclick=()=>{select.value=b.dataset.pickAsset;select.onchange();});highlight();
   document.querySelectorAll('[data-detail-asset]').forEach(b=>b.onclick=()=>task(b,async()=>{const d=await api('/api/assets/detail',{id:b.dataset.detailAsset});modal(`<h2>${E(d.asset.name)}</h2><img id="assetDetailPreview" class="asset-large" src="/api/assets/preview?id=${encodeURIComponent(d.asset.id)}" alt="Actual model geometry"><p>${d.dimensions?'Model bounds: '+d.dimensions.map(v=>v.toFixed(2)).join(' × ')+' m (X × Y × Z)':'Dimensions unavailable'}</p><label>View angle<select id="assetPreviewAngle"><option value="35">View 1</option><option value="125">View 2</option><option value="-145">View 3</option><option value="-55">View 4</option></select></label><p>${E(d.notice)}</p><p>${E(d.asset.model)} · ${E(d.asset.pack)}</p>`);$('#assetPreviewAngle').onchange=()=>{$('#assetDetailPreview').src='/api/assets/preview?id='+encodeURIComponent(d.asset.id)+'&angle='+$('#assetPreviewAngle').value;};}));
  }
- input.oninput=()=>{catalogPage=0;draw();};$('#assetPrev').onclick=()=>{catalogPage--;draw();};$('#assetNext').onclick=()=>{catalogPage++;draw();};draw();
+ input.oninput=()=>{catalogQuery=input.value;catalogPage=0;draw();};$('#assetPrev').onclick=()=>{catalogPage--;draw();};$('#assetNext').onclick=()=>{catalogPage++;draw();};draw();
 }
 async function showNativeGroups(){
  const r=selectedRoom();if(!r)throw Error('Select a room or outdoor zone first.');

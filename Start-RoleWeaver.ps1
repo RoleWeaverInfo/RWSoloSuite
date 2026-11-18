@@ -24,7 +24,8 @@ $serviceScript = Join-Path $PSScriptRoot 'service.py'
 if (-not (Test-Path -LiteralPath $serviceScript)) { $serviceScript = Join-Path $PSScriptRoot 'AI Player\service.py' }
 if (-not (Test-Path -LiteralPath $serviceScript)) { throw 'Role Weaver is missing. Install Role Weaver Module Studio or extract the complete adventure ZIP.' }
 $pythonArguments = @('-B',$serviceScript) + $serviceArguments
-$servicePython = Join-Path $env:LOCALAPPDATA 'Python\pythoncore-3.12-64\python.exe'
+$servicePython = Join-Path (Split-Path -Parent $serviceScript) '.venv\Scripts\python.exe'
+if (-not (Test-Path -LiteralPath $servicePython)) { $servicePython = Join-Path $env:LOCALAPPDATA 'Python\pythoncore-3.12-64\python.exe' }
 if (Test-Path -LiteralPath $servicePython) { & $servicePython @pythonArguments }
 elseif (Get-Command py -ErrorAction SilentlyContinue) { & py -3 @pythonArguments }
 elseif (Get-Command python -ErrorAction SilentlyContinue) { & python @pythonArguments }

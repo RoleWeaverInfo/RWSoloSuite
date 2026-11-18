@@ -12,6 +12,10 @@ Create single-player Neverwinter Nights: Enhanced Edition adventures, edit them 
 
 The service never starts NWN. Open NWN yourself after starting Role Weaver, then select your module or saved game. Clicking Start Role Weaver again reuses the running service. The splash uses the included Role Weaver artwork; the dashboard uses a blue theme.
 
+## Guardrails and token usage
+
+Open **Guardrails & usage** in the sidebar for gameplay dialogue protections, request limits, an optional daily token stop, and separate persistent token reports for gameplay and module creation. Checks run locally without additional AI review calls. See [GUARDRAILS-AND-USAGE.md](GUARDRAILS-AND-USAGE.md) for defaults, limits and data retention.
+
 ## Build and share
 
 A fresh installation starts with a blank area workspace. Add a floorplan and description, review the inferred objects and scale, and apply the generated proposal. Edit rooms, connections, furnishings, materials and lighting, then use **Update generated area** or **Open in Aurora**. **Install area for testing** installs a separate offline test module; start NWN yourself to test it.
@@ -33,7 +37,7 @@ Close the service before running a newer Setup. Projects, builds, asset caches, 
 
 To migrate from a previous source ZIP, close both services and copy that ZIP's entire `data` folder into the installed workspace location above before first launch. If a workspace already exists there, back it up before merging. Check game/user folders and the compiler path in Settings afterward. Do not distribute your workspace or saved keys.
 
-The **source ZIP** is still available for developers: extract it to a writable folder and use **Start Role Weaver.cmd** with Python 3.10+. Source checkouts keep `data` beside the source; installed copies use the per-user location. `ROLEWEAVER_DATA_DIR` is an optional explicit workspace override for testing or a separate workspace.
+The **source ZIP** is still available for developers: extract it to a writable folder and use **Start Role Weaver.cmd** with Python 3.10–3.13. Create a local `.venv` and install `requirements-guardrails.txt` as described in [GUARDRAILS-AND-USAGE.md](GUARDRAILS-AND-USAGE.md). The source launcher prefers that environment. Source checkouts keep `data` beside the source; installed copies use the per-user location. `ROLEWEAVER_DATA_DIR` is an optional explicit workspace override for testing or a separate workspace.
 
 - **Older service running:** close its service window, then start this release. Do not close NWN without saving.
 - **Python not found:** use the Windows Setup installer, which includes Python. Only the source ZIP needs a separate Python installation.

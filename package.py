@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parent
 
 def package(build=None,examples=(),output=None):
     builds=list(dict.fromkeys(([build] if build else [])+list(examples)))
-    files={name:ROOT/name for name in ('studio.py','service.py','Start Role Weaver.cmd','Start-RoleWeaver.ps1','RELEASE-NOTES.md','ROLE-WEAVER-LICENSE.txt')}
+    files={name:ROOT/name for name in ('studio.py','service.py','Start Role Weaver.cmd','Start-RoleWeaver.ps1','RELEASE-NOTES.md','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','GUARDRAILS-AND-USAGE.md')}
     files['README.md']=ROOT/'RELEASE-GUIDE.md'
     for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor'):
         for file in (ROOT/name).rglob('*'):

@@ -43,21 +43,26 @@ def database_path(user_dir):
 class Application:
     def __init__(self,data):
         self.store=Store(Path(data).resolve());self.config=defaults();self.lock=threading.RLock();self.token=secrets.token_urlsafe(32)
-        if not any(p['schema_version']==2 for p in self.store.list()):
+        projects=self.store.list()
+        if projects and not any(p['schema_version']==2 for p in projects):
             p=authoring.blank('area_workshop','Untitled area');p['design_mode']='area';self.store.save(p)
         config=self.store.root/'settings.json'
         if config.is_file():self.config.update({k:v for k,v in json.loads(config.read_text(encoding='utf-8')).items() if k in self.config})
         from .credentials import Credentials
         from .custom_assets import AssetLibrary
+        from .guardrails import GameplayGuardrails
+        from .usage import UsageStore
+        self.guardrails=GameplayGuardrails(self.store.root/'guardrails.json')
+        self.ai_usage=UsageStore(self.store.root/'ai-usage.sqlite3')
         self.credentials=Credentials(self.store.root);self.asset_library=AssetLibrary(self.store.root,self.config['game_root'])
-        self.provider=Provider(self.config['gemini_model'] if self.config['provider']=='gemini' else self.config['model'],self.config['provider'],self.credentials);self.bridge=Bridge(database_path(self.config['user_dir']),self.store,self.provider)
-        self.authoring_provider=Provider(self.config['authoring_gemini_model'] if self.config['provider']=='gemini' else self.config['authoring_model'],self.config['provider'],self.credentials,reasoning_effort=None if self.config['authoring_reasoning']=='default' else self.config['authoring_reasoning'])
+        self.provider=Provider(self.config['gemini_model'] if self.config['provider']=='gemini' else self.config['model'],self.config['provider'],self.credentials,scope='gameplay',guardrails=self.guardrails,usage_store=self.ai_usage);self.bridge=Bridge(database_path(self.config['user_dir']),self.store,self.provider)
+        self.authoring_provider=Provider(self.config['authoring_gemini_model'] if self.config['provider']=='gemini' else self.config['authoring_model'],self.config['provider'],self.credentials,reasoning_effort=None if self.config['authoring_reasoning']=='default' else self.config['authoring_reasoning'],scope='authoring',usage_store=self.ai_usage)
         self.bridge.start()
 
     def state(self):
         from .area_presets import catalog as preset_catalog
         self.bridge.path=database_path(self.config['user_dir'])
-        return {'version':VERSION,'csrf':self.token,'projects':self.store.list(),'settings':self.config,
+        return {'version':VERSION,'csrf':self.token,'projects':self.store.list(),'settings':self.config,'guardrails':self.guardrails.status(),
                 'credentials':self.credentials.status(),'key_available':self.credentials.status()[self.config['provider']]['available'],'usage':self.provider.usage,'authoring_usage':self.authoring_provider.usage,
                 'bridge':self.bridge.status(),'receipts':self.bridge.receipts(),
                 'catalog':{'creatures':list(CREATURES),'furnishings':list(DECOR),'appearances':list(APPEARANCES)},'area_presets':preset_catalog(),
@@ -65,6 +70,7 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/guardrails':return self.guardrails.configure(b.get('settings'))
         if route.startswith('/api/design/'):
             from . import design_tools as design
             if route=='/api/design/analyze-reference':
@@ -119,6 +125,9 @@ class Application:
             return detail(self.asset_library,b['id'])[0]
         if route=='/api/player/register':return self.store.register_player_build(b['build_id'],b['project'])
         if route=='/api/project/save':return {'project':self.store.save(b['project'])}
+        if route=='/api/project/delete':
+            if b.get('confirm') is not True:raise ValueError('Confirm deletion of the selected project first')
+            return self.store.delete(b['id'])
         if route=='/api/project/new':
             ident=b['id'];path=self.store.path(ident)
             if path.exists():raise ValueError('A project with that ID already exists')
@@ -232,6 +241,8 @@ class Handler(BaseHTTPRequestHandler):
         parts=urlsplit(self.path);route=parts.path;query=parse_qs(parts.query);app=self.server.app
         try:
             if route=='/api/state':return self.send(200,app.state())
+            if route=='/api/guardrails':return self.send(200,app.guardrails.status())
+            if route=='/api/usage':return self.send(200,app.ai_usage.report(query.get('period',['24h'])[0]))
             if route=='/api/assets/preview':
                 from .asset_catalog import preview
                 return self.send(200,preview(app.asset_library,query.get('id',[''])[0],int(query.get('angle',['35'])[0])),'image/svg+xml')
@@ -256,7 +267,7 @@ class Handler(BaseHTTPRequestHandler):
                 if suffix is None:raise ValueError('Unknown download type')
                 file=app.store.root/'builds'/ident/(p['module_name']+suffix)
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
-            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
+            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))

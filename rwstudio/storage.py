@@ -17,8 +17,9 @@ def write_json(path,value):
 class Store:
     def __init__(self,root):
         self.root=Path(root);self.lock=threading.RLock()
+        first_workspace=not (self.root/'projects').exists()
         for name in ('projects','builds'): (self.root/name).mkdir(parents=True,exist_ok=True)
-        if not list((self.root/'projects').glob('*.json')):
+        if first_workspace:
             from .authoring import blank
             p=blank('area_workshop','Untitled area');p['design_mode']='area';self.save(p)
 
@@ -33,6 +34,17 @@ class Store:
         project=validate_project(project)
         with self.lock: write_json(self.path(project['id']),project)
         return project
+
+    def delete(self,ident):
+        with self.lock:
+            path=self.path(ident);directory=self.root/'projects'
+            # Only a regular project file in this workspace may be removed.
+            if directory.resolve().parent!=self.root.resolve() or path.is_symlink() or path.resolve().parent!=directory.resolve():
+                raise ValueError('Project file is outside the workspace')
+            if not path.is_file():raise ValueError('This project has already been deleted or is missing')
+            remaining=[p for p in self.list() if p['id']!=ident]
+            path.unlink()
+            return {'deleted':ident,'projects':remaining}
 
     def list(self):
         with self.lock:

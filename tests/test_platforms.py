@@ -131,7 +131,7 @@ class Platforms(unittest.TestCase):
 
     def test_editor_and_review_show_platform_controls(self):
         script="""
-const fs=require('fs'),vm=require('vm'),assert=require('assert');const ctx={E:String,areaIndex:0,roomIndex:0};vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/spatial.js','utf8'),ctx);
+const fs=require('fs'),vm=require('vm'),assert=require('assert');const ctx={E:String,areaIndex:0,roomIndex:0,foldAttributes:()=>''};vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/spatial.js','utf8'),ctx);
 const r=JSON.parse(process.argv[1]);const html=ctx.spatialPanel({geometry:{wall_height:5,wall_thickness:.3,corridor_width:2}},r);assert(html.includes('Number of steps'));assert(html.includes('stair_side'));assert(html.includes('removePlatform_0'));
 const svg=ctx.platformOutlines({height:6},r);assert.equal((svg.match(/<rect /g)||[]).length,4);assert(svg.includes('Step 3'));
 """

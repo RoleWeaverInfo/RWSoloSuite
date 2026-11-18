@@ -109,7 +109,7 @@ class SpatialGeometry(unittest.TestCase):
         if not shutil.which('node'):self.skipTest('Node is required for editor checks')
         result=subprocess.run(['node','-e',r"""
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const ctx={project:{furnishings:[],custom_placements:[{id:'desk',name:'Desk',room:'r',asset_id:'desk_mesh'},{id:'paper',name:'Paper',room:'r',asset_id:'paper_mesh'}],asset_geometry:{desk_mesh:[[0,0,0],[2,1,.9]],paper_mesh:[[0,0,0],[.2,.2,.01]]},object_positions:[{id:'desk',x:3,y:2,facing:0},{id:'paper',x:4,y:2,facing:0,z:0,support:'desk'}]},clone:o=>JSON.parse(JSON.stringify(o)),E:s=>String(s??''),areaIndex:0,roomIndex:0};
+const ctx={project:{furnishings:[],custom_placements:[{id:'desk',name:'Desk',room:'r',asset_id:'desk_mesh'},{id:'paper',name:'Paper',room:'r',asset_id:'paper_mesh'}],asset_geometry:{desk_mesh:[[0,0,0],[2,1,.9]],paper_mesh:[[0,0,0],[.2,.2,.01]]},object_positions:[{id:'desk',x:3,y:2,facing:0},{id:'paper',x:4,y:2,facing:0,z:0,support:'desk'}]},clone:o=>JSON.parse(JSON.stringify(o)),E:s=>String(s??''),areaIndex:0,roomIndex:0,foldAttributes:()=>''};
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/spatial.js','utf8'),ctx);
 const html=ctx.placementPanel({rooms:[{id:'r'}]});assert(html.includes('Height above support'));assert(html.includes('data-rotate'));
 ctx.supportedChildren('desk',{x:3,y:2,facing:0},{x:5,y:4,facing:90});const paper=ctx.project.object_positions[1];assert.equal(paper.x,5);assert.equal(paper.y,5);assert.equal(paper.facing,90);

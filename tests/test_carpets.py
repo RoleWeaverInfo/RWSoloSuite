@@ -80,7 +80,7 @@ class Carpets(unittest.TestCase):
     def test_editor_and_floorplan_review_expose_size_and_color(self):
         script=r"""
 const fs=require('fs'),vm=require('vm'),assert=require('assert');let html='';const buttons={};let plan;
-const ctx={E:String,areaIndex:0,roomIndex:0,app:{authoring_catalog:{furnishings:[]}},modal:s=>html=s,document:{querySelectorAll:()=>[]},$:s=>buttons[s]??={},clone:o=>JSON.parse(JSON.stringify(o))};vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/spatial.js','utf8'),ctx);vm.runInContext(fs.readFileSync('web/design.js','utf8'),ctx);
+const ctx={E:String,areaIndex:0,roomIndex:0,foldAttributes:()=>'',app:{authoring_catalog:{furnishings:[]}},modal:s=>html=s,document:{querySelectorAll:()=>[]},$:s=>buttons[s]??={},clone:o=>JSON.parse(JSON.stringify(o))};vm.createContext(ctx);vm.runInContext(fs.readFileSync('web/spatial.js','utf8'),ctx);vm.runInContext(fs.readFileSync('web/design.js','utf8'),ctx);
 const p=JSON.parse(process.argv[1]),a=p.areas[0],r=a.rooms[0];const controls=ctx.spatialPanel(a,r);assert(controls.includes('Carpets and runners'));assert(controls.includes('14.1'));assert(controls.includes('removeCarpet_0'));assert(controls.includes('carpets.0.color'));
 const svg=ctx.carpetOutlines(a,r);assert(svg.includes('fill="#8e161e"'));assert(svg.includes('height="1.41"'));
 ctx.showReferenceChecklist({area:a,measurements:[],objects:[],matches:[],assets:[],assumptions:[]},a.id);assert(html.includes('data-plan-carpet="0.0.width"'));assert(html.includes('14.1'));
