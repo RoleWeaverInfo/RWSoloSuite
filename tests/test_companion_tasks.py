@@ -16,14 +16,14 @@ COMPILER=ROOT/'vendor/nwnsc/nwnsc.exe'
 def payload():return dict(source=dict(kind='party',profile='seren',name='Seren',resref='seren',familiar_type=-1,communication='speech'),target='cael',actor_uuid='seren-instance',target_uuid='cael-instance',owner_uuid='hero-instance',question='Why is the bell silent?',quests={},game={})
 
 class CompanionTaskTests(unittest.TestCase):
-    def test_old_policies_migrate_off_without_mutation(self):
+    def test_missing_policies_use_enabled_defaults_without_mutation(self):
         p=example()
         for n in p['npcs']:
             n['companion'].pop('inspect_containers');n['companion'].pop('social_visits');n['behavior'].pop('accept_visits')
         for t in p['companions']['templates']:t.pop('inspect_containers');t.pop('social_visits')
         q=validate(p)
         self.assertNotIn('social_visits',p['npcs'][-1]['companion'])
-        self.assertFalse(q['npcs'][-1]['companion']['social_visits']);self.assertFalse(q['npcs'][0]['behavior']['accept_visits']);self.assertFalse(q['companions']['templates'][0]['inspect_containers'])
+        self.assertTrue(q['npcs'][-1]['companion']['social_visits']);self.assertTrue(q['npcs'][0]['behavior']['accept_visits']);self.assertTrue(q['companions']['templates'][0]['inspect_containers'])
     def test_recipient_only_receives_unlocked_knowledge_and_no_mechanics(self):
         p=example();provider=Provider('unused');request_payload=payload()
         with patch.object(provider,'request',return_value=dict(reply='I was afraid.',action='grant_gold')) as request:result=reply(provider,p,request_payload)

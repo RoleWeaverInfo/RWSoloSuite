@@ -106,10 +106,10 @@ def validate(p,complete=False):
             if isinstance(n,dict):
                 if isinstance(n.get('merchant'),dict):n['merchant'].setdefault('interface','list')
                 if isinstance(n.get('companion'),dict):
-                    n['companion'].setdefault('inspect_containers',False);n['companion'].setdefault('social_visits',False)
-                if isinstance(n.get('behavior'),dict):n['behavior'].setdefault('accept_visits',False)
+                    n['companion'].setdefault('inspect_containers',True);n['companion'].setdefault('social_visits',True)
+                if isinstance(n.get('behavior'),dict):n['behavior'].setdefault('accept_visits',True)
         for t in (p['companions'].get('templates',[]) if isinstance(p.get('companions'),dict) and isinstance(p['companions'].get('templates'),list) else []):
-            if isinstance(t,dict):t.setdefault('inspect_containers',False);t.setdefault('social_visits',False)
+            if isinstance(t,dict):t.setdefault('inspect_containers',True);t.setdefault('social_visits',True)
     from .design_extensions import base_project,validate_extensions
     validate_extensions(p);schema_check(base_project(p),SCHEMA)
     validate_companions(p)

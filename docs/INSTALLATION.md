@@ -60,6 +60,14 @@ Default NWN user folders are `Documents/Neverwinter Nights` on Windows/Mac and `
 
 Close NWN before replacing installed module files. Use **AI service → Stop Role Weaver** or close its terminal window before updating Studio. Closing the browser alone does not stop the service.
 
+In versions with the **Update software** button (sidebar or AI service page), choose **Check for updates**, then **Download update**. Studio selects the package for your operating system and architecture and verifies its SHA-256 digest against GitHub's release metadata. After saving your project and exiting NWN, choose **Install update and restart**. This updates the service and dashboard together. Windows uses the per-user installer; Linux/Mac keep the previous application beside the replacement as a backup. The browser reconnects after restart. If it does not, start Role Weaver normally and check the workspace's `updates/<operation>/update.log` (and `installer.log` on Windows).
+
+Stable installations receive stable releases; release candidates can receive newer candidates or stable releases. Automatic installation is for native packages with a writable installation folder and an external workspace. Source checkouts can check releases but are never overwritten. Update source separately after committing or backing up local changes. The currently published 0.21.0-rc1 packages predate this button; install a release containing it once before using automatic updates.
+
+The official release repository is public: updates and downloads do not require a GitHub sign-in or a shared access key. If GitHub temporarily rate-limits anonymous checks, retry later or use **Open official releases**. An existing GitHub CLI sign-in can also be used when available; no developer GitHub credential is bundled.
+
+For a module exported in this workspace, **Build & share → Shareable builds → Play in NWN** installs that exact build and its packaged dependencies, registers its matching AI profile, enables the service, and starts NWN at character selection. Save and exit an already-running NWN first. This button starts a new adventure; use NWN's own **Load Game** menu for existing saves. The normal Role Weaver startup shortcuts still start only the service. Native game detection supports Windows, macOS and Linux installations; Wine/Proton-only installations should be launched through their own game launcher.
+
 User workspaces are separate from application files:
 
 | Platform | Workspace |
@@ -74,9 +82,10 @@ Back up that folder while Studio is stopped. Windows Setup preserves it during u
 
 - **Matching adventure build not found:** import the `.rwproject.json` supplied with that exact `.mod`. Start a new game to test a regenerated module; old saves keep older resources.
 - **No AI response:** check service status, your active provider/key/model, quota/credit, gameplay guardrails, and that the game is unpaused. Do not post your API key in a bug report.
+- **Service not connected in-game:** start or update Role Weaver, enable its AI service, and verify the NWN user folder. Newly rebuilt modules provide `!studio` to recheck and automatically report reconnection. The module cannot launch a desktop application itself. Older saves retain their earlier scripts.
 - **Another version is running:** stop the old service before launching the new one.
 - **Cannot save a key on Linux/Mac:** unlock the OS keyring and retry, or set the provider environment variable before starting Studio.
 - **Aurora unavailable:** export from Build & share and open the module on Windows. Studio's visual editor works on all three platforms.
-- **Download inaccessible:** this repository is currently private. Release access follows repository access; a release does not automatically make the repository public.
+- **Download inaccessible:** the official repository is public. Check the release URL and your network connection; if GitHub is rate-limiting requests, retry later.
 
 Next: [Playing with AI](PLAYER-GUIDE.md) · [Create an adventure with ChatGPT and Studio](CREATE-AN-ADVENTURE.md).

@@ -7,8 +7,8 @@ SCHEMA=_obj({'patrols':B,'social':B,'social_interval':dict(I,minimum=60,maximum=
 NPC_SCHEMA=_obj({'patrol_enabled':B,'route':dict(array(S),maxItems=16),'mode':enum('loop','pingpong'),'wait_seconds':dict(I,minimum=6,maximum=300),'run':B,
  'accept_visits':B,'social_enabled':B,'partners':dict(array(S),maxItems=16),'topic':S,'cooldown':dict(I,minimum=60,maximum=3600),'communication':enum('speech','nonverbal')})
 
-def defaults():return dict(patrols=False,social=False,social_interval=120,social_budget=6)
-def npc_defaults():return dict(patrol_enabled=False,route=[],mode='loop',wait_seconds=12,run=False,accept_visits=False,social_enabled=False,partners=[],topic='The weather, everyday work and the well-being of travelers.',cooldown=180,communication='speech')
+def defaults():return dict(patrols=False,social=True,social_interval=120,social_budget=6)
+def npc_defaults():return dict(patrol_enabled=False,route=[],mode='loop',wait_seconds=12,run=False,accept_visits=True,social_enabled=True,partners=[],topic='The weather, everyday work and the well-being of travelers.',cooldown=180,communication='speech')
 
 def errors(p):
     out=[];rooms={r['id']:a['id'] for a in p['areas'] for r in a['rooms']};npcs={n['id']:n for n in p['npcs']}

@@ -100,6 +100,14 @@ class NativeCompanionTests(unittest.TestCase):
         self.assertIn(b'SetMaxHenchmen(4)',self.res['aw_load',2009])
         self.assertIn(b'Join my party',self.res['seren',2029]);self.assertIn(b'Companion controls',self.res['seren',2029])
         self.assertIn(b'AWCTravel',self.res['aw_exit',2009])
+
+    def test_module_checks_service_at_entry_during_play_and_by_chat_command(self):
+        self.assertIn(b'SPServiceBegin(pc)',self.res['aw_enter',2009])
+        self.assertIn(b'DelayCommand(12.0,SPServiceCheck(pc))',self.res['aw_enter',2009])
+        self.assertIn(b'SPServiceCheck(pc);SPPoll(pc)',self.res['aw_beat',2009])
+        self.assertIn(b'lower=="!studio"',self.res['sp_chat',2009])
+        self.assertIn(b'SPServiceCheck(pc,TRUE)',self.res['sp_chat',2009])
+        for name in ('aw_enter','aw_beat','sp_chat'):self.assertIn((name,2010),self.res)
     def test_histories_and_pending_replies_are_save_local_actor_bound(self):
         core=self.res['aw_companion',2009];runtime=self.res['sp_inc',2009]
         for part in (b'SqlPrepareQueryObject(GetModule()',b'owner=@owner',b'AWCLinked',b'GetIsPossessedFamiliar',b'AWC_CONTROL_EPOCH',b'kind=="familiar"',b'kind=="summon"'):

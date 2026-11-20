@@ -1,6 +1,7 @@
 #include "sp_inc"
 void main() {
     object pc=GetPCChatSpeaker();string s=GetPCChatMessage();if(!GetIsPC(pc)) return;
+    if(GetStringLowerCase(s)=="!studio"){SetPCChatMessage("");SPServiceCheck(pc,TRUE);return;}
     if(GetStringLeft(s,4)=="!ai ") {SetPCChatMessage("");SPAsk(pc,"npc",GetSubString(s,4,1200));}
     else if(GetStringLeft(s,4)=="!dm ") {SetPCChatMessage("");SPAsk(pc,"dm",GetSubString(s,4,1200));}
     else if(GetStringLeft(s,6)=="!talk ") {

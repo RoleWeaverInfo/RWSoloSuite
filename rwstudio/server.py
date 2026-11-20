@@ -59,6 +59,8 @@ class Application:
         self.provider=Provider(self.config['gemini_model'] if self.config['provider']=='gemini' else self.config['model'],self.config['provider'],self.credentials,scope='gameplay',guardrails=self.guardrails,usage_store=self.ai_usage);self.bridge=Bridge(database_path(self.config['user_dir']),self.store,self.provider)
         self.authoring_provider=Provider(self.config['authoring_gemini_model'] if self.config['provider']=='gemini' else self.config['authoring_model'],self.config['provider'],self.credentials,reasoning_effort=None if self.config['authoring_reasoning']=='default' else self.config['authoring_reasoning'],scope='authoring',usage_store=self.ai_usage)
         self.bridge.start()
+        from .updates import Updater
+        self.updater=Updater(self.store.root)
 
     def state(self):
         from .area_presets import catalog as preset_catalog
@@ -71,6 +73,15 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/updates/status':return self.updater.status()
+        if route=='/api/updates/check':return self.updater.start('check')
+        if route=='/api/updates/download':return self.updater.start('download')
+        if route=='/api/updates/install':
+            if b.get('confirm') is not True:raise ValueError('Confirm installing the verified update and restarting the service first.')
+            with BUILD_LOCK:result=self.updater.apply()
+            self.bridge.stop.set()
+            threading.Timer(.6,self.http_server.shutdown).start()
+            return result
         if route=='/api/service/stop':
             if b.get('confirm') is not True:raise ValueError('Confirm stopping the service first')
             self.bridge.stop.set()
@@ -208,6 +219,9 @@ class Application:
             with BUILD_LOCK:return self.store.delete_build(b['build_id'])
         if route=='/api/install':
             with BUILD_LOCK:return install_build(self.store,b['build_id'],self.config['user_dir'])
+        if route=='/api/play':
+            from .dashboard_launch import launch_build
+            with BUILD_LOCK:return launch_build(self,b['build_id'])
         if route=='/api/author/open-aurora':
             from .aurora import open_project
             p=b['project']
@@ -279,7 +293,7 @@ class Handler(BaseHTTPRequestHandler):
                 if suffix is None:raise ValueError('Unknown download type')
                 file=app.store.root/'builds'/ident/(p['module_name']+suffix)
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
-            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
+            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/updates.js':'updates.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))

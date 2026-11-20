@@ -18,7 +18,7 @@ COMPILER=ROOT/'vendor/nwnsc/nwnsc.exe'
 PAYLOAD=dict(source='mira',target='tomas',source_uuid='mira-instance',target_uuid='tomas-instance',history='A public greeting.')
 
 class AmbientTests(unittest.TestCase):
-    def test_old_projects_migrate_off_without_mutating(self):
+    def test_missing_behavior_policies_use_new_defaults_without_mutating(self):
         p=seed();p.pop('ambient')
         for n in p['npcs']:n.pop('behavior')
         upgraded=validate(p);self.assertEqual(upgraded['ambient'],defaults());self.assertEqual(upgraded['npcs'][0]['behavior'],npc_defaults())

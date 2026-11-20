@@ -130,8 +130,9 @@ def game_running():
     if os.name!='nt':
         result=subprocess.run(['ps','-A','-o','comm='],capture_output=True,text=True,timeout=10)
         if result.returncode:raise ValueError('Could not check running games. Close NWN and install the adventure manually.')
-        return any(Path(line.strip()).name.lower() in ('nwmain','nwmain.exe') for line in result.stdout.splitlines())
+        return any(Path(line.strip()).name.lower() in ('nwmain','nwmain.exe','nwmain-linux') for line in result.stdout.splitlines())
     result=subprocess.run(['tasklist','/FI','IMAGENAME eq nwmain.exe','/FO','CSV','/NH'],capture_output=True,text=True,creationflags=NO_WINDOW)
+    if result.returncode:raise ValueError('Could not check running games. Close NWN and retry.')
     return any(row and row[0].lower()=='nwmain.exe' for row in csv.reader(result.stdout.splitlines()))
 
 def run(p,popen=subprocess.Popen,check_state=state,check_game=game_running,sleep=time.sleep):

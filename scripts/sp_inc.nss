@@ -16,12 +16,14 @@ void SPInit()
     sqlquery a=SqlPrepareQueryCampaign(SPDB,"CREATE TABLE IF NOT EXISTS sp_sessions (session_id TEXT PRIMARY KEY, project_id TEXT NOT NULL, build_id TEXT NOT NULL, snapshot TEXT NOT NULL, updated INTEGER NOT NULL)"); SqlStep(a);
     sqlquery b=SqlPrepareQueryCampaign(SPDB,"CREATE TABLE IF NOT EXISTS sp_requests (request_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, kind TEXT NOT NULL, npc_tag TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'queued', response TEXT NOT NULL DEFAULT '', created INTEGER NOT NULL, updated INTEGER NOT NULL)"); SqlStep(b);
     sqlquery c=SqlPrepareQueryCampaign(SPDB,"CREATE TABLE IF NOT EXISTS sp_commands (command_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'queued', receipt TEXT NOT NULL DEFAULT '', created INTEGER NOT NULL, updated INTEGER NOT NULL)"); SqlStep(c);
+    sqlquery presence=SqlPrepareQueryCampaign(SPDB,"CREATE TABLE IF NOT EXISTS sp_service (session_id TEXT PRIMARY KEY, build_id TEXT NOT NULL, status TEXT NOT NULL, updated INTEGER NOT NULL)");SqlStep(presence);
     SetLocalString(GetModule(),"SP_SESSION",GetRandomUUID());
     // All previous game instances are stale, even if a saved request was restored.
     sqlquery d=SqlPrepareQueryCampaign(SPDB,"UPDATE sp_sessions SET updated=0"); SqlStep(d);
     sqlquery e=SqlPrepareQueryCampaign(SPDB,"DELETE FROM sp_requests WHERE created<CAST(strftime('%s','now') AS INTEGER)-86400"); SqlStep(e);
     sqlquery f=SqlPrepareQueryCampaign(SPDB,"DELETE FROM sp_commands WHERE created<CAST(strftime('%s','now') AS INTEGER)-86400"); SqlStep(f);
     sqlquery g=SqlPrepareQueryCampaign(SPDB,"DELETE FROM sp_sessions WHERE updated=0"); SqlStep(g);
+    sqlquery stale=SqlPrepareQueryCampaign(SPDB,"DELETE FROM sp_service");SqlStep(stale);
 }
 json SPSnapshot(object pc)
 {
@@ -69,6 +71,37 @@ void SPReset(object pc)
     if(GetLocalString(pc,"SP_SESSION")!=SPSession()) {
         SetLocalString(pc,"SP_SESSION",SPSession()); DeleteLocalString(pc,"SP_PENDING"); }
 }
+// Presence uses SQLite wall time, not accelerated in-world time. Never gate
+// native quests/inventory or API requests on this optional, versioned check.
+void SPServiceBegin(object pc)
+{
+    SetLocalString(pc,"SP_SERVICE_SESSION",SPSession());
+    SetLocalInt(pc,"SP_SERVICE_START",SPNow());
+    SetLocalString(pc,"SP_SERVICE_STATE","checking");
+    SendMessageToPC(pc,"Role Weaver: checking the connection to Module Studio. Keep the Role Weaver service running for live AI.");
+}
+string SPServiceState(object pc)
+{
+    int now=SPNow();if(now<=0)return "unavailable";
+    sqlquery q=SqlPrepareQueryCampaign(SPDB,"SELECT status FROM sp_service WHERE session_id=@s AND build_id=@b AND updated>=@start AND updated>=CAST(strftime('%s','now') AS INTEGER)-30 AND updated<=CAST(strftime('%s','now') AS INTEGER)");
+    SqlBindString(q,"@s",SPSession());SqlBindString(q,"@b",SPBuild());SqlBindInt(q,"@start",GetLocalInt(pc,"SP_SERVICE_START"));
+    if(SqlStep(q)){string status=SqlGetString(q,0);if(status=="connected" || status=="paused")return status;}
+    if(now-GetLocalInt(pc,"SP_SERVICE_START")<12)return "checking";
+    return "unavailable";
+}
+void SPServiceCheck(object pc,int force=FALSE)
+{
+    if(!GetIsPC(pc))return;
+    if(GetLocalString(pc,"SP_SERVICE_SESSION")!=SPSession() || !GetLocalInt(pc,"SP_SERVICE_START"))SPServiceBegin(pc);
+    string state=SPServiceState(pc);string previous=GetLocalString(pc,"SP_SERVICE_STATE");
+    if(!force && state==previous)return;
+    SetLocalString(pc,"SP_SERVICE_STATE",state);
+    if(state=="checking"){if(force)SendMessageToPC(pc,"Role Weaver: checking Module Studio. Keep NWN unpaused and try !studio again in a few seconds.");return;}
+    if(state=="connected"){
+        SendMessageToPC(pc,previous=="unavailable" || previous=="paused"?"Role Weaver: the Module Studio connection is restored.":"Role Weaver: Module Studio is connected. Keep its service running; you may close the browser. AI still needs your configured key and this adventure's profile.");return;}
+    if(state=="paused"){SendMessageToPC(pc,"Role Weaver: Module Studio is running, but the AI service is paused. Open its AI service page and choose Enable AI service.");return;}
+    SendMessageToPC(pc,"ROLE WEAVER SERVICE NOT CONNECTED: Start Role Weaver Module Studio, enable its AI service, then return to NWN. If it is already running, check its version and NWN user folder. AI conversations and AI-directed companion actions need the service; normal menus, inventory and authored quests remain available. Type !studio to check again.");
+}
 void SPAsk(object pc,string kind,string message)
 {
     SPReset(pc);
@@ -90,13 +123,15 @@ void SPAsk(object pc,string kind,string message)
     if(SqlGetError(q)!="") { SendMessageToPC(pc,"The local AI connection is unavailable. Authored conversations still work."); return; }
     SetLocalString(pc,"SP_PENDING",id);SetLocalInt(pc,"SP_SENT",SPNow());
     SetLocalString(pc,"SP_QUESTION",message);SetLocalString(pc,"SP_TAG",tag);
+    // Also explain missing/paused service when the player first tries AI.
+    if(SPServiceState(pc)!="connected")SPServiceCheck(pc,TRUE);
     SendMessageToPC(pc,"Role Weaver: request sent. Keep the module running while Studio replies.");
 }
 void SPPoll(object pc)
 {
     SPReset(pc);string id=GetLocalString(pc,"SP_PENDING"); if(id=="") return;
     if(SPNow()-GetLocalInt(pc,"SP_SENT")>100) {
-        DeleteLocalString(pc,"SP_PENDING"); SendMessageToPC(pc,"AI reply timed out. Check Solo Studio or continue with the authored conversation."); return; }
+        DeleteLocalString(pc,"SP_PENDING"); SendMessageToPC(pc,"AI reply timed out. Type !studio to check the local service, or use the normal NPC menu. A connected service still needs a working API key and this adventure's matching profile."); return; }
     sqlquery q=SqlPrepareQueryCampaign(SPDB,"SELECT state,response,kind,npc_tag FROM sp_requests WHERE request_id=@i AND session_id=@s");
     SqlBindString(q,"@i",id);SqlBindString(q,"@s",SPSession());
     if(!SqlStep(q)) return;

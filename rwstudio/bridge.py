@@ -14,11 +14,15 @@ DDL = [
     "CREATE TABLE IF NOT EXISTS sp_commands (command_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'queued', receipt TEXT NOT NULL DEFAULT '', created INTEGER NOT NULL, updated INTEGER NOT NULL)",
 ]
 
+# Written independently of model requests, which can take minutes. Presence is
+# scoped to the NWN user database and exact module session/build, never an API key.
+PRESENCE_DDL = 'CREATE TABLE IF NOT EXISTS sp_service (session_id TEXT PRIMARY KEY, build_id TEXT NOT NULL, status TEXT NOT NULL, updated INTEGER NOT NULL)'
+
 
 class Bridge:
     def __init__(self,path,store,provider):
         self.path=path;self.store=store;self.provider=provider
-        self.enabled=False;self.error='';self.stop=threading.Event();self.thread=None
+        self.enabled=False;self.error='';self.stop=threading.Event();self.thread=None;self.presence_thread=None
         self.proposals={};self.lock=threading.Lock()
 
     @contextmanager
@@ -44,6 +48,25 @@ class Bridge:
     def start(self):
         if self.thread is None:
             self.thread=threading.Thread(target=self.loop,daemon=True,name='roleweaver-game-bridge');self.thread.start()
+        if self.presence_thread is None:
+            self.presence_thread=threading.Thread(target=self.presence_loop,daemon=True,name='roleweaver-game-presence');self.presence_thread.start()
+
+    def publish_presence(self):
+        with self.connect() as db:
+            db.execute(PRESENCE_DDL)
+            # A paused game stops publishing snapshots; it must still see a live
+            # service when play resumes. No AI work is triggered for these rows.
+            sessions=db.execute('SELECT session_id,build_id FROM sp_sessions ORDER BY updated DESC LIMIT 8').fetchall()
+            db.execute('DELETE FROM sp_service WHERE session_id NOT IN (SELECT session_id FROM sp_sessions)')
+            for session in sessions:
+                db.execute("INSERT OR REPLACE INTO sp_service(session_id,build_id,status,updated) VALUES(?,?,?,CAST(strftime('%s','now') AS INTEGER))",
+                           (session['session_id'],session['build_id'],'connected' if self.enabled else 'paused'))
+
+    def presence_loop(self):
+        while not self.stop.is_set():
+            try:self.publish_presence()
+            except (FileNotFoundError,sqlite3.Error):pass  # Game startup/short locks; old presence expires naturally.
+            if self.stop.wait(2):break
 
     def loop(self):
         while not self.stop.wait(1):

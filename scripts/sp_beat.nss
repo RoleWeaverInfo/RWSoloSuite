@@ -5,5 +5,5 @@ void main() {
     if(!GetIsObjectValid(pc)) return;
     SPPublish(pc);SPCommands(pc);
     object member=GetFirstPC();
-    while(GetIsObjectValid(member)) {SPPoll(member);member=GetNextPC();}
+    while(GetIsObjectValid(member)) {SPServiceCheck(member);SPPoll(member);member=GetNextPC();}
 }

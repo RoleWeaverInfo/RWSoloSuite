@@ -43,6 +43,7 @@ void SPAsk(object pc,string kind,string message)''')
 object SPActorAddress(object pc,string name){string tag=SPAddress(name);object fixed=tag==""?OBJECT_INVALID:GetObjectByTag(tag);object owned=AWCFind(pc,name);if(GetLocalInt(pc,"AWC_AMBIGUOUS") || (GetIsObjectValid(fixed) && GetIsObjectValid(owned) && fixed!=owned))return OBJECT_INVALID;return GetIsObjectValid(fixed)?fixed:owned;}
 void main(){object pc=GetPCChatSpeaker();string s=GetPCChatMessage();if(!GetIsPC(pc) || GetPCChatVolume()!=TALKVOLUME_TALK)return;
  string lower=GetStringLowerCase(s);
+ if(lower=="!studio"){SetPCChatMessage("");SPServiceCheck(pc,TRUE);return;}
  if(s=="!companions" || s=="!companion" || GetStringLeft(s,11)=="!companion "){SetPCChatMessage("");int handled=AWCChatControl(pc,s);object target=GetLocalObject(pc,"AWC_CHAT_TARGET");string message=GetLocalString(pc,"AWC_CHAT_TEXT");SPEnd(pc,FALSE);if(!handled && GetIsObjectValid(target)){SetLocalObject(pc,"SP_FOCUS",target);SPAsk(pc,"npc",message);}return;}
  if(lower=="!end" || lower=="bye" || lower=="goodbye" || lower=="farewell"){if(lower=="!end")SetPCChatMessage("");SPEnd(pc);return;}
  if(GetStringLeft(s,4)=="!ai "){SetPCChatMessage("");SPAsk(pc,"npc",GetSubString(s,4,1200));return;}

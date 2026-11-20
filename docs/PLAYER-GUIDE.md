@@ -2,6 +2,12 @@
 
 Start Role Weaver before NWN. Register the adventure's matching `.rwproject.json` and leave the AI service enabled. Use your own API key. [Installation and setup](INSTALLATION.md) explains these steps.
 
+Newly rebuilt AI-enabled modules check the service when you enter. After a short startup grace period, an in-game system message tells you if Studio is not connected or its AI service is paused. It also reports when the connection returns. Type **`!studio`** in Talk to check at any time. Keep NWN unpaused while the check runs. Closing the dashboard's browser tab is fine; the service itself must stay running.
+
+If the service stops during play, detection takes roughly 30 seconds plus a module heartbeat. Slow AI replies do not interrupt this connection check. “Connected” confirms the local service, not API credit, a working key or a registered adventure profile. Native dialogue, quest menus and inventory remain available. Old modules/saves do not acquire new scripts automatically: update Studio, rebuild the module and start a new game to use the check.
+
+A native NWN module cannot directly launch the desktop service. Start Studio yourself before NWN (or switch out of NWN and start it when warned). No automatic operating-system startup setting is enabled by this feature.
+
 ## Talk to an AI NPC
 
 1. Walk near the character and open their conversation.
@@ -29,6 +35,12 @@ Examples of natural requests:
 The companion needs to reach and identify the target. Locks, ownership rules, protected equipment and the creator's settings can limit actions. Ask it to report the result; a statement that it will try is not proof that the task finished. For a familiar, `!companion familiar <message>` is also available when ordinary selection is inconvenient.
 
 ## Move items and trade
+
+New Studio characters start with AI conversations, NPC social chat and companion visits enabled. Companions start with movement, storage inspection and item exchanges enabled. Social partners are unrestricted by default, subject to nearby/idle actors and the existing conversation budget. Creators can turn each permission off; players can further restrict their companions. Animals keep nonverbal profiles and cannot carry a spoken question to another NPC.
+
+For an older project, its saved choices stay unchanged. In Studio's **Companions** or **Behaviors** section, choose **Apply conversation & storage defaults to this project**, review the changes, save and rebuild. Test the rebuilt module with a new game. This also clears per-character social partner restrictions; recruitment choices and animal communication styles remain as authored.
+
+Try “Go ask the merchant what swords he has for sale,” “Look inside that chest,” or “Take one healing potion from the chest.” Companions can inspect nearby accessible containers and exchange permitted items by default. Locked, trapped or quest-gated containers remain protected, and equipped/protected items cannot be moved. Inspecting a chest alone never takes anything.
 
 Open the companion's **Inventory** control. Select an item and use **Transfer selected**, or drag the icon to the other side of the visual inventory. Choose the quantity control when appropriate. Protected/equipped items cannot be transferred. Use page controls for longer lists. Familiars and summons use their associated storage; their disappearance does not turn natural creature weapons into transferable loot.
 
