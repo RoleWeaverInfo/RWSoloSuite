@@ -195,7 +195,7 @@ def _build(p,store,game_root,compiler):
         (source/'mc_cache.nss').write_text('void main(){object pc=GetLastOpenedBy();if(GetIsPC(pc)&&!GetLocalInt(OBJECT_SELF,"MC_SEEN")){SetLocalInt(OBJECT_SELF,"MC_SEEN",TRUE);SendMessageToPC(pc,'+literal('You find '+q['item_name']+' among the stored goods.')+');}}\n',encoding='utf-8')
         (source/'mc_death.nss').write_text('void main(){object pc=GetLastPlayerDied();DelayCommand(1.0,PopUpDeathGUIPanel(pc,TRUE,TRUE,0,'+literal('Return to '+names['mc_hall']+', or reload a saved game.')+'));}\n',encoding='utf-8')
         scripts=sorted(source.glob('*.nss'))
-        result=subprocess.run([str(compiler),'-n',str(game_root),'-i',str(source),'-b',str(compiled),*map(str,scripts)],capture_output=True,text=True,timeout=150,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        result=subprocess.run([str(compiler.resolve()),'-n',str(game_root.resolve()),'-i',str(source.resolve()),'-b',str(compiled.resolve()),*[p.name for p in scripts]],cwd=source,capture_output=True,text=True,timeout=150,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         (out/'compile.log').write_text(result.stdout+result.stderr,encoding='utf-8')
         if result.returncode: raise ValueError('NWScript compile failed: '+(result.stdout+result.stderr)[-6000:])
         for script in scripts:

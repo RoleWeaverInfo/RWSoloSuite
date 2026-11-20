@@ -8,7 +8,11 @@ The first native Linux and macOS release candidate joins the Windows installer. 
 
 The `source.zip` is for developers and **does** require Python/dependencies. SHA-256 files accompany the downloads. No game files, personal projects or API keys are bundled.
 
-New guides cover installation, AI-NPC conversations, companions, inventory/trading, and creating an adventure from ChatGPT story drafts and labeled floorplans. See the `docs` folder in the distribution or repository.
+New guides cover installation, AI-NPC conversations, companions, inventory/trading, and creating an adventure from ChatGPT story drafts and labeled floorplans. They are included in the `docs` folder and available here:
+
+- [Installation and API setup](https://github.com/RoleWeaverInfo/RWSoloSuite/blob/v0.21.0-rc1/docs/INSTALLATION.md)
+- [AI NPCs and companions: player guide](https://github.com/RoleWeaverInfo/RWSoloSuite/blob/v0.21.0-rc1/docs/PLAYER-GUIDE.md)
+- [Create an adventure with ChatGPT and Studio](https://github.com/RoleWeaverInfo/RWSoloSuite/blob/v0.21.0-rc1/docs/CREATE-AN-ADVENTURE.md)
 
 Guided Gemini/OpenAI setup links to official key pages, securely saves each user's own key, offers separate gameplay/authoring model choices, and can check model metadata access. Gemini offers eligible models on a limited free tier; OpenAI API usage is paid. Metadata checks do not guarantee available generation credit or quota.
 

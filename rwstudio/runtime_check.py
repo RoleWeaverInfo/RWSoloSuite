@@ -28,7 +28,7 @@ def main():
         root=Path(temporary);source=root/'source';source.mkdir();compiled=root/'compiled';compiled.mkdir()
         (source/'nwscript.nss').write_text('// Offline compiler smoke header\n')
         (source/'rw_smoke.nss').write_text('void main() { int value = 1; }\n')
-        result=subprocess.run([str(compiler_path()),'-i',str(source),'-b',str(compiled),str(source/'rw_smoke.nss')],capture_output=True,text=True,timeout=30)
+        result=subprocess.run([str(compiler_path().resolve()),'-i',str(source.resolve()),'-b',str(compiled.resolve()),'rw_smoke.nss'],cwd=source,capture_output=True,text=True,timeout=30)
         assert result.returncode==0,result.stdout+result.stderr
         assert (compiled/'rw_smoke.ncs').is_file(),'Compiler did not produce bytecode'
         app=Application(root/'data');server=Server(('127.0.0.1',0),app)

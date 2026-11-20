@@ -508,7 +508,9 @@ def _build(p,store,game_root,compiler):
     with tempfile.TemporaryDirectory(prefix='adventure-',dir=store.root) as temp:
         out=Path(temp);source=out/'source';source.mkdir();compiled=out/'compiled';compiled.mkdir()
         for name,body in scripts.items():(source/(name+'.nss')).write_text(body+'\n',encoding='utf-8')
-        result=subprocess.run([str(compiler),'-n',str(game_root),'-i',str(source),'-b',str(compiled),*map(str,sorted(source.glob('*.nss')))],capture_output=True,text=True,timeout=180,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        # nwnsc's Unix build preserves slashes in input filenames when deriving
+        # output names. Compile basenames from the source directory on every OS.
+        result=subprocess.run([str(compiler.resolve()),'-n',str(game_root.resolve()),'-i',str(source.resolve()),'-b',str(compiled.resolve()),*[p.name for p in sorted(source.glob('*.nss'))]],cwd=source,capture_output=True,text=True,timeout=180,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if result.returncode:raise ValueError('NWScript compilation failed: '+(result.stdout+result.stderr)[-6500:])
         (out/'compile.log').write_text(result.stdout+result.stderr,encoding='utf-8')
         for name,body in scripts.items():

@@ -13,9 +13,9 @@ ROOT=Path(__file__).resolve().parent
 
 def package(build=None,examples=(),output=None):
     builds=list(dict.fromkeys(([build] if build else [])+list(examples)))
-    files={name:ROOT/name for name in ('studio.py','service.py','Start Role Weaver.cmd','Start-RoleWeaver.ps1','Start-RoleWeaver.sh','RELEASE-NOTES.md','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','requirements-platform.txt','GUARDRAILS-AND-USAGE.md')}
+    files={name:ROOT/name for name in ('studio.py','service.py','package.py','build_native.py','build_installer.py','Start Role Weaver.cmd','Start-RoleWeaver.ps1','Start-RoleWeaver.sh','RELEASE-NOTES.md','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','requirements-platform.txt','GUARDRAILS-AND-USAGE.md')}
     files['README.md']=ROOT/'RELEASE-GUIDE.md'
-    for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','docs'):
+    for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','docs','installer'):
         for file in (ROOT/name).rglob('*'):
             if file.is_file() and '__pycache__' not in file.parts and file.suffix not in ('.pyc','.log'):
                 files[file.relative_to(ROOT).as_posix()]=file
