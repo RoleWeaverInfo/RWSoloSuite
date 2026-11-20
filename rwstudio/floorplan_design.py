@@ -106,9 +106,10 @@ def analyze(provider,library,project,area_id,index):
             if len(candidates)>rank:evidence_order.setdefault(candidates[rank]['id'],candidates[rank])
     from .custom_assets import AssetLibrary
     groups=[]
-    if result['area']['type'] in ('castle','dungeon'):
+    if result['area']['type'] in ('castle','dungeon') or (result['area']['type']=='cave' and a.get('geometry')):
         from .spatial import enable
         enable(result['area'],result['measurements'])
+        if a.get('geometry',{}).get('solid_exterior'):result['area']['geometry']['solid_exterior']=True
         for opening in drawn_openings:
             room=next((r for r in result['area']['rooms'] if r['id']==opening['room']),None)
             if room is None:raise ValueError('Opening refers to an unknown room')

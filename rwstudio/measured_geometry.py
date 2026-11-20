@@ -176,11 +176,15 @@ def tile_meshes(area,layout):
     for i in range(len(xs)-1):
         for j in range(len(ys)-1):
             tx,ty=int((xs[i]+xs[i+1])/20),int((ys[j]+ys[j+1])/20)
-            if (tx,ty) not in used:continue
+            if (tx,ty) not in used and not area['geometry'].get('solid_exterior'):continue
             floor,wall,walk=get(tx,ty);ox,oy=tx*10+5,ty*10+5;x1,x2,y1,y2=xs[i]-ox,xs[i+1]-ox,ys[j]-oy,ys[j+1]-oy
             region=regions.get((i,j),(None,'floor'))
             points=[(x,y,elevation(region,x+ox,y+oy)) for x,y in ((x1,y1),(x2,y1),(x2,y2),(x1,y2))];quad(walk,points,4 if (i,j) in occupied else 7)
             if (i,j) in occupied:quad(floor,[(x,y,visible[i,j]) for x,y,z in points],0,[( (x+ox)/2,(y+oy)/2,0) for x,y,z in points])
+            elif area['geometry'].get('solid_exterior'):
+                # A dark roof/bedrock cap fills the blocked mass behind walls.
+                # It never contributes a walkable face or changes room dimensions.
+                quad(floor,[(x,y,height-.01) for x,y,z in points],3)
     # Render each riser and platform side. Only true height discontinuities
     # block walking; the ramp is continuous across the visible step risers.
     for i,j in occupied:
@@ -235,6 +239,9 @@ def minimap(layout,tx,ty):
     for row in range(size):
         for col in range(size):
             x=tx*10+(col+.5)*10/size;y=ty*10+(size-row-.5)*10/size
+            if layout.get('outdoor'):
+                shade=18 if any(rect_contains(r,x,y) for r in layout['walls']) else 165 if any(rect_contains(r,x,y) for r in layout['paving']) else 125 if any(rect_contains(r,x,y) for r in layout['roads']) else 65
+                raw.extend((shade,shade,shade,255));continue
             inside=any(rect_contains(r,x,y) for r in layout['rectangles'])
             shade=165 if inside else 18
             raw.extend((shade,shade,shade,255))
@@ -309,7 +316,7 @@ def serialize_set(cfg):
     validate_set(raw)
     return raw
 
-def export(area,layout,game,namespace,door_registry=None):
+def export(area,layout,game,namespace,door_registry=None,meshes=None,floor_surfaces=None):
     """Return generated HAK resources and the actual area tile IDs."""
     from .layout import TILES
     setname='r'+hashlib.sha256((namespace+area['id']).encode()).hexdigest()[:8]
@@ -323,16 +330,27 @@ def export(area,layout,game,namespace,door_registry=None):
         if finish:d['wood']=finish['wood']
         door_registry.register(d,setname)
     cfg=configparser.ConfigParser(strict=False);cfg.optionxform=str;cfg.read_string(game.get(layout['tileset'],2013).decode('latin1'))
+    # Retail desert bridge declares a door without a hook; some stock SETs
+    # also retain inactive door/sound sections. Normalize before strict export.
+    if layout['tileset']=='ttd01' and cfg.get('TILE36','Model',fallback='').lower()=='ttd01_h07_01' and cfg.get('TILE36','Doors')=='1' and 'TILE36DOOR0' not in cfg:cfg['TILE36']['Doors']='0'
+    for section in list(cfg.sections()):
+        match=re.fullmatch(r'TILE(\d+)(DOOR|SOUND)(\d+)',section)
+        if match and int(match[3])>=int(cfg['TILE'+match[1]]['Doors' if match[2]=='DOOR' else 'Sounds']):cfg.remove_section(section)
     palette=copy.deepcopy(read(game.get(layout['tileset']+'palstd',2030))[1]);resources={};tiles={};start=int(cfg['TILES']['Count']);count=start
     floor_tex=setname+'f';wall_tex=setname+'w';resources[floor_tex,3]=stone_texture(finish) if finish else texture();resources[wall_tex,3]=stone_texture(finish,True) if finish else texture(True)
     from .carpets import tile_meshes as carpet_meshes,texture as carpet_texture
     carpets=carpet_meshes(area);colors=sorted({color for tile in carpets.values() for color in tile});carpet_textures={color:setname+'c'+str(i) for i,color in enumerate(colors)}
     for color,resref in carpet_textures.items():resources[resref,3]=carpet_texture(color)
-    meshes=tile_meshes(area,layout);paths=path_nodes(meshes)
+    if meshes is None:meshes=tile_meshes(area,layout)
+    paths=path_nodes(meshes);surfaces={0:floor_tex,**(floor_surfaces or {})}
+    if any(f[3]==3 for floor,_,_ in meshes.values() for f in floor['faces']):
+        surfaces[3]=setname+'b';resources[surfaces[3],3]=stone_texture(dict(floor='#15171b',wall='#15171b',pattern='rough'))
     for (x,y),(floor,wall,walk) in sorted(meshes.items()):
         name=setname+f'{x:02x}{y:02x}';root=f'node dummy {name}\n parent NULL\nendnode\n'
         body=f'newmodel {name}\nsetsupermodel {name} NULL\nclassification TILE\nsetanimationscale 1\nbeginmodelgeom {name}\n'+root
-        if floor['faces']:body+=node_text(floor,'floor',name,bitmap=floor_tex)
+        for material_id in sorted({f[3] for f in floor['faces']}):
+            part=dict(floor,faces=[(*f[:3],0) for f in floor['faces'] if f[3]==material_id])
+            body+=node_text(part,'floor' if material_id==0 else 'floor'+str(material_id),name,bitmap=surfaces[material_id],shadow=material_id!=3)
         if wall['faces']:body+=node_text(wall,'walls',name,bitmap=wall_tex)
         for color,m in carpets.get((x,y),{}).items():body+=node_text(m,'carpet_'+color,name,bitmap=carpet_textures[color],shadow=False)
         body+=node_text(walk,'walk',name,'aabb')+f'endmodelgeom {name}\ndonemodel {name}\n'

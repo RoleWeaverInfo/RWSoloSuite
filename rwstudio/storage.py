@@ -51,6 +51,50 @@ class Store:
             return [{'id':p['id'],'title':p['title'],'module_name':p['module_name'],'schema_version':p['schema_version'],'design_mode':p.get('design_mode','adventure')} for p in
                     (json.loads(f.read_text(encoding='utf-8')) for f in sorted((self.root/'projects').glob('*.json')))]
 
+    def builds(self):
+        with self.lock:
+            return [json.loads(f.read_text(encoding='utf-8')) for f in
+                    sorted((self.root/'builds').glob('*/manifest.json'),key=lambda f:f.stat().st_mtime)]
+
+    def delete_build(self,ident):
+        if not isinstance(ident,str) or not re.fullmatch(r'[0-9a-f]{20}',ident):
+            raise ValueError('Invalid build ID')
+        with self.lock:
+            directory=self.root/'builds';folder=directory/ident
+            def linked(path):
+                # Junctions are reparse points, but are not reported as symlinks.
+                return path.is_symlink() or bool(getattr(path.lstat(),'st_file_attributes',0)&0x400)
+            if linked(directory) or directory.resolve()!=self.root.resolve()/'builds':
+                raise ValueError('Build folder is outside the workspace')
+            if not folder.exists():raise ValueError('This build has already been deleted or is missing')
+            if linked(folder) or folder.resolve()!=directory.resolve()/ident or not folder.is_dir():
+                raise ValueError('Build folder is outside the workspace')
+            # Validate the whole tree before deleting anything; never follow links.
+            entries=[]
+            def collect(parent):
+                for child in parent.iterdir():
+                    if linked(child) or not child.resolve().is_relative_to(folder.resolve()):
+                        raise ValueError('Build contains a linked or external path; no files were removed')
+                    entries.append(child)
+                    if child.is_dir():collect(child)
+            collect(folder)
+            manifest=folder/'manifest.json'
+            if not manifest.is_file():raise ValueError('This build has already been deleted or is missing')
+            metadata=json.loads(manifest.read_text(encoding='utf-8'))
+            project=self.built_project(ident)
+            if metadata.get('build_id')!=ident or metadata.get('project_id')!=project['id']:
+                raise ValueError('Build identity does not match its adventure profile')
+            # project.json is also the runtime registration for installed modules.
+            # Keeping it matches register_player_build's context-only layout.
+            context=folder/'project.json'
+            for entry in reversed(entries):
+                if entry in (manifest,context):continue
+                if entry.is_dir():entry.rmdir()
+                else:entry.unlink()
+            # Keep a failed/partial deletion visible so the user can retry it.
+            manifest.unlink()
+            return {'deleted':ident,'ai_profile_preserved':True}
+
     def register_player_build(self,build,project):
         if not isinstance(build,str) or not re.fullmatch(r'[0-9a-f]{20}',build):raise ValueError('Invalid build ID')
         project=validate_project(project);target=self.root/'builds'/build/'project.json'

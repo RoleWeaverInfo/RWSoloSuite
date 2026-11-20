@@ -163,7 +163,7 @@ def _build(p,store,game_root,compiler):
     from .native_groups import verify_installed,prepare_navigation
     verify_installed(p,game_root)
     source_files=[Path(__file__),Path(__file__).with_name('furnishing.py'),Path(__file__).with_name('inventory_icons.py'),Path(__file__).with_name('layout.py'),Path(__file__).with_name('authoring.py'),Path(__file__).with_name('story_actions.py'),Path(__file__).with_name('merchants.py'),Path(__file__).with_name('companions.py'),Path(__file__).with_name('companion_tasks.py'),Path(__file__).with_name('ambient.py'),Path(__file__).with_name('runtime_ai.py'),*sorted((ROOT/'authoring_scripts').glob('*.nss')),*sorted((ROOT/'scripts').glob('*.nss'))]
-    source_files.extend(Path(__file__).with_name(n+'.py') for n in ('native_groups','model_preview','footprints','asset_catalog','spatial','measured_geometry','platforms','carpets','doorways','area_presets','native_materials'))
+    source_files.extend(Path(__file__).with_name(n+'.py') for n in ('native_groups','model_preview','footprints','asset_catalog','spatial','measured_geometry','outdoor_geometry','platforms','carpets','doorways','area_presets','native_materials'))
     from .custom_assets import AssetLibrary,FileArchive,table
     dependencies=AssetLibrary(store.root).resolve(p)
     from .asset_catalog import installed
@@ -199,7 +199,10 @@ def _build(p,store,game_root,compiler):
     from .native_materials import export as export_materials
     door_registry=Registry(game,dependency_archives) if any(d.get('measured') for l in layouts.values() for d in l.get('doorways',[])) else None
     for a in p['areas']:
-        if a.get('geometry'):
+        if a.get('outdoor_layout'):
+            from .outdoor_geometry import export as export_outdoor
+            generated,layouts[a['id']]=export_outdoor(a,layouts[a['id']],game,digest,door_registry);generated_resources.update(generated)
+        elif a.get('geometry'):
             generated,layouts[a['id']]=export_measured(a,layouts[a['id']],game,digest,door_registry);generated_resources.update(generated)
         else:
             generated,layouts[a['id']]=export_materials(a,layouts[a['id']],game,digest,dependency_archives);generated_resources.update(generated)
@@ -433,7 +436,7 @@ def _build(p,store,game_root,compiler):
             # Native framed doors on solid interior boundaries. Corridor openings
             # retain their continuous terrain; every link also has a trigger.
             ar,sr=rooms[a];typ=ar['type']
-            if c['kind']=='exit' and (ar.get('geometry') or sr.get('native_group',{}).get('definition',{}).get('mode')=='enclosed'):
+            if c['kind']=='exit' and (ar.get('geometry') or a in ar.get('outdoor_layout',{}).get('courtyard_rooms',[]) or sr.get('native_group',{}).get('definition',{}).get('mode')=='enclosed'):
                 door_x,door_y=exit_point(sr,side,0);dtag='aw_door_'+str(ci)+'_'+str(li)
                 d=door(dtag,'To '+dr['name'],dest,door_x,door_y,{'east':270,'north':0,'west':90,'south':180}[side])
                 local(d,{'AW_GATE':c['requires_quest']});put(d,'Locked',int(bool(c['requires_quest'])),0);put(d,'KeyRequired',int(bool(c['requires_quest'])),0)

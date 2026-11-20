@@ -12,7 +12,7 @@ def base_project(p):
     q.pop('object_positions',None);q.pop('asset_geometry',None)
     for c in q.get('connections',[]):c.pop('doorway',None)
     for a in q.get('areas',[]):
-        a.pop('references',None);a.pop('design_plan',None);a.pop('geometry',None);a.pop('look',None)
+        a.pop('references',None);a.pop('design_plan',None);a.pop('geometry',None);a.pop('look',None);a.pop('outdoor_layout',None)
         for r in a['rooms']:r.pop('native_group',None);r.pop('interior',None);r.pop('openings',None);r.pop('platforms',None);r.pop('carpets',None)
     return q
 

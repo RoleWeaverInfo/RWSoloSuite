@@ -17,11 +17,15 @@ def validate_positions_shape(positions):
         if any(not math.isfinite(p[k]) for k in ('x','y','facing')) or not -1<=p.get('z',0)<=30:raise ValueError('Position or height is outside the supported range')
 
 def validate_area(area):
+    from .outdoor_geometry import validate as validate_outdoor
+    validate_outdoor(area)
     from .area_presets import validate as validate_look
     validate_look(area)
     spec=area.get('geometry')
     if spec is not None:
-        if not isinstance(spec,dict) or set(spec)!={'mode','wall_height','wall_thickness','corridor_width'} or spec['mode']!='measured':raise ValueError('Invalid measured geometry settings')
+        required={'mode','wall_height','wall_thickness','corridor_width'}
+        if not isinstance(spec,dict) or not required<=set(spec) or set(spec)-required-{'solid_exterior'} or spec['mode']!='measured':raise ValueError('Invalid measured geometry settings')
+        if 'solid_exterior' in spec and type(spec['solid_exterior']) is not bool:raise ValueError('Choose whether to fill the exterior mass')
         if area['type'] not in ('castle','dungeon','cave'):raise ValueError('Measured walls are for interiors; outdoor areas use native terrain')
         for key,lo,hi in [('wall_height',2,10),('wall_thickness',.1,1),('corridor_width',1.5,6)]:
             if type(spec[key]) not in (int,float) or not math.isfinite(spec[key]) or not lo<=spec[key]<=hi:raise ValueError('Invalid '+key)
@@ -59,7 +63,7 @@ def enable(area,measurements=()):
 
 def stripped(area):
     import copy
-    a=copy.deepcopy(area);a.pop('geometry',None);a.pop('look',None)
+    a=copy.deepcopy(area);a.pop('geometry',None);a.pop('look',None);a.pop('outdoor_layout',None)
     for r in a['rooms']:r.pop('interior',None);r.pop('native_group',None);r.pop('openings',None);r.pop('platforms',None);r.pop('carpets',None)
     return a
 

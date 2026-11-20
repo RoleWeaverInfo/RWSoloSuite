@@ -1,7 +1,8 @@
 // Basic and catalog furniture must share working edit/removal controls.
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements={'#saveState':{}},removers=[];
-const ctx={console,document:{querySelector:s=>elements[s]||null,querySelectorAll:s=>s==='[data-remove]'?removers:[]}};
+let acceptRemoval=false;const prompts=[];
+const ctx={console,window:{confirm:message=>{prompts.push(message);return acceptRemoval;}},document:{querySelector:s=>elements[s]||null,querySelectorAll:s=>s==='[data-remove]'?removers:[]}};
 vm.createContext(ctx);
 const source=fs.readFileSync('web/editor.js','utf8');
 vm.runInContext(source.slice(0,source.indexOf("$('#saveProject').onclick")),ctx);
@@ -26,6 +27,10 @@ ctx.render=()=>rendered++;
 ctx.bindSafety=ctx.bindAreaSections=ctx.bindDesign=ctx.bindPresets=()=>{};
 removers.push({dataset:{remove:'furnishings:1'}},{dataset:{remove:'custom_placements:0'}});
 ctx.bind();removers[0].onclick();
+assert.equal(run('project.furnishings.length'),2);
+assert.equal(run('project.object_positions.length'),2);
+assert(prompts.at(-1).includes('Guard bed'));
+acceptRemoval=true;removers[0].onclick();
 assert.equal(run('project.furnishings.length'),1);
 assert.equal(run('project.furnishings[0].id'),'outside');
 assert.equal(run('project.object_positions.some(p=>p.id==="bed")'),false);

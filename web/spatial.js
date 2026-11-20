@@ -3,7 +3,12 @@ const roomMetres=r=>[r.interior?.width_m??r.width*10,r.interior?.depth_m??r.heig
 function spatialInput(label,path,value,step=.1){return `<label class="field"><span>${E(label)}</span><input data-spatial="${path}" type="number" step="${step}" value="${E(value)}"></label>`;}
 function spatialPanel(a,r){
  const p=`areas.${areaIndex}`,rp=`${p}.rooms.${roomIndex}`,g=a.geometry;
+ if(['forest','desert','winter'].includes(a.type))return courtyardPanel(a);
  return `<div class="card"><h3>Room boundaries and scale</h3>${g?`<p>Measured stone interior. Wall faces follow the clear dimensions below; the surrounding tile envelope does not enlarge the room.</p><div class="row">${spatialInput('Wall height · m',p+'.geometry.wall_height',g.wall_height)}${spatialInput('Wall thickness · m',p+'.geometry.wall_thickness',g.wall_thickness)}${spatialInput('Passage width · m',p+'.geometry.corridor_width',g.corridor_width)}</div>${r?`<strong>${E(r.name)}</strong><div class="row">${spatialInput('Clear width · m',rp+'.interior.width_m',roomMetres(r)[0])}${spatialInput('Clear depth · m',rp+'.interior.depth_m',roomMetres(r)[1])}</div>${openingPanel(r,rp)}${roomFeaturesPanel(r,rp)}`:''}<p class="hint">Rebuild to export matching floors, walls, collision and minimaps. The generated geometry HAK travels with the share ZIP. Walls are rectangular stone; native cave shapes and outdoor terrain use the native tiles mode.</p><button data-action="nativeGeometry">Use native tiles instead</button>`:`<p>Native tiles and room groups keep their authored wall shapes. Their clear interiors may differ from the tile dimensions.</p>${['castle','dungeon','cave'].includes(a.type)?'<button data-action="measuredGeometry">Use measured stone walls</button>':'<p class="hint">Outdoor forests, desert and winter areas keep their native terrain.</p>'}`}</div>`;
+}
+function courtyardPanel(a){
+ const s=a.outdoor_layout,p=`areas.${areaIndex}.outdoor_layout`;
+ return `<div class="card"><h3>Outdoor courtyards and paths</h3><p>Generate a flat outdoor landscape with stone-paved, walled zones and connected dirt paths. Grass, sand or snow covers the countryside. Native hills and room groups are replaced in this mode.</p>${s?`<p>Choose the zones inside the walls. Connections between selected zones become walled, paved approaches; roads leaving them receive working gates.</p>${a.rooms.map(r=>`<label class="check"><input type="checkbox" data-courtyard-room="${E(r.id)}" ${s.courtyard_rooms.includes(r.id)?'checked':''}>${E(r.name)}</label>`).join('')}<div class="row">${spatialInput('Wall height · m',p+'.wall_height',s.wall_height)}${spatialInput('Wall thickness · m',p+'.wall_thickness',s.wall_thickness)}${spatialInput('Clear path / gate width · m',p+'.road_width',s.road_width)}</div><button data-action="removeCourtyard" class="quiet danger">Remove courtyard landscape</button>`:'<button data-action="enableCourtyard">Create stone courtyard in selected zone</button>'}<p class="hint">Update the generated area to build these surfaces, walls, gates and collision into its shareable geometry HAK.</p></div>`;
 }
 function roomFeaturesPanel(r,rp){
  const platforms=(r.platforms||[]).length,carpets=(r.carpets||[]).length;
@@ -45,6 +50,7 @@ function placementPanel(a){
 function bindSpatial(){
  function unlocked(rid){if((project.locked_rooms||[]).includes(rid))throw Error('Unlock this room before changing its layout or contents.');}
  async function update(fn){const before=clone(project);try{fn();previousDraft=before;change();report=await api('/api/author/review',{project});render();if(report.errors.length)notify(report.errors.join('\n'),true);}catch(e){project=before;render();throw e;}}
+ document.querySelectorAll('[data-courtyard-room]').forEach(el=>el.onchange=()=>{if(!el.checked&&!confirmRemoval('the courtyard walls and paving around '+area().rooms.find(r=>r.id===el.dataset.courtyardRoom).name)){el.checked=true;return;}return task(el,()=>update(()=>{area().rooms.forEach(r=>unlocked(r.id));const ids=new Set(area().outdoor_layout.courtyard_rooms);if(el.checked)ids.add(el.dataset.courtyardRoom);else ids.delete(el.dataset.courtyardRoom);if(!ids.size)throw Error('Keep at least one courtyard zone, or use Remove courtyard landscape.');area().outdoor_layout.courtyard_rooms=[...ids];}));});
  document.querySelectorAll('[data-doorway]').forEach(el=>el.onchange=()=>task(el,()=>update(()=>{const [index,key]=el.dataset.doorway.split('.'),c=project.connections[Number(index)];unlocked(c.from_room);unlocked(c.to_room);c.doorway??={style:'wood',height:2.4,leaves:'auto'};c.doorway[key]=key==='height'?Number(el.value):el.value;})));
  document.querySelectorAll('[data-spatial]').forEach(el=>el.onchange=()=>task(el,()=>update(()=>{
   const path=el.dataset.spatial,parts=path.split('.'),n=el.tagName==='SELECT'?el.value:Number(el.value);if(!el.value.trim()||(el.tagName!=='SELECT'&&!Number.isFinite(n)))throw Error('Enter a finite number.');
@@ -55,6 +61,12 @@ function bindSpatial(){
  document.querySelectorAll('[data-rotate]').forEach(el=>el.onclick=()=>task(el,()=>update(()=>{const pos=project.object_positions[Number(el.dataset.rotate)],f=[...project.furnishings,...(project.custom_placements||[])].find(f=>f.id===pos.id);unlocked(f.room);const before=clone(pos);pos.facing=(pos.facing+90)%360;supportedChildren(pos.id,before,pos);})));
 }
 async function spatialAction(name){
+ if(['enableCourtyard','removeCourtyard'].includes(name)){
+  const a=area();if(a.rooms.some(r=>(project.locked_rooms||[]).includes(r.id)))throw Error('Unlock the area’s rooms first.');
+  if(name==='enableCourtyard'&&(!selectedRoom()||a.rooms.some(r=>r.native_group)))throw Error('Select a zone and remove native room groups before creating a flat courtyard landscape.');
+  previousDraft=clone(project);if(name==='removeCourtyard')delete a.outdoor_layout;else a.outdoor_layout={courtyard_rooms:[selectedRoom().id],wall_height:4,wall_thickness:.5,road_width:4};
+  change();report=await api('/api/author/review',{project});render();return true;
+ }
  if(name.startsWith('connectOpening_')){
   const r=selectedRoom(),a=area(),side=name.split('_')[1],o=r.openings.find(o=>o.side===side),others=a.rooms.filter(x=>x.id!==r.id),opposite={north:'south',south:'north',east:'west',west:'east'};
   if((project.locked_rooms||[]).includes(r.id))throw Error('Unlock this room first.');if(!others.length)throw Error('Add the destination room to this area first, then connect this opening.');

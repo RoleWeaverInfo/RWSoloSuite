@@ -17,7 +17,7 @@ from .content import seed, canonical, validate_project, CREATURES, DECOR, APPEAR
 from .storage import Store, write_json
 from .provider import Provider
 from .bridge import Bridge
-from .builder import ROOT, build_project, install_build
+from .builder import ROOT, BUILD_LOCK, build_project, install_build
 from .paths import default_data
 from .installation import service_lock
 from . import authoring
@@ -194,7 +194,11 @@ class Application:
                 from .design_tools import area_test_project
                 project=area_test_project(project,b.get('area_id') or project['areas'][0]['id'])
             return build_project(project,self.store,self.config['game_root'],self.config['compiler'])
-        if route=='/api/install':return install_build(self.store,b['build_id'],self.config['user_dir'])
+        if route=='/api/build/delete':
+            if b.get('confirm') is not True:raise ValueError('Confirm deletion of the selected build first')
+            with BUILD_LOCK:return self.store.delete_build(b['build_id'])
+        if route=='/api/install':
+            with BUILD_LOCK:return install_build(self.store,b['build_id'],self.config['user_dir'])
         if route=='/api/author/open-aurora':
             from .aurora import open_project
             p=b['project']
@@ -259,8 +263,7 @@ class Handler(BaseHTTPRequestHandler):
                 with app.bridge.lock:proposal=app.bridge.proposals.get(query.get('session_id',[''])[0])
                 return self.send(200,{'proposal':proposal})
             if route=='/api/builds':
-                result=[json.loads(f.read_text(encoding='utf-8')) for f in sorted((app.store.root/'builds').glob('*/manifest.json'),key=lambda f:f.stat().st_mtime)]
-                return self.send(200,{'builds':result})
+                return self.send(200,{'builds':app.store.builds()})
             if route=='/download':
                 ident=query.get('build',[''])[0];p=app.store.built_project(ident);kind=query.get('kind',['zip'])[0]
                 suffix={'zip':'-aurora.zip','mod':'.mod','project':'.rwproject.json'}.get(kind)

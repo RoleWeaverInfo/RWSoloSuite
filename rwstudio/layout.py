@@ -117,6 +117,9 @@ def doorway_plan(area,connections):
 def plan(p):
     result={}
     for a in p['areas']:
+        if a.get('outdoor_layout'):
+            from .outdoor_geometry import plan as outdoor_plan
+            result[a['id']]=outdoor_plan(a,p['connections']);continue
         if a.get('geometry',{}).get('mode')=='measured':
             from .measured_geometry import plan as measured_plan
             result[a['id']]=measured_plan(a,p['connections']);continue

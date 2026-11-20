@@ -54,6 +54,10 @@ def validate(area):
     if area['type'] not in OUTDOOR and look['weather'] in ('rain','snow'):raise ValueError('Rain and snow require an outdoor area')
 
 def preserve(source,target):
+    if source.get('outdoor_layout') and 'outdoor_layout' not in target and target['type'] in OUTDOOR:
+        selected=set(source['outdoor_layout']['courtyard_rooms'])&{r['id'] for r in target['rooms']}
+        if selected and not any(r.get('native_group') for r in target['rooms']):target['outdoor_layout']=dict(copy.deepcopy(source['outdoor_layout']),courtyard_rooms=sorted(selected))
+    if source.get('geometry',{}).get('solid_exterior') and target.get('geometry'):target['geometry']['solid_exterior']=True
     if 'look' in target or 'look' not in source:return
     proposed=copy.deepcopy(source['look']);candidate=dict(target,look=proposed)
     try:validate(candidate)

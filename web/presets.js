@@ -19,7 +19,7 @@ function bindPresets(){
   a.look??=originalLook();const key=el.dataset.look;a.look[key]=['brightness','fog'].includes(key)?Number(el.value):el.value;
   if(key==='lighting'){a.look.brightness=1;a.look.fog=app.area_presets.lighting[el.value]?.fog||0;a.look.weather='preset';}
  })));
- document.querySelectorAll('[data-look-action]').forEach(el=>el.onclick=()=>task(el,()=>edit(a=>{
+ document.querySelectorAll('[data-look-action]').forEach(el=>el.onclick=()=>{if(el.dataset.lookAction==='reset'&&!confirmRemoval('this area’s material and lighting overrides','This restores the original area look in the draft. Save the project to keep the change.'))return;return task(el,()=>edit(a=>{
   if(el.dataset.lookAction==='reset'){delete a.look;return;}const [material,lighting]=app.area_presets.defaults[a.type];a.look={material,lighting,brightness:1,fog:app.area_presets.lighting[lighting].fog,weather:'preset'};
- })));
+ }));});
 }

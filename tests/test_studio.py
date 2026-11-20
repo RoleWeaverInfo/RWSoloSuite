@@ -208,6 +208,19 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(status,200);self.assertEqual(json.loads(raw)['project']['id'],'fresh_area')
         self.assertFalse(path.exists());self.assertEqual(len(self.app.store.list()),1)
 
+    def test_build_delete_requires_confirmation_and_csrf(self):
+        ident='e'*20;p=seed();self.app.store.register_player_build(ident,p)
+        folder=self.app.store.root/'builds'/ident
+        (folder/'manifest.json').write_text(json.dumps(dict(build_id=ident,project_id=p['id'])))
+        artifact=folder/'demo.mod';artifact.write_bytes(b'module')
+        for headers,body,status in [({'X-Studio-Token':'bad'},{'build_id':ident,'confirm':True},403),({}, {'build_id':ident},400),({}, {'build_id':'../settings','confirm':True},400)]:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.request('/api/build/delete',body,headers)
+            self.assertEqual(error.exception.code,status);self.assertTrue(artifact.is_file())
+        status,raw=self.request('/api/build/delete',{'build_id':ident,'confirm':True})
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw)['deleted'],ident)
+        self.assertFalse(artifact.exists());self.assertEqual(self.app.store.built_project(ident),p)
+        _,raw=self.request('/api/builds');self.assertEqual(json.loads(raw)['builds'],[])
+
 class ExportTests(unittest.TestCase):
     def test_three_area_native_export(self):
         game=Path('D:/SteamLibrary/steamapps/common/Neverwinter Nights');compiler=ROOT/'vendor/nwnsc/nwnsc.exe'
