@@ -37,7 +37,7 @@ def main():
 datas = DATA_FILES
 binaries = [(COMPILER, 'vendor/nwnsc')]
 hiddenimports = collect_submodules('rwstudio')
-for package in ('guardrails', 'litellm', 'tiktoken', 'jsonschema_specifications', 'keyring'):
+for package in ('guardrails', 'litellm', 'tiktoken', 'jsonschema_specifications', 'rfc3987_syntax', 'lark', 'keyring'):
     d, b, h = collect_all(package)
     datas += d; binaries += b; hiddenimports += h
 for distribution in ('guardrails-ai', 'guardrails-ai-regex-match', 'keyring'):

@@ -22,7 +22,7 @@ def installed_directory():
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('setup',type=Path);parser.add_argument('--full-suite',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('setup',type=Path);parser.add_argument('--full-suite',action='store_true');parser.add_argument('--without-game',action='store_true',help='CI: exercise compiler/runtime without copyrighted game assets');args=parser.parse_args()
     if installed_directory() is not None:raise RuntimeError('An installed Studio is already registered. Do not overwrite it with the smoke test.')
     base=(ROOT/'data'/('installer-smoke-'+str(time.time_ns()))).resolve();app=base/'Program with spaces';workspace=base/'Retained workspace';user=base/'NWN user'
     assert base.is_relative_to((ROOT/'data').resolve())
@@ -70,8 +70,14 @@ def main():
         result['installed_service']='passed';print('Bundled service and saved workspace passed.',flush=True)
         # Build a real module using only the installed application and its compiler.
         code="from rwstudio.authoring import blank; from rwstudio.design_tools import area_test_project; from rwstudio.builder import build_project; from rwstudio.storage import Store; from rwstudio.paths import default_data; from rwstudio.server import defaults; from pathlib import Path; c=defaults(); assert c['game_root']; p=area_test_project(blank('installer_probe','Installer probe'),'starting_area'); p['module_name']='rw_setup_probe'; b=build_project(p,Store(default_data()),c['game_root'],c['compiler']); assert Path(b['path']).is_file(); print('Installed runtime built '+b['module'])"
-        run([str(python),'-B','-c',code],'installed-native-build.log',timeout=150)
-        result['installed_native_module_build']='passed'
+        if args.without_game:
+            run([str(python),'-B','-c','from rwstudio.runtime_check import main; main()'],'installed-runtime-check.log',timeout=150)
+            code="from pathlib import Path; from rwstudio.paths import default_data; from rwstudio.player_package import write_player_bundle; p=default_data()/'builds/bootstrap-test'; p.mkdir(parents=True); (p/'rw_setup_probe.mod').write_bytes(b'Diagnostic only - never loaded into NWN'); write_player_bundle(p,'rw_setup_probe.mod')"
+            run([str(python),'-B','-c',code],'bootstrap-fixture.log')
+            result['installed_compiler_and_runtime']='passed; full module build requires owned NWN assets'
+        else:
+            run([str(python),'-B','-c',code],'installed-native-build.log',timeout=150)
+            result['installed_native_module_build']='passed'
         if args.full_suite:
             print('Running regression suite under bundled Python.',flush=True)
             code="import sys,unittest; sys.path.insert(0,"+repr(str(ROOT))+"); result=unittest.TextTestRunner(verbosity=1).run(unittest.defaultTestLoader.discover('tests')); raise SystemExit(not result.wasSuccessful())"

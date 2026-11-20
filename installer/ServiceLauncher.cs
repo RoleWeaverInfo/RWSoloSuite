@@ -7,7 +7,7 @@ using System.Text;
 [assembly: AssemblyTitle("Role Weaver Module Studio")]
 [assembly: AssemblyCompany("RoleWeaverInfo")]
 [assembly: AssemblyProduct("Role Weaver Module Studio")]
-[assembly: AssemblyVersion("0.20.0.2")]
+[assembly: AssemblyVersion("0.21.0.1")]
 
 internal static class ServiceLauncher
 {
