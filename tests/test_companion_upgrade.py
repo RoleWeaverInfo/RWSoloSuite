@@ -36,6 +36,7 @@ class CompanionUpgradeTests(unittest.TestCase):
    self.assertLessEqual(len([f for f in proposal['furnishings'] if f['room']=='guest_hall']),4)
   self.assertEqual(p,old)
 
+@unittest.skipUnless(native_tasks.GAME.is_dir() and native_tasks.COMPILER.is_file(),'NWN/compiler required')
 class NativeUpgradeTests(unittest.TestCase):
  setUpClass=classmethod(native_tasks.NativeCompanionTaskTests.setUpClass.__func__)
  tearDownClass=classmethod(native_tasks.NativeCompanionTaskTests.tearDownClass.__func__)

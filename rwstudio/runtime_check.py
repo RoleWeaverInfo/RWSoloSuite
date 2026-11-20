@@ -13,6 +13,11 @@ def main():
     from .guardrails_sdk import LocalValidation
     from .guardrails import DEFAULTS
     from .server import Application,Server
+    from .tls import context
+    import ssl
+    tls=context()
+    assert tls.check_hostname and tls.verify_mode==ssl.CERT_REQUIRED
+    assert tls.get_ca_certs(),'Trusted HTTPS roots are missing'
     for name in ('web/author.html','web/branding/splash.png','rwstudio/adventure_builder.py','authoring_scripts/aw_cp_ui.nss'):
         assert (ROOT/name).is_file(),name
     with patch('socket.socket.connect',side_effect=RuntimeError('External network forbidden')):

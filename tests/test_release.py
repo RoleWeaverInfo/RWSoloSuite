@@ -68,7 +68,7 @@ class ServiceStartupTests(unittest.TestCase):
                 install.assert_not_called()
             with patch.object(service.launcher,'game_running',return_value=False),patch.object(service.launcher,'install') as install:
                 service.install_adventure(source,user)
-                self.assertEqual(install.call_args.args[0]['installed'],str(user/'modules/source.mod'))
+                self.assertEqual(install.call_args.args[0]['installed'],str((user/'modules/source.mod').resolve()))
 
 
 class ReleasePackageTests(unittest.TestCase):

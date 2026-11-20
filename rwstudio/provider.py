@@ -5,6 +5,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from .tls import context as tls_context
 from .content import PROJECT_SCHEMA, _obj, S, enum, schema_check, validate_project, npc_context
 
 REPLY_SCHEMA=_obj({'reply':S,'action':enum('none','accept_quest','turn_in')})
@@ -90,7 +91,7 @@ class Provider:
                     'unknown_usage_budget':'Gameplay AI paused because a provider call has unreported token usage and a daily token stop is enabled.'}.get(blocked,'Gameplay AI is paused.')
                 raise AIError(message+' See Guardrails & usage in Studio. Native NPC menus remain available.')
         try:
-            with urllib.request.urlopen(request,timeout=300 if effort else 120 if max_tokens>10000 else 65) as response:
+            with urllib.request.urlopen(request,timeout=300 if effort else 120 if max_tokens>10000 else 65,context=tls_context()) as response:
                 data=json.loads(response.read(2_000_000))
         except urllib.error.HTTPError as exc:
             raise AIError(provider_error(exc,provider)) from None

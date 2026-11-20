@@ -1,5 +1,6 @@
 """Build Python-included Linux/macOS packages on a matching native runner."""
 import hashlib
+import importlib.metadata
 import json
 import os
 from pathlib import Path
@@ -24,6 +25,9 @@ def main():
         import zipfile
         with zipfile.ZipFile(source['package']) as archive:archive.extractall(stage)
         app=stage/'Role-Weaver-Module-Studio'
+        shutil.copy2(ROOT/'installer/PYTHON-LICENSE.txt',app/'PYTHON-LICENSE.txt')
+        dependencies=sorted({(d.metadata['Name'] or 'unknown')+'=='+d.version for d in importlib.metadata.distributions()})
+        (app/'BUNDLED-DEPENDENCIES.txt').write_text('Build environment distributions; licenses are retained in bundled metadata.\n\n'+'\n'.join(dependencies)+'\n')
         (app/'vendor/nwnsc/nwnsc.exe').unlink(missing_ok=True)
         (app/'vendor/nwnsc/nwnsc').chmod(0o755)
         (app/'installation.json').write_text(json.dumps(dict(version=VERSION,data_mode='per-user')))
@@ -46,7 +50,16 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='RoleWeaverModuleStudi
 coll = COLLECT(exe, a.binaries, a.datas, name='RoleWeaverModuleStudio', strip=False, upx=False)
 """.replace('DATA_FILES',repr(datas)).replace('COMPILER',repr(str(app/'vendor/nwnsc/nwnsc'))).replace('ENTRY',repr(str(ROOT/'installer/frozen_entry.py'))).replace('APP_ROOT',repr(str(app)))
         if sys.platform=='darwin':
-            content+="\napp = BUNDLE(coll, name='Role Weaver Module Studio.app', bundle_identifier='com.roleweaver.modulestudio', info_plist={'CFBundleShortVersionString': '0.21.0', 'NSHighResolutionCapable': True})\n"
+            icons=stage/'RoleWeaver.iconset';icons.mkdir()
+            square=stage/'square.png'
+            subprocess.run(['sips','-Z','1024',str(app/'web/branding/splash.png'),'--out',str(square)],check=True,capture_output=True)
+            subprocess.run(['sips','--padToHeightWidth','1024','1024','--padColor','00131F',str(square)],check=True,capture_output=True)
+            for size in (16,32,128,256,512):
+                for multiplier,suffix in ((1,''),(2,'@2x')):
+                    pixels=str(size*multiplier)
+                    subprocess.run(['sips','-z',pixels,pixels,str(square),'--out',str(icons/f'icon_{size}x{size}{suffix}.png')],check=True,capture_output=True)
+            icon=stage/'RoleWeaver.icns';subprocess.run(['iconutil','-c','icns',str(icons),'-o',str(icon)],check=True)
+            content+="\napp = BUNDLE(coll, name='Role Weaver Module Studio.app', icon="+repr(str(icon))+", bundle_identifier='com.roleweaver.modulestudio', info_plist={'CFBundleShortVersionString': '0.21.0', 'NSHighResolutionCapable': True})\n"
         spec.write_text(content)
         subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--distpath',str(stage/'frozen'),'--workpath',str(stage/'work'),str(spec)],check=True)
         if sys.platform=='darwin':
@@ -67,7 +80,7 @@ coll = COLLECT(exe, a.binaries, a.datas, name='RoleWeaverModuleStudio', strip=Fa
             shutil.copytree(ROOT/'docs',bundle/'docs')
             target=out/(name+'.tar.gz')
             with tarfile.open(target,'w:gz') as archive:archive.add(bundle,arcname='RoleWeaverModuleStudio')
-        digest=hashlib.file_digest(target.open('rb'),'sha256').hexdigest()
+        with target.open('rb') as stream:digest=hashlib.file_digest(stream,'sha256').hexdigest()
         target.with_name(target.name+'.sha256').write_text(digest+'  '+target.name+'\n')
         print(json.dumps(dict(package=str(target),architecture=arch,sha256=digest,smoke_test='passed',signed='ad-hoc' if sys.platform=='darwin' else False)))
 

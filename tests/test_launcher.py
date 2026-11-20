@@ -70,7 +70,7 @@ class LauncherTests(unittest.TestCase):
             cwd=Path(calls[0][1]['cwd'])
             self.assertEqual(cwd,Path(p['executable']).parent)
             self.assertNotEqual(cwd,Path(p['game_root']))
-            self.assertEqual((cwd/'../../data').resolve(),self.game/'data')
+            self.assertEqual((cwd/'../../data').resolve(),(self.game/'data').resolve())
     def test_access_violation_reports_hex_code_and_local_log_location(self):
         for code in (3221225477,-1073741819):
             with patch.object(launcher,'http',return_value={}):

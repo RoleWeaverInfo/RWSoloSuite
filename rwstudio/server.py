@@ -217,7 +217,7 @@ class Application:
             return open_project(p,b['area_id'],self.store,self.config['game_root'],self.config['compiler'],self.config['user_dir'])
         if route=='/api/settings':
             b={**self.config,**b}
-            if set(b)!=set(self.config) or any(not isinstance(v,str) or not v.strip() or len(v)>1000 for v in b.values()):raise ValueError('Invalid settings')
+            if set(b)!=set(self.config) or any(not isinstance(v,str) or (not v.strip() and k!='game_root') or len(v)>1000 for k,v in b.items()):raise ValueError('Invalid settings')
             if b['provider'] not in ('openai','gemini') or any(not re.fullmatch(r'[A-Za-z0-9._-]{1,100}',b[k]) for k in ('model','gemini_model','authoring_model','authoring_gemini_model')):raise ValueError('Invalid provider or model name')
             if b['authoring_reasoning'] not in ('default','low','medium','high','xhigh','max'):raise ValueError('Choose a supported authoring reasoning effort')
             with self.lock:

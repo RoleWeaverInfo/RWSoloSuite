@@ -3,6 +3,7 @@ import json
 import re
 import urllib.error
 import urllib.request
+from .tls import context as tls_context
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -18,7 +19,7 @@ def check_models(credentials,provider,models):
     if not key:raise ValueError('Save a key for this provider before checking model access')
     base='https://api.openai.com/v1/models/' if provider=='openai' else 'https://generativelanguage.googleapis.com/v1beta/models/'
     headers={'Authorization':'Bearer '+key} if provider=='openai' else {'x-goog-api-key':key}
-    opener=urllib.request.build_opener(NoRedirect())
+    opener=urllib.request.build_opener(NoRedirect(),urllib.request.HTTPSHandler(context=tls_context()))
     checked=[]
     for model in dict.fromkeys(models):
         request=urllib.request.Request(base+model,headers=headers,method='GET')
