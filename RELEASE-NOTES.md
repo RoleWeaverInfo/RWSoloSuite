@@ -1,6 +1,6 @@
-# 0.21.0-rc2 — The Emberseal of Briarwatch example
+# 0.21.0-rc3 — The Emberseal of Briarwatch example
 
-The latest Emberseal maps are the sole bundled example, rebuilt with current scripts and conversation/storage defaults. Fresh dashboards include the project, three floorplans and playable build; existing workspaces can load it with a draft backup. Every native package and source ZIP includes it, with a separate Emberseal adventure/Aurora download. Silent Bell and other trials are not bundled. See [release notes](docs/RELEASE-0.21.0-rc2.md) and the [Emberseal guide](docs/EMBERSEAL.md).
+The latest Emberseal maps are the sole bundled example, rebuilt with current scripts and conversation/storage defaults. Fresh dashboards include the project, three floorplans and playable build; existing workspaces can load it with a draft backup. Every native package and source ZIP includes it, with a separate Emberseal adventure/Aurora download. Silent Bell and other trials are not bundled. See [release notes](docs/RELEASE-0.21.0-rc3.md) and the [Emberseal guide](docs/EMBERSEAL.md).
 
 ## Launch controls, updates and gameplay defaults
 

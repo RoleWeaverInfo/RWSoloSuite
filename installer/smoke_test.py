@@ -60,10 +60,14 @@ def main():
             except OSError:
                 if service.poll() is not None:raise RuntimeError('Installed service exited; inspect service.log')
                 time.sleep(.25)
-        assert state and state['bridge']['enabled'] and len(state['projects'])==1
-        project=request('/api/project?id=area_workshop')['project'];project['title']='Retained installer test project'
+        assert state and state['bridge']['enabled']
+        assert [p['id'] for p in state['projects']]==['emberseal_demo']
+        project=request('/api/project?id=emberseal_demo')['project']
+        assert project['module_name']=='rw_ember_v3' and len(project['areas'])==3
+        result['bundled_example']='The Emberseal of Briarwatch is the sole initial project'
+        project['title']='Retained installer test project'
         request('/api/project/save',{'project':project},state['csrf'])
-        sentinel=workspace/'projects/area_workshop.json';saved=sentinel.read_bytes()
+        sentinel=workspace/'projects/emberseal_demo.json';saved=sentinel.read_bytes()
         for route in ('/startup','/branding/splash.png','/player'):
             with urllib.request.urlopen('http://127.0.0.1:8767'+route,timeout=4) as response:assert response.status==200
         service.terminate();service.wait(timeout=10);service=None;output.close()
