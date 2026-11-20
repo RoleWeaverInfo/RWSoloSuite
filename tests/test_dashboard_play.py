@@ -24,7 +24,7 @@ class DashboardPlayTests(unittest.TestCase):
         self.store = Store(self.root/'workspace');self.project = seed();self.project['ai_conversations'] = True
         self.store.register_player_build(BUILD, self.project)
         self.folder = self.store.root/'builds'/BUILD
-        self.raw = pack_module((ROOT/'assets/base.mod').read_bytes(), {('sp_config',2009):('string SPProject(){return "silent_bell";} string SPBuild(){return "'+BUILD+'";}').encode()})
+        self.raw = pack_module((ROOT/'assets/authoring-template.erf').read_bytes(), {('sp_config',2009):('string SPProject(){return "silent_bell";} string SPBuild(){return "'+BUILD+'";}').encode()})
         (self.folder/'rw_silent_bell.mod').write_bytes(self.raw)
         write_json(self.folder/'manifest.json', dict(module='rw_silent_bell.mod', sha256=hashlib.sha256(self.raw).hexdigest()))
         write_json(self.folder/'rw_silent_bell.rwproject.json', dict(build_id=BUILD, project=self.project))

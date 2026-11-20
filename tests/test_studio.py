@@ -196,7 +196,7 @@ class HTTPTests(unittest.TestCase):
         for url in ['/','/app.js','/style.css']:
             status,raw=self.request(url);self.assertEqual(status,200);self.assertGreater(len(raw),100)
     def test_project_delete_requires_confirmation_and_csrf(self):
-        ident='area_workshop';path=self.app.store.path(ident)
+        ident='emberseal_demo';path=self.app.store.path(ident)
         for headers,body,status in [({'X-Studio-Token':'bad'},{'id':ident,'confirm':True},403),({}, {'id':ident},400),({}, {'id':'../settings','confirm':True},400)]:
             with self.assertRaises(urllib.error.HTTPError) as error:self.request('/api/project/delete',body,headers)
             self.assertEqual(error.exception.code,status);self.assertTrue(path.is_file())
@@ -209,6 +209,7 @@ class HTTPTests(unittest.TestCase):
         self.assertFalse(path.exists());self.assertEqual(len(self.app.store.list()),1)
 
     def test_build_delete_requires_confirmation_and_csrf(self):
+        baseline=self.app.store.builds()
         ident='e'*20;p=seed();self.app.store.register_player_build(ident,p)
         folder=self.app.store.root/'builds'/ident
         (folder/'manifest.json').write_text(json.dumps(dict(build_id=ident,project_id=p['id'])))
@@ -219,7 +220,7 @@ class HTTPTests(unittest.TestCase):
         status,raw=self.request('/api/build/delete',{'build_id':ident,'confirm':True})
         self.assertEqual(status,200);self.assertEqual(json.loads(raw)['deleted'],ident)
         self.assertFalse(artifact.exists());self.assertEqual(self.app.store.built_project(ident),p)
-        _,raw=self.request('/api/builds');self.assertEqual(json.loads(raw)['builds'],[])
+        _,raw=self.request('/api/builds');self.assertEqual(json.loads(raw)['builds'],baseline)
 
 class ExportTests(unittest.TestCase):
     def test_three_area_native_export(self):

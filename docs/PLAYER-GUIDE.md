@@ -1,5 +1,7 @@
 # Playing with AI characters and companions
 
+The included example is **The Emberseal of Briarwatch** (`rw_ember_v3.mod`). Fresh Studio installations already contain its project and build. Choose **Build & share → Play in NWN**, or use **Load Emberseal example** first on an existing installation. The [Emberseal guide](EMBERSEAL.md) covers the queen's quest, merchants, optional recruit and required HAK. No Silent Bell or other trial module is needed.
+
 Start Role Weaver before NWN. Register the adventure's matching `.rwproject.json` and leave the AI service enabled. Use your own API key. [Installation and setup](INSTALLATION.md) explains these steps.
 
 Newly rebuilt AI-enabled modules check the service when you enter. After a short startup grace period, an in-game system message tells you if Studio is not connected or its AI service is paused. It also reports when the connection returns. Type **`!studio`** in Talk to check at any time. Keep NWN unpaused while the check runs. Closing the dashboard's browser tab is fine; the service itself must stay running.

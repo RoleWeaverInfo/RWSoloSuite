@@ -1,3 +1,5 @@
+> Previous release: see [0.21.0-rc2](RELEASE-0.21.0-rc2.md) for the current Emberseal example and downloads.
+
 # Role Weaver Module Studio 0.21.0-rc1
 
 The first native Linux and macOS release candidate joins the Windows installer. All five application downloads include Python, Guardrails AI validators and an NWScript compiler:

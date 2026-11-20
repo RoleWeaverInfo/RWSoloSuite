@@ -1,0 +1,3 @@
+#include "sp_inc"
+void main(){string id=GetLocalString(OBJECT_SELF,"AWT_REQUEST");if(id!=""){sqlquery q=SqlPrepareQueryCampaign(SPDB,"UPDATE sp_requests SET state='expired' WHERE request_id=@id AND session_id=@session AND state IN ('queued','working','ready')");SqlBindString(q,"@id",id);SqlBindString(q,"@session",GetLocalString(OBJECT_SELF,"AWT_SESSION"));SqlStep(q);}DeleteLocalString(OBJECT_SELF,"AWT_REQUEST");}
+

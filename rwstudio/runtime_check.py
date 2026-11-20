@@ -39,6 +39,13 @@ def main():
                 with urllib.request.urlopen(url+route,timeout=10) as response:assert response.status==200
             with urllib.request.urlopen(url+'/api/state',timeout=10) as response:state=json.load(response)
             assert state['version']==VERSION
+            example=state['bundled_example']
+            assert example and example['project_id']=='emberseal_demo','Emberseal example is missing'
+            assert [p['id'] for p in state['projects']]==['emberseal_demo'],'Fresh dashboard contains unexpected examples'
+            build=app.store.built_project(example['build_id'])
+            assert build['module_name']=='rw_ember_v3' and len(build['areas'])==3
+            download=url+'/download?build='+example['build_id']+'&kind=zip'
+            with urllib.request.urlopen(download,timeout=20) as response:assert len(response.read())>1_000_000
             request=urllib.request.Request(url+'/api/service/stop',data=b'{"confirm":true}',headers={'Content-Type':'application/json','X-Studio-Token':state['csrf']})
             with urllib.request.urlopen(request,timeout=10) as response:assert json.load(response)['stopped']
             worker.join(10);assert not worker.is_alive()

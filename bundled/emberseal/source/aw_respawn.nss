@@ -1,0 +1,2 @@
+void main(){object pc=GetLastRespawnButtonPresser();ApplyEffectToObject(DURATION_TYPE_INSTANT,EffectResurrection(),pc);ApplyEffectToObject(DURATION_TYPE_INSTANT,EffectHeal(GetMaxHitPoints(pc)),pc);AssignCommand(pc,JumpToLocation(GetLocation(GetObjectByTag("aw_start"))));}
+

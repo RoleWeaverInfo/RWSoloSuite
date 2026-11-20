@@ -43,7 +43,7 @@ def database_path(user_dir):
 
 class Application:
     def __init__(self,data):
-        self.store=Store(Path(data).resolve());self.config=defaults();self.lock=threading.RLock();self.token=secrets.token_urlsafe(32)
+        self.store=Store(Path(data).resolve(),include_example=True);self.config=defaults();self.lock=threading.RLock();self.token=secrets.token_urlsafe(32)
         projects=self.store.list()
         if projects and not any(p['schema_version']==2 for p in projects):
             p=authoring.blank('area_workshop','Untitled area');p['design_mode']='area';self.store.save(p)
@@ -64,8 +64,9 @@ class Application:
 
     def state(self):
         from .area_presets import catalog as preset_catalog
+        from .bundled_example import information
         self.bridge.path=database_path(self.config['user_dir'])
-        return {'version':VERSION,'csrf':self.token,'projects':self.store.list(),'settings':self.config,'guardrails':self.guardrails.status(),
+        return {'version':VERSION,'csrf':self.token,'projects':self.store.list(),'settings':self.config,'guardrails':self.guardrails.status(),'bundled_example':information(),
                 'credentials':self.credentials.status(),'key_available':self.credentials.status()[self.config['provider']]['available'],'usage':self.provider.usage,'authoring_usage':self.authoring_provider.usage,
                 'bridge':self.bridge.status(),'receipts':self.bridge.receipts(),
                 'catalog':{'creatures':list(CREATURES),'furnishings':list(DECOR),'appearances':list(APPEARANCES)},'area_presets':preset_catalog(),
@@ -73,6 +74,10 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/example/load':
+            if b.get('confirm') is not True:raise ValueError('Confirm loading the included example. Any existing Emberseal draft will be backed up first.')
+            from .bundled_example import install
+            with BUILD_LOCK:return install(self.store,replace=True)
         if route=='/api/updates/status':return self.updater.status()
         if route=='/api/updates/check':return self.updater.start('check')
         if route=='/api/updates/download':return self.updater.start('download')

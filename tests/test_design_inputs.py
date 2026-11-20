@@ -131,7 +131,7 @@ class DesignInputTests(unittest.TestCase):
 
 class AssetTests(unittest.TestCase):
  def make_pack(self,path):
-  raw=pack_module((ROOT/'assets/base.mod').read_bytes(),{('placeables',2017):b'2DA V2.0\n\n Label ModelName\n8000 Test_Table plc_test\n',('plc_test',2002):b'test-model-placeholder'})
+  raw=pack_module((ROOT/'assets/authoring-template.erf').read_bytes(),{('placeables',2017):b'2DA V2.0\n\n Label ModelName\n8000 Test_Table plc_test\n',('plc_test',2002):b'test-model-placeholder'})
   path.write_bytes(b'HAK V1.0'+raw[8:]);return path
  def test_pack_discovery_checksum_and_corrupt_table(self):
   with tempfile.TemporaryDirectory() as tmp:

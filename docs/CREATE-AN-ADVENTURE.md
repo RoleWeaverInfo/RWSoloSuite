@@ -1,5 +1,7 @@
 # From ChatGPT story and floorplans to a playable NWN module
 
+Start by opening the included **The Emberseal of Briarwatch** example. It contains a complete story, fifteen named character profiles, two linked quests and three annotated floorplans for an indoor keep, walled market/road area and cave. Inspect these in the dashboard before creating your own project. Fresh installations load it automatically; existing installations can use **Load Emberseal example**. The example is already compiled and downloadable in **Build & share**. See its [guide](EMBERSEAL.md). Use a new project ID and module filename when making a separate adventure.
+
 Start small: a short quest, a handful of key characters and two or three areas. ChatGPT helps draft the story, character notes and labeled floorplans. Role Weaver imports the images and uses its own configured API model to turn them into area proposals, NPC profiles, encounters and native NWN resources. A ChatGPT conversation is not itself a Studio project file.
 
 ## 1. Draft the adventure in ChatGPT

@@ -39,7 +39,7 @@ exit 1
 '''.replace('MODULE',name)
     for filename in ('Start Role Weaver.sh','Start Role Weaver.command'):
         path=folder/filename;path.write_text(shell,encoding='utf8',newline='\n');path.chmod(0o755);copied.append(path)
-    for filename in ('INSTALLATION.md','PLAYER-GUIDE.md'):
+    for filename in ('INSTALLATION.md','PLAYER-GUIDE.md','EMBERSEAL.md','CREATE-AN-ADVENTURE.md'):
         path=folder/filename;shutil.copy2(ROOT/'docs'/filename,path);copied.append(path)
     return [folder/'Start Role Weaver.cmd',folder/'Start-RoleWeaver.ps1',*copied]
 
@@ -84,7 +84,7 @@ def refresh_share_zip(folder,manifest):
 
 def package_build_files(folder,manifest):
     folder=Path(folder);name=Path(manifest['module']).stem
-    explicit=[folder/f for f in (manifest['module'],name+'.rwproject.json',name+'-aurora.zip','PLAY.txt','ROLE-WEAVER-LICENSE.txt','manifest.json','project.json','validation.json','layout.json','Start Role Weaver.cmd','Start-RoleWeaver.ps1','Start Role Weaver.sh','Start Role Weaver.command','INSTALLATION.md','PLAYER-GUIDE.md')]
+    explicit=[folder/f for f in (manifest['module'],name+'.rwproject.json',name+'-aurora.zip','PLAY.txt','ROLE-WEAVER-LICENSE.txt','manifest.json','project.json','validation.json','layout.json','Start Role Weaver.cmd','Start-RoleWeaver.ps1','Start Role Weaver.sh','Start Role Weaver.command','INSTALLATION.md','PLAYER-GUIDE.md','EMBERSEAL.md','CREATE-AN-ADVENTURE.md')]
     explicit += [f for f in (folder/'source').glob('*') if f.is_file() and f.suffix in ('.ifo','.are','.git','.gic','.utc','.uti','.utp','.dlg','.jrl','.fac','.nss','.ncs','.utt','.utm')]
     explicit += list((folder/'geometry-source').glob('*'))
     explicit += [f for f in [folder/'dependencies.json',*(folder/'hak').glob('*.hak')] if f.is_file()]

@@ -1,3 +1,5 @@
+> Historical archive: the trial modules and instructions below are obsolete and are not bundled. The current sole example is The Emberseal of Briarwatch (rw_ember_v3.mod); use the current README, installation guide and PLAYTEST.md.
+
 # RWSoloSuite — Role Weaver Module Studio 0.19.0
 
 ## Material and lighting presets (0.19.0)

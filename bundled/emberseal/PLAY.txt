@@ -1,0 +1,15 @@
+Extract this entire ZIP to a writable folder, then double-click Start Role Weaver.cmd BEFORE opening NWN. It starts/enables the local AI service, registers this exact adventure profile and installs the module. It never launches NWN. Keep the service window open, then open NWN yourself and select rw_ember_v3.mod. For an existing save, choose Load Game in NWN.
+
+Install Role Weaver Module Studio using its Windows Setup installer; Python is included. This adventure launcher detects the installed Studio. The optional source runtime instead requires Python 3.12+. Start NWN:EE once before installation to create its user folder. Configure the NWN user folder and your own OpenAI or Gemini key in Settings. A missing key does not prevent opening the service dashboard.
+
+For offline play, manually install rw_ember_v3.mod in your Neverwinter Nights/modules folder. The complete adventure, authored conversations, quest journal, encounter scaling and ending run without the service or an API key.
+
+Open the .mod in Aurora to edit native resources. Keep a separate copy: rebuilding uses the authoring project, not Aurora edits.
+
+This module requires the included HAK files. Start Role Weaver.cmd installs them automatically while NWN is closed. For manual installation, copy every file in hak/ to Neverwinter Nights/hak. The .mod alone is insufficient. Generated geometry sources are in geometry-source/ for editing.
+
+Optional freeform NPC chat: leave Role Weaver running with your own configured provider key. If using a separately installed Studio, import the matching .rwproject.json through AI service status. Stay near an AI NPC and type !talk <alias> <message>. The ordinary quest does not depend on this service.
+
+Companions: use !companions, approach an authored recruit and choose Join my party. Summon familiars and creatures normally with your own class abilities. Their profiles attach to those actual native creatures. Use Talk freely with AI, then close the controls and speak in Talk; !companion familiar <message> also works. Follow/stay/guard and inventory do not require an API. Familiar/summon satchels remain in the owner inventory after expiry. Native menus still handle their dismissal.
+
+Ambient NPCs: patrols walk the authored same-area room stops without AI. Social chat requires both NPCs to opt in, plus live AI Player. It has no quest/reward actions, uses public profile knowledge and pauses for players/combat/recruitment. Creator switches are in Behaviors.

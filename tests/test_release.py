@@ -48,7 +48,7 @@ class ServiceStartupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             folder=Path(tmp);p=seed();p['ai_conversations']=True;build='a'*20
             module=folder/(p['module_name']+'.mod');raw=('string SPProject(){return "'+p['id']+'";} string SPBuild(){return "'+build+'";}').encode()
-            module.write_bytes(pack_module((ROOT/'assets/base.mod').read_bytes(),{('sp_config',2009):raw}));write_json(module.with_suffix('.rwproject.json'),dict(build_id=build,project=p))
+            module.write_bytes(pack_module((ROOT/'assets/authoring-template.erf').read_bytes(),{('sp_config',2009):raw}));write_json(module.with_suffix('.rwproject.json'),dict(build_id=build,project=p))
             doc=service.adventure_document(module);store=Store(folder/'data');draft=dict(p,story='Author draft remains');store.save(draft)
             def http(route,body,token):
                 if route=='/api/player/register':store.register_player_build(body['build_id'],body['project'])
@@ -80,9 +80,15 @@ class ReleasePackageTests(unittest.TestCase):
                 for name in ('Start Role Weaver.cmd','Start-RoleWeaver.ps1','service.py','web/branding/splash.png','web/startup.html','vendor/nwnsc/nwnsc.exe','requirements-guardrails.txt','GUARDRAILS-AND-USAGE.md','rwstudio/guardrails_sdk.py','rwstudio/usage.py','web/safety.js','installer/build_nwnsc.py','build_native.py','docs/INSTALLATION.md','docs/PLAYER-GUIDE.md','docs/CREATE-AN-ADVENTURE.md'):
                     self.assertIn(prefix+name,names)
                 self.assertFalse(any(n.startswith(prefix+'data/') or n.startswith(prefix+'examples/') or n.endswith(('credentials.json','settings.json','guardrails.json','.sqlite3','Play Adventure.cmd','Start-Adventure.ps1','/play.py')) for n in names))
+                self.assertEqual([n for n in names if n.endswith('.mod')],[prefix+'bundled/emberseal/rw_ember_v3.mod'])
+                self.assertIn(prefix+'bundled/emberseal/project.json',names)
+                self.assertIn(prefix+'bundled/emberseal/rw_ember_v3-aurora.zip',names)
+                self.assertIn(prefix+'docs/EMBERSEAL.md',names)
+                self.assertNotIn(prefix+'docs/DEVELOPMENT-HISTORY.md',names)
                 self.assertEqual(len(names),len(set(names)));self.assertIsNone(archive.testzip());self.assertIn(b'Python 3.12',archive.read(prefix+'README.md'))
                 self.assertEqual(archive.read(prefix+'web/branding/splash.png'),(ROOT/'web/branding/splash.png').read_bytes())
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),result['sha256']);self.assertIn(result['sha256'],path.with_suffix('.zip.sha256').read_text())
+            self.assertTrue(Path(result['example']['package']).is_file())
 
     def test_credential_scanner_catches_secret_across_chunk_boundary(self):
         with tempfile.TemporaryDirectory() as tmp:

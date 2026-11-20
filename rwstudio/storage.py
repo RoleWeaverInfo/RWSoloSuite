@@ -15,13 +15,16 @@ def write_json(path,value):
 
 
 class Store:
-    def __init__(self,root):
+    def __init__(self,root,include_example=False):
         self.root=Path(root);self.lock=threading.RLock()
         first_workspace=not (self.root/'projects').exists()
         for name in ('projects','builds'): (self.root/name).mkdir(parents=True,exist_ok=True)
         if first_workspace:
-            from .authoring import blank
-            p=blank('area_workshop','Untitled area');p['design_mode']='area';self.save(p)
+            from .bundled_example import information,install
+            if include_example and information():install(self)
+            else:
+                from .authoring import blank
+                p=blank('area_workshop','Untitled area');p['design_mode']='area';self.save(p)
 
     def path(self,ident):
         if not isinstance(ident,str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',ident): raise ValueError('Invalid project ID')

@@ -1,0 +1,3 @@
+#include "aw_social"
+#include "aw_cp_cargo"
+void main(){SetLocalInt(GetModule(),"AWM_CLOCK",AWMClock()+6);json doors=AWDoors();int di=0;while(di<JsonGetLength(doors)){json d=JsonArrayGet(doors,di);object obj=GetObjectByTag(AWText(d,"tag"));if(GetIsObjectValid(obj))SetLocked(obj,!AQDone(AWText(d,"gate")));di++;}object pc=GetFirstPC();while(GetIsObjectValid(pc)){if(GetLocalInt(pc,"AWM_TOKEN") && !AWMNear(pc,GetLocalObject(pc,"AWM_ACTOR")))AWMClose(pc);AWXTick(pc);AWCTransferTick(pc);AWTTick(pc);AWArea(pc);AWAmbushes(pc);AQTick(pc);SPPublish(pc);SPServiceCheck(pc);SPPoll(pc);pc=GetNextPC();}AWATick();AWSTick(GetFirstPC());}

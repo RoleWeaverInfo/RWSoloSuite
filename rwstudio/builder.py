@@ -72,7 +72,7 @@ def build_project(project,store,game_root,compiler):
         return _build(p,store,game_root,compiler)
 
 def _build(p,store,game_root,compiler):
-    base=(ROOT/'assets/base.mod').read_bytes()
+    base=(ROOT/'assets/authoring-template.erf').read_bytes()
     runtime=b''.join(f.read_bytes() for f in sorted((ROOT/'scripts').glob('*.nss')))+Path(__file__).read_bytes()+base
     ident=hashlib.sha256(canonical(p).encode()+runtime).hexdigest()[:20]
     destination=store.root/'builds'/ident

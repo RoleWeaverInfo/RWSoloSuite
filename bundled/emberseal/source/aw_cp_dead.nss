@@ -1,0 +1,2 @@
+void main(){SetLocalInt(OBJECT_SELF,"AWC_CONTROL_EPOCH",GetLocalInt(OBJECT_SELF,"AWC_CONTROL_EPOCH")+1);string base=GetLocalString(OBJECT_SELF,"AWC_BASE_DEATH");if(base!="" && base!="aw_cp_dead")ExecuteScript(base,OBJECT_SELF);}
+

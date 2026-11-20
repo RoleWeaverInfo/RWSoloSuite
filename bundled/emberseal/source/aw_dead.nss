@@ -1,0 +1,2 @@
+void main(){string id=GetLocalString(OBJECT_SELF,"AW_ENC");if(id!="" && !GetLocalInt(OBJECT_SELF,"AW_COUNTED")){SetLocalInt(OBJECT_SELF,"AW_COUNTED",TRUE);SetLocalInt(GetModule(),"AW_KILL_"+id,GetLocalInt(GetModule(),"AW_KILL_"+id)+1);}string base=GetLocalString(OBJECT_SELF,"AW_BASE_DEATH");if(base!="" && base!="aw_dead")ExecuteScript(base,OBJECT_SELF);}
+

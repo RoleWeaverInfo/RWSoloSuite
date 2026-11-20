@@ -1,4 +1,8 @@
-# Unreleased — launch controls, updates and gameplay defaults
+# 0.21.0-rc2 — The Emberseal of Briarwatch example
+
+The latest Emberseal maps are the sole bundled example, rebuilt with current scripts and conversation/storage defaults. Fresh dashboards include the project, three floorplans and playable build; existing workspaces can load it with a draft backup. Every native package and source ZIP includes it, with a separate Emberseal adventure/Aurora download. Silent Bell and other trials are not bundled. See [release notes](docs/RELEASE-0.21.0-rc2.md) and the [Emberseal guide](docs/EMBERSEAL.md).
+
+## Launch controls, updates and gameplay defaults
 
 - **Play in NWN** on exported builds installs their exact module/dependencies, registers the AI profile and starts character selection. Normal service startup remains service-only.
 - **Update software** checks platform-specific GitHub releases, verifies package digests and offers confirmed native installation/restart. Workspaces and keys are preserved; source checkouts are protected. The repository is now public, so official downloads need no GitHub sign-in.
@@ -6,7 +10,7 @@
 
 - Newly built AI modules check for the local Role Weaver service on entry and during play, warn if it is disconnected or paused, and report reconnection. `!studio` provides an immediate status check without an AI request.
 - A separate service heartbeat keeps the connection visible during slow model calls and paused games. Checks reject stale saved-session acknowledgments and never block native quests or inventory.
-- Restart the updated Studio and rebuild the module; existing modules/saves and the published 0.21.0-rc1 packages are unchanged. Native modules cannot directly start desktop programs.
+- The included Emberseal is already rebuilt. Rebuild other modules to adopt these changes; existing modules/saves and the previous 0.21.0-rc1 packages are unchanged. Native modules cannot directly start desktop programs.
 
 # 0.21.0-rc1 — native desktop packages and getting-started guides
 

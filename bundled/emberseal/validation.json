@@ -1,0 +1,21 @@
+{
+  "errors": [],
+  "warnings": [
+    "Queen Elowen Vale is a merchant with no initial stock.",
+    "Arcanist Lysandra Vale is a merchant with no initial stock.",
+    "Market courtyard: 50 x 40 metres is a large room; consider a smaller footprint or distinct activity zones.",
+    "Briarwatch Keep: measured geometry includes a generated HAK; share the complete ZIP or install its HAK alongside the module.",
+    "Briarwatch Gate and Green Road: its material finish includes a generated HAK; share the complete ZIP with the module.",
+    "Ember Hollow: measured geometry includes a generated HAK; share the complete ZIP or install its HAK alongside the module."
+  ],
+  "ready": true,
+  "summary": {
+    "areas": 3,
+    "rooms": 14,
+    "connections": 13,
+    "npcs": 15,
+    "encounters": 7,
+    "quests": 2,
+    "objectives": 5
+  }
+}

@@ -1,0 +1,2 @@
+void main(){SetLocalInt(OBJECT_SELF,"AWA_EPOCH",GetLocalInt(OBJECT_SELF,"AWA_EPOCH")+1);DeleteLocalInt(OBJECT_SELF,"AWA_MOVING");string base=GetLocalString(OBJECT_SELF,"AWA_BASE_DEATH");if(base!="" && base!="aw_am_dead")ExecuteScript(base,OBJECT_SELF);}
+

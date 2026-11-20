@@ -1,3 +1,5 @@
+> Historical archive: the trial modules and instructions below are obsolete and are not bundled. The current sole example is The Emberseal of Briarwatch (rw_ember_v3.mod); use the current README, installation guide and PLAYTEST.md.
+
 # First AI Edition playtest
 
 The new AI module has been compiled and structurally checked, but it has not been opened in Aurora or played by the implementation agent. Your earlier successful Aurora check covered the original module, not this new AI Edition.

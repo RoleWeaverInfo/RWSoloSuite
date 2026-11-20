@@ -93,6 +93,7 @@ jobs:
             dist/*-Setup-x64.exe*
             dist/*-source.zip*
             dist/*-payload.json
+            dist/The-Emberseal-of-Briarwatch-*.zip*
           if-no-files-found: error
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -120,4 +121,4 @@ jobs:
       - name: Publish release candidate
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --prerelease --title "Role Weaver Module Studio $GITHUB_REF_NAME — Windows, Linux and macOS" --notes-file docs/RELEASE-0.21.0.md
+        run: gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --prerelease --title "Role Weaver Module Studio $GITHUB_REF_NAME — Emberseal example, Windows, Linux and macOS" --notes-file docs/RELEASE-0.21.0-rc2.md

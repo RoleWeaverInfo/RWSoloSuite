@@ -19,7 +19,7 @@ class LauncherTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.game=self.root/'Game with spaces';self.user=self.root/'User with spaces';self.runtime=self.root/'Runtime';self.runtime.mkdir();(self.game/'bin/win32').mkdir(parents=True);(self.game/'bin/win32/nwmain.exe').write_bytes(b'not executed');(self.user/'modules').mkdir(parents=True)
         self.project=seed();self.project['ai_conversations']=True;self.module=self.user/'modules/rw_silent_bell.mod'
         raw=('string SPProject(){return "silent_bell";} string SPBuild(){return "'+BUILD+'";}').encode()
-        self.module.write_bytes(pack_module((ROOT/'assets/base.mod').read_bytes(),{('sp_config',2009):raw}))
+        self.module.write_bytes(pack_module((ROOT/'assets/authoring-template.erf').read_bytes(),{('sp_config',2009):raw}))
         self.sidecar=self.module.with_suffix('.rwproject.json');write_json(self.sidecar,dict(build_id=BUILD,project=self.project))
     def tearDown(self):self.temp.cleanup()
     def plan(self,**kwargs):return launcher.plan(module='rw_silent_bell',game_root=self.game,user_dir=self.user,root=self.runtime,**kwargs)

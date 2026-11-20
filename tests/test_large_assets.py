@@ -13,7 +13,7 @@ class LargeAssetTests(unittest.TestCase):
  def test_disk_index_matches_archive_and_scan_avoids_read_bytes(self):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp);source=root/'pack.hak'
-   raw=b'HAK V1.0'+pack_module((ROOT/'assets/base.mod').read_bytes(),{('placeables',2017):b'2DA V2.0\n\nLabel ModelName\n8000 Test_Table plc_test\n',('plc_test',2002):b'test model'})[8:];source.write_bytes(raw)
+   raw=b'HAK V1.0'+pack_module((ROOT/'assets/authoring-template.erf').read_bytes(),{('placeables',2017):b'2DA V2.0\n\nLabel ModelName\n8000 Test_Table plc_test\n',('plc_test',2002):b'test model'})[8:];source.write_bytes(raw)
    self.assertEqual(dict(FileArchive(source)),archive(raw))
    library=AssetLibrary(root/'studio')
    with patch.object(Path,'read_bytes',side_effect=AssertionError('Whole-file read is forbidden')):
@@ -29,7 +29,7 @@ class LargeAssetTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp)
    if shutil.disk_usage(root).free<1_500_000_000:self.skipTest('Large import regression needs temporary disk space')
-   path=root/'large.hak';raw=b'HAK V1.0'+pack_module((ROOT/'assets/base.mod').read_bytes(),{('placeables',2017):b'2DA V2.0\n\nLabel ModelName\n8000 Large_Test plc_large\n'})[8:]
+   path=root/'large.hak';raw=b'HAK V1.0'+pack_module((ROOT/'assets/authoring-template.erf').read_bytes(),{('placeables',2017):b'2DA V2.0\n\nLabel ModelName\n8000 Large_Test plc_large\n'})[8:]
    with path.open('wb') as f:f.write(raw);f.truncate(513_000_000)
    library=AssetLibrary(root/'studio');result=library.scan(path)
    self.assertEqual(result['packs'][0]['bytes'],513_000_000)

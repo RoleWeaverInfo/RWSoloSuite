@@ -2,6 +2,12 @@
 
 The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish a prerelease only after all five build jobs succeed. Update `rwstudio.VERSION` and release notes before tagging. Never put keys, game installations or local `data` in a release.
 
+## Included example and release payload
+
+All native packages and the source ZIP include only **The Emberseal of Briarwatch** from `bundled/emberseal`. `bundle.json` pins hashes for its compiled module, matching project/profile, geometry HAK, resource sources and floorplans. The packager verifies these files and creates both the embedded Share/Aurora ZIP and `The-Emberseal-of-Briarwatch-<version>.zip` for release download. Personal `data`, legacy example projects and historical playtest guides are excluded. The internal authoring template uses an `.erf` extension.
+
+Fresh dashboards copy the curated example into the per-user workspace. Existing workspaces use **Load Emberseal example**, with a draft backup before replacement. The packaged runtime smoke test verifies the example, build, HAK and download; no model request or local game install is needed to load it. Updating the example is a maintainer operation: build it from the latest reviewed Emberseal project using `prepare_emberseal.py`, review the pinned resources and hashes, and run tests before committing. Do not replace published release assets in place; publish a new version.
+
 ## Linux and macOS
 
 Use the target OS/architecture (Ubuntu 24.04 or macOS 15 release baseline) with Python 3.13, CMake, Bison 3+ and a C++ compiler. On Mac, put Homebrew Bison on PATH; Apple's older system Bison is insufficient.

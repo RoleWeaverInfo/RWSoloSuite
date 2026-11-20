@@ -1,3 +1,5 @@
+> Historical archive: the trial modules and instructions below are obsolete and are not bundled. The current sole example is The Emberseal of Briarwatch (rw_ember_v3.mod); use the current README, installation guide and PLAYTEST.md.
+
 # Validation — 2026-11-13
 
 Release: Role Weaver Solo Studio 0.1.0, foundation/playtest build.

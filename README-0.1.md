@@ -1,3 +1,5 @@
+> Historical archive: the trial modules and instructions below are obsolete and are not bundled. The current sole example is The Emberseal of Briarwatch (rw_ember_v3.mod); use the current README, installation guide and PLAYTEST.md.
+
 # Role Weaver Solo Studio
 
 A local adventure editor and AI companion for Neverwinter Nights: Enhanced Edition. This first release extends **The Missing Courier** with AI conversations for Edric, Mara and Tavin, an AI DM Assistant, and an Aurora module exporter.
