@@ -18,3 +18,7 @@
 - Python 3.10+ remains a prerequisite. This candidate is a Windows ZIP, not a self-contained executable or installer. It has not been published to GitHub.
 
 Includes the existing area authoring, visual catalog, native room groups, measured walls/scale/placement, platforms/stairs, carpets, connected doorways, and material/lighting presets. The preset button's review-state fix is included.
+# 0.21.0-rc1 — native desktop packages and getting-started guides
+
+See [this release's notes](docs/RELEASE-0.21.0.md) and [installation instructions](docs/INSTALLATION.md). Added Windows/Linux/macOS release automation, Linux and macOS builds for x64 and ARM64, platform-specific workspaces/compiler discovery/secure key stores, confirmed service shutdown, cross-platform adventure launchers, guided provider setup, and player/ChatGPT authoring guides.
+

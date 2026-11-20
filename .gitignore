@@ -11,3 +11,6 @@ __pycache__/
 *.sqlite3
 *.db
 .venv/
+vendor/nwnsc/nwnsc
+build/
+*.spec

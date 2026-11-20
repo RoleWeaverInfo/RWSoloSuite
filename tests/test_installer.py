@@ -15,7 +15,7 @@ import zipfile
 
 class InstallerTests(unittest.TestCase):
     def test_source_workspace_stays_local_and_installed_workspace_survives_versions(self):
-        with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{},clear=True):
+        with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{},clear=True),patch('rwstudio.paths.sys.platform','win32'):
             root=Path(tmp);program=root/'program';program.mkdir();local=root/'user';local.mkdir()
             with patch.dict(os.environ,{'LOCALAPPDATA':str(local)}):
                 self.assertEqual(default_data(program),program/'data')

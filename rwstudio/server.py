@@ -26,11 +26,12 @@ from .ambient import defaults as ambient_defaults,npc_defaults as behavior_defau
 from .companions import defaults as companion_defaults,npc_defaults as npc_companion_defaults
 
 def defaults():
-    bundled=ROOT/'vendor/nwnsc/nwnsc.exe'
+    from .paths import compiler_path,nwn_user_dir
+    bundled=compiler_path(ROOT);user=nwn_user_dir()
     from .launcher import game_candidates
-    game=next((str(p) for p in game_candidates() if (p/'bin/win32/nwmain.exe').is_file()),'')
-    return {'content_root':str(Path.home()/'Documents/Neverwinter Nights/hak'),'provider':'openai','gemini_model':'gemini-2.5-flash','model':'gpt-5.6-luna','authoring_model':'gpt-6-astra','authoring_gemini_model':'gemini-2.5-flash','authoring_reasoning':'medium','game_root':game,
-            'user_dir':str(Path.home()/'Documents/Neverwinter Nights'),
+    game=next((str(p) for p in game_candidates() if (p/'data/nwn_base.key').is_file() or (p/'data/nwn_retail.key').is_file()),'')
+    return {'content_root':str(user/'hak'),'provider':'openai','gemini_model':'gemini-3.5-flash-lite','model':'gpt-5.6-luna','authoring_model':'gpt-6-astra','authoring_gemini_model':'gemini-3.6-flash','authoring_reasoning':'medium','game_root':game,
+            'user_dir':str(user),
             'compiler':str(bundled)}
 
 def database_path(user_dir):
@@ -70,6 +71,11 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/service/stop':
+            if b.get('confirm') is not True:raise ValueError('Confirm stopping the service first')
+            self.bridge.stop.set()
+            threading.Thread(target=self.http_server.shutdown,daemon=True).start()
+            return {'stopped':True}
         if route=='/api/guardrails':return self.guardrails.configure(b.get('settings'))
         if route.startswith('/api/design/'):
             from . import design_tools as design
@@ -118,6 +124,9 @@ class Application:
                 result=install_build(self.store,manifest['build_id'],self.config['user_dir'])
                 return {'module':p['module_name'],'path':manifest['path'],'installed':result['installed']}
         if route=='/api/credentials':return {'credentials':self.credentials.update(b['provider'],b.get('key'),b.get('remove',False))}
+        if route=='/api/credentials/check':
+            from .provider_setup import check_models
+            return check_models(self.credentials,b.get('provider'),b.get('models'))
         if route=='/api/assets/scan':return self.asset_library.scan(b['path'])
         if route=='/api/assets/list':return self.asset_library.list()
         if route=='/api/assets/detail':
@@ -220,7 +229,7 @@ class Application:
 
 class Server(ThreadingHTTPServer):
     daemon_threads=True
-    def __init__(self,address,app):self.app=app;super().__init__(address,Handler)
+    def __init__(self,address,app):self.app=app;app.http_server=self;super().__init__(address,Handler)
 
 class Handler(BaseHTTPRequestHandler):
     server_version='RoleWeaverSolo'
@@ -270,7 +279,7 @@ class Handler(BaseHTTPRequestHandler):
                 if suffix is None:raise ValueError('Unknown download type')
                 file=app.store.root/'builds'/ident/(p['module_name']+suffix)
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
-            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
+            static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))
@@ -284,7 +293,7 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length));result=self.server.app.post(urlsplit(self.path).path,body)
             self.send(200,result)
         except (ValueError,KeyError,TypeError) as exc:self.send(400,{'error':str(exc)[:6500]})
-        except PermissionError:self.send(400,{'error':'Windows denied access to that location. Check the configured folder permissions.'})
+        except PermissionError:self.send(400,{'error':'Access to that location was denied. Check the configured folder permissions.'})
         except Exception:self.send(500,{'error':'The operation could not finish. Check the configured paths and retry.'})
 
 def serve(data,port=8766,open_browser=False,player=False,adventure=None):

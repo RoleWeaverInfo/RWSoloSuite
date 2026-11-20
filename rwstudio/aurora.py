@@ -3,6 +3,7 @@ import hashlib
 import shutil
 import subprocess
 import tempfile
+import sys
 from pathlib import Path
 from .authoring import validate
 from .builder import build_project
@@ -10,6 +11,7 @@ from .custom_assets import install_dependencies
 
 
 def open_project(project, area_id, store, game_root, compiler, user_dir):
+    if sys.platform!='win32':raise ValueError('Aurora is a Windows tool. Use Build & share to export the module and HAKs, then open them in Aurora on Windows. Studio editing and native module compilation work on this platform.')
     project=validate(project)
     area=next((a for a in project['areas'] if a['id']==area_id),None)
     if area is None:raise ValueError('Choose an area to open in Aurora')

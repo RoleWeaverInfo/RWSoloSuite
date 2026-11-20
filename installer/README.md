@@ -1,4 +1,19 @@
-# Build the Windows installer
+# Build release packages
+
+The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish a prerelease only after all five build jobs succeed. Update `rwstudio.VERSION` and release notes before tagging. Never put keys, game installations or local `data` in a release.
+
+## Linux and macOS
+
+Use the target OS/architecture (Ubuntu 24.04 or macOS 15 release baseline) with Python 3.13, CMake, Bison 3+ and a C++ compiler. On Mac, put Homebrew Bison on PATH; Apple's older system Bison is insufficient.
+
+1. Install `requirements-guardrails.txt`, `requirements-platform.txt` and `pyinstaller==6.22.3` in a build environment.
+2. Run `python installer/build_nwnsc.py`. This builds the pinned upstream NWScript compiler revision on the native architecture, retaining the upstream license in `vendor/nwnsc`.
+3. Run tests, then `python build_native.py`. The build starts from the clean source allowlist, bundles Python/dependencies, includes source files used by generator hashing, and tests the exact packaged executable with no real API requests. Checks cover guardrails, native script compilation, static UI and local authenticated service shutdown.
+4. The output is a Linux `.tar.gz` or macOS `.app` inside a symlink-preserving ZIP, plus SHA-256. No end-user Python installation is required. Mac builds are ad-hoc signed and verified, but are not Developer ID signed/notarized.
+
+Linux keys require a running desktop Secret Service; Mac uses login Keychain. Native keyring failures fail closed instead of falling back to plaintext. OS keychain integration still warrants manual testing on the end-user desktop.
+
+## Windows installer
 
 The installer embeds Python in the application directory rather than installing Python globally. This preserves the source-based module generator and its resource hashes. It does not modify PATH or Python file associations. The C# console launcher uses the .NET Framework supplied with Windows 10/11 and invokes only the bundled interpreter. Users do not need the compiler or Inno Setup.
 

@@ -67,7 +67,7 @@ def build_project(project,store,game_root,compiler):
         return build(project,store,game_root,compiler)
     p=validate_project(project);game_root=Path(game_root);compiler=Path(compiler)
     if not (game_root/'data').is_dir(): raise ValueError('Choose the Neverwinter Nights installation folder in Settings')
-    if not compiler.is_file(): raise ValueError('NWScript compiler not found; choose nwnsc.exe in Settings')
+    if not compiler.is_file(): raise ValueError('NWScript compiler not found; choose the bundled nwnsc compiler in Settings')
     with BUILD_LOCK:
         return _build(p,store,game_root,compiler)
 

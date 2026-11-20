@@ -11,7 +11,7 @@ from rwstudio.storage import Store
 
 class AuroraTests(unittest.TestCase):
  def test_launches_unique_editable_copy_without_overwriting_edits(self):
-  with tempfile.TemporaryDirectory() as tmp:
+  with tempfile.TemporaryDirectory() as tmp,patch('rwstudio.aurora.sys.platform','win32'):
    root=Path(tmp);game=root/'Game with spaces';exe=game/'bin/win32/nwtoolset.exe';exe.parent.mkdir(parents=True);exe.touch()
    store=Store(root/'data');p=seed();area=p['areas'][0]
    build=store.root/'builds'/('a'*20);build.mkdir(parents=True);source=build/(p['module_name']+'.mod');source.write_bytes(b'compiled module')

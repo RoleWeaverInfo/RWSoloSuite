@@ -35,6 +35,8 @@ def game_candidates(configured=None):
             except OSError:pass
     for env in ('ProgramFiles(x86)','ProgramFiles'):
         if os.environ.get(env):steam.append(Path(os.environ[env])/'Steam')
+    if sys.platform=='darwin':steam.append(Path.home()/'Library/Application Support/Steam')
+    elif os.name!='nt':steam.extend([Path.home()/'.local/share/Steam',Path.home()/'.steam/steam',Path.home()/'.steam/root',Path.home()/'.var/app/com.valvesoftware.Steam/.local/share/Steam'])
     for folder in list(steam):
         vdf=folder/'steamapps/libraryfolders.vdf'
         if vdf.is_file():
@@ -125,7 +127,10 @@ def configure(s,p):
     http('/api/bridge',dict(enabled=True),s['csrf'])
 
 def game_running():
-    if os.name!='nt':return False
+    if os.name!='nt':
+        result=subprocess.run(['ps','-A','-o','comm='],capture_output=True,text=True,timeout=10)
+        if result.returncode:raise ValueError('Could not check running games. Close NWN and install the adventure manually.')
+        return any(Path(line.strip()).name.lower() in ('nwmain','nwmain.exe') for line in result.stdout.splitlines())
     result=subprocess.run(['tasklist','/FI','IMAGENAME eq nwmain.exe','/FO','CSV','/NH'],capture_output=True,text=True,creationflags=NO_WINDOW)
     return any(row and row[0].lower()=='nwmain.exe' for row in csv.reader(result.stdout.splitlines()))
 

@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),els={},requests=[];
 function el(){return {disabled:false,value:'',hidden:false,innerHTML:'',focus(){},close(){this.open=false;},click(){this.onclick?.();},classList:{toggle(){}},setAttribute(){}};}
-const ctx={console,document:{querySelector:s=>els[s]??=el(),querySelectorAll:()=>[]}};vm.createContext(ctx);
+const ctx={console,AISetup:{mount(){}},document:{querySelector:s=>els[s]??=el(),querySelectorAll:()=>[]}};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('web/design.js','utf8'),ctx);
 const source=fs.readFileSync('web/editor.js','utf8');vm.runInContext(source.slice(0,source.indexOf("$('#saveProject').onclick")),ctx);
 const run=s=>vm.runInContext(s,ctx);let loaded=[],notice='',modalHtml='',binds=0;
@@ -21,7 +21,7 @@ async function checks(){
  await ctx.deleteSavedProject('saved_id');assert.deepEqual(requests,[{path:'/api/project/delete',body:{id:'saved_id',confirm:true}}]);
  assert.equal(run('project'),null);assert.equal(run('previousDraft'),null);assert.equal(run('proposal'),null);assert.equal(run('dirty'),false);
  assert(els['#workspace'].innerHTML.includes('No projects yet'));assert(els['#saveProject'].disabled);assert(els['#deleteProject'].disabled);assert(els['#projectSelect'].disabled);assert(!els['#newProject'].disabled);assert(!els['#importProject'].disabled);assert(els['nav[aria-label="Authoring workflow"]'].hidden);
- run("page='settings'");ctx.render();assert(els['#workspace'].innerHTML.includes('AI providers and local setup'));assert.equal(binds,1);
+ run("page='settings'");ctx.render();assert(els['#workspace'].innerHTML.includes('providerSetup'));assert.equal(binds,1);
  // An unsuccessful deletion retains the selected project and its unsaved changes.
  reset();const before=run('JSON.stringify(project)');ctx.api=async()=>{throw Error('Permission denied');};
  await assert.rejects(()=>ctx.deleteSavedProject('saved_id'),/Permission denied/);assert.equal(run('JSON.stringify(project)'),before);assert.equal(run('dirty'),true);assert(!els['#saveProject'].disabled);
