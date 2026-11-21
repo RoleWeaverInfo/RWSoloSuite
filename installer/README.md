@@ -1,6 +1,6 @@
 # Build release packages
 
-The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish a prerelease only after all five build jobs succeed. Update `rwstudio.VERSION` and release notes before tagging. Never put keys, game installations or local `data` in a release.
+The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish only after all five build jobs succeed. Plain versions such as `v1.0.0` publish a stable release marked Latest; versions with a prerelease suffix publish a prerelease without changing Latest. The tag must match `rwstudio.VERSION` and have a matching `docs/RELEASE-<version>.md` file. Update both before tagging. Never put keys, game installations or local `data` in a release.
 
 ## Included example and release payload
 
@@ -33,6 +33,6 @@ The stable AppId is `{C6F47CF3-CB49-4846-90F7-74FF6339D65C}`. Setup defaults to 
 
 Installer tests use a dedicated directory inside the repository, with a separate `ROLEWEAVER_DATA_DIR`. Test install, start with no external Python on PATH, reinstall while closed, and uninstall. Check that a saved project/settings sentinel survives and that the service lock blocks upgrades. Do not perform recursive cleanup outside the verified test workspace. An uninstall registration is created temporarily by testing the real installer; skip such testing if an actual installed Studio is already registered.
 
-The candidate is unsigned. To sign a public release, configure Inno Setup's signing support with the publisher's own certificate and signing service; never store signing credentials in the repository.
+The Windows installer is unsigned. To sign a public release, configure Inno Setup's signing support with the publisher's own certificate and signing service; never store signing credentials in the repository.
 
 References: [Python application-local embedding](https://docs.python.org/3.13/using/windows.html#the-embeddable-package), [Python runtime release/checksums](https://www.python.org/downloads/release/python-31317/), [Inno Setup verified downloads](https://jrsoftware.org/inno-setup/downloads/verify), [portable compiler installation](https://jrsoftware.org/inno-setup/documentation/topic_technotes.htm), [per-user installation](https://jrsoftware.org/inno-setup/documentation/topic_setup_privilegesrequired.htm), [AppMutex protection](https://jrsoftware.org/inno-setup/documentation/topic_setup_appmutex.htm).

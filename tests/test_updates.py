@@ -13,7 +13,7 @@ from rwstudio import updates
 from rwstudio.server import Application
 
 
-def release(version='0.22.0', suffix='Setup-x64.exe', raw=b'installer'):
+def release(version='1.1.0', suffix='Setup-x64.exe', raw=b'installer'):
     return dict(tag_name='v'+version, prerelease='-' in version, draft=False, assets=[dict(name='Role-Weaver-Module-Studio-'+version+'-'+suffix,id=123,size=len(raw),digest='sha256:'+hashlib.sha256(raw).hexdigest())])
 
 
@@ -32,6 +32,10 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(updates.select_release(releases,'0.10.0-rc1','Setup-x64.exe')['version'],'1.0.0-rc2')
         self.assertIsNone(updates.select_release([release('0.10.0-rc1')],'0.10.0-rc1','Setup-x64.exe'))
         self.assertGreater(updates.version_key('0.10.0'),updates.version_key('0.10.0-rc12'))
+        promoted=[release('1.0.0'),release('1.1.0-rc1')]
+        self.assertEqual(updates.select_release([release('1.0.0')],'0.21.0-rc3','Setup-x64.exe')['version'],'1.0.0')
+        self.assertEqual(updates.select_release(promoted,'0.21.0','Setup-x64.exe')['version'],'1.0.0')
+        self.assertIsNone(updates.select_release(promoted,'1.0.0','Setup-x64.exe'))
 
     def test_invalid_release_metadata_and_missing_assets_are_rejected(self):
         for field, value in [('digest',''),('id','123'),('size',0),('size',updates.MAX_PACKAGE+1)]:
@@ -67,7 +71,7 @@ class UpdateTests(unittest.TestCase):
     def test_background_check_and_failure_states_are_reviewable(self):
         updater = updates.Updater(self.root)
         with patch.object(updates,'release_list',return_value=([release()],False)),patch.object(updates,'package_suffix',return_value='Setup-x64.exe'):
-            updater._run('check');self.assertEqual(updater.status()['state'],'available');self.assertEqual(updater.status()['release']['version'],'0.22.0')
+            updater._run('check');self.assertEqual(updater.status()['state'],'available');self.assertEqual(updater.status()['release']['version'],'1.1.0')
         with patch.object(updates,'release_list',side_effect=ValueError('No access')):
             updater._run('check');self.assertEqual(updater.status()['state'],'error');self.assertEqual(updater.status()['error'],'No access')
 

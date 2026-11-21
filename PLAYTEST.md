@@ -1,6 +1,6 @@
 # The Emberseal of Briarwatch — playtest checklist
 
-The only bundled example is **The Emberseal of Briarwatch**, module `rw_ember_v3.mod`, project `emberseal_demo`. Use the build included with Studio 0.21.0-rc3 and start a new game. Old saves and older trial modules do not test this revision. See [the example guide](docs/EMBERSEAL.md).
+The only bundled example is **The Emberseal of Briarwatch**, module `rw_ember_v3.mod`, project `emberseal_demo`. Use the build included with Studio 1.0.0 and start a new game. Old saves and older trial modules do not test this revision. See [the example guide](docs/EMBERSEAL.md).
 
 1. On a fresh workspace, confirm only Emberseal is loaded. On an existing workspace, use **Load Emberseal example** and confirm any previous Emberseal draft is backed up.
 2. Set the NWN folders and provider key. In **Build & share**, download the Share/Aurora ZIP and use **Play in NWN**. Confirm the module and its generated HAK install and character selection opens.

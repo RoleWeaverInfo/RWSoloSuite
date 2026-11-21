@@ -1,3 +1,9 @@
+# 1.0.0 — first stable release
+
+Role Weaver Module Studio graduates from prerelease to its first stable version. Windows, Linux and macOS application packages include Python and **The Emberseal of Briarwatch** as the sole bundled example, with a separate adventure/Aurora ZIP. The application, dashboard version display, Mac bundle metadata and download filenames now use 1.0.0. GitHub marks this release Latest; existing release-candidate installations can find it through **Update software**. The reviewed Emberseal maps and compiled module remain unchanged from rc3.
+
+See [1.0.0 release notes](docs/RELEASE-1.0.0.md), [installation and upgrade instructions](docs/INSTALLATION.md), and the [Emberseal guide](docs/EMBERSEAL.md). Previous entries below describe historical releases.
+
 # 0.21.0-rc3 — The Emberseal of Briarwatch example
 
 The latest Emberseal maps are the sole bundled example, rebuilt with current scripts and conversation/storage defaults. Fresh dashboards include the project, three floorplans and playable build; existing workspaces can load it with a draft backup. Every native package and source ZIP includes it, with a separate Emberseal adventure/Aurora download. Silent Bell and other trials are not bundled. See [release notes](docs/RELEASE-0.21.0-rc3.md) and the [Emberseal guide](docs/EMBERSEAL.md).

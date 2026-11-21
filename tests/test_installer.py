@@ -19,7 +19,7 @@ class InstallerTests(unittest.TestCase):
             root=Path(tmp);program=root/'program';program.mkdir();local=root/'user';local.mkdir()
             with patch.dict(os.environ,{'LOCALAPPDATA':str(local)}):
                 self.assertEqual(default_data(program),program/'data')
-                for version in ('0.20.0-rc2','0.21.0'):
+                for version in ('0.20.0-rc2','0.21.0-rc3','1.0.0'):
                     (program/'installation.json').write_text(json.dumps({'version':version}))
                     self.assertEqual(default_data(program),local/'RoleWeaver/ModuleStudio')
                     self.assertFalse(default_data(program).is_relative_to(program))

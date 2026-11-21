@@ -10,7 +10,7 @@ Download a package from [Releases](https://github.com/RoleWeaverInfo/RWSoloSuite
 | Mac with Intel processor | `macOS-x64.zip` | macOS 15 or later |
 | Mac with Apple Silicon (M-series) | `macOS-arm64.zip` | macOS 15 or later |
 
-These are release candidates. Native automated checks cover packaged startup, local dashboard requests, compiler output and offline guardrails. Full NWN gameplay on every operating system is not yet certified. ARM64 Studio support does not imply that NWN itself runs natively on Linux ARM64. Use a game installation supported by its publisher. Aurora Toolset runs on Windows; Linux and Mac can author/build standard modules and transfer them to Windows for Aurora editing.
+Version 1.0.0 is the first stable release. Native automated checks cover packaged startup, local dashboard requests, compiler output and offline guardrails. Full NWN gameplay on every operating system is not yet certified. ARM64 Studio support does not imply that NWN itself runs natively on Linux ARM64. Use a game installation supported by its publisher. Aurora Toolset runs on Windows; Linux and Mac can author/build standard modules and transfer them to Windows for Aurora editing.
 
 You need your own Neverwinter Nights: Enhanced Edition installation and its game data to build and play modules. Game files, third-party HAK packs and API keys are not included. A browser and internet access are needed for AI requests. Conventional authored dialogue, quests and menus can work without AI.
 
@@ -31,7 +31,7 @@ You need your own Neverwinter Nights: Enhanced Edition installation and its game
 
 1. Open **About This Mac** to check Intel versus Apple Silicon, then extract the matching ZIP.
 2. Move **Role Weaver Module Studio.app** into Applications (or your user's Applications folder). Launch it there and leave it running while playing.
-3. The candidate is ad-hoc signed, not Developer ID signed or Apple notarized. macOS may block its first launch. After checking that you downloaded the intended release, use Apple's **Privacy & Security → Open Anyway** procedure if available. Do not disable Gatekeeper globally. See [Apple's guidance for apps outside the App Store](https://support.apple.com/en-us/102445).
+3. The application is ad-hoc signed, not Developer ID signed or Apple notarized. macOS may block its first launch. After checking that you downloaded the intended release, use Apple's **Privacy & Security → Open Anyway** procedure if available. Do not disable Gatekeeper globally. See [Apple's guidance for apps outside the App Store](https://support.apple.com/en-us/102445).
 4. Allow Studio to access its saved key in your login Keychain when requested.
 
 ## First setup on every platform
@@ -47,7 +47,7 @@ Keys are protected with Windows DPAPI, macOS Keychain, or Linux Secret Service. 
 
 ## Play an adventure
 
-**The Emberseal of Briarwatch is the sole included example.** Fresh installations load its editable project and compiled build automatically. Existing workspaces can choose **Load Emberseal example** in the sidebar; a previous Emberseal draft is backed up, and other projects remain. In **Build & share**, use **Play in NWN** or **Share / Aurora ZIP** without generating or compiling anything first. The release also offers **The-Emberseal-of-Briarwatch-0.21.0-rc3.zip** separately. See the [Emberseal guide](EMBERSEAL.md) for its story, characters and route. Earlier trial modules are not bundled; upgrades do not delete your personal modules or saved games.
+**The Emberseal of Briarwatch is the sole included example.** Fresh installations load its editable project and compiled build automatically. Existing workspaces can choose **Load Emberseal example** in the sidebar; a previous Emberseal draft is backed up, and other projects remain. In **Build & share**, use **Play in NWN** or **Share / Aurora ZIP** without generating or compiling anything first. The release also offers **The-Emberseal-of-Briarwatch-1.0.0.zip** separately. See the [Emberseal guide](EMBERSEAL.md) for its story, characters and route. Earlier trial modules are not bundled; upgrades do not delete your personal modules or saved games.
 
 Extract the **entire** adventure ZIP. Keep its matching `.mod` and `.rwproject.json` together. With NWN closed:
 
@@ -64,7 +64,7 @@ Close NWN before replacing installed module files. Use **AI service → Stop Rol
 
 In versions with the **Update software** button (sidebar or AI service page), choose **Check for updates**, then **Download update**. Studio selects the package for your operating system and architecture and verifies its SHA-256 digest against GitHub's release metadata. After saving your project and exiting NWN, choose **Install update and restart**. This updates the service and dashboard together. Windows uses the per-user installer; Linux/Mac keep the previous application beside the replacement as a backup. The browser reconnects after restart. If it does not, start Role Weaver normally and check the workspace's `updates/<operation>/update.log` (and `installer.log` on Windows).
 
-Stable installations receive stable releases; release candidates can receive newer candidates or stable releases. Automatic installation is for native packages with a writable installation folder and an external workspace. Source checkouts can check releases but are never overwritten. Update source separately after committing or backing up local changes. The earlier 0.21.0-rc1 packages predate this button; install 0.21.0-rc3 or newer once before using automatic updates.
+Stable installations receive stable releases; release candidates can receive newer candidates or stable releases. Automatic installation is for native packages with a writable installation folder and an external workspace. Source checkouts can check releases but are never overwritten. Update source separately after committing or backing up local changes. The earlier 0.21.0-rc1 packages predate this button; install 1.0.0 or newer once before using automatic updates.
 
 The official release repository is public: updates and downloads do not require a GitHub sign-in or a shared access key. If GitHub temporarily rate-limits anonymous checks, retry later or use **Open official releases**. An existing GitHub CLI sign-in can also be used when available; no developer GitHub credential is bundled.
 

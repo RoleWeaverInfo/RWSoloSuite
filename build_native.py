@@ -59,7 +59,9 @@ coll = COLLECT(exe, a.binaries, a.datas, name='RoleWeaverModuleStudio', strip=Fa
                     pixels=str(size*multiplier)
                     subprocess.run(['sips','-z',pixels,pixels,str(square),'--out',str(icons/f'icon_{size}x{size}{suffix}.png')],check=True,capture_output=True)
             icon=stage/'RoleWeaver.icns';subprocess.run(['iconutil','-c','icns',str(icons),'-o',str(icon)],check=True)
-            content+="\napp = BUNDLE(coll, name='Role Weaver Module Studio.app', icon="+repr(str(icon))+", bundle_identifier='com.roleweaver.modulestudio', info_plist={'CFBundleShortVersionString': '0.21.0', 'NSHighResolutionCapable': True})\n"
+            bundle_version=VERSION.split('-',1)[0]
+            info_plist={'CFBundleShortVersionString':bundle_version,'CFBundleVersion':bundle_version,'NSHighResolutionCapable':True}
+            content+="\napp = BUNDLE(coll, name='Role Weaver Module Studio.app', icon="+repr(str(icon))+", bundle_identifier='com.roleweaver.modulestudio', info_plist="+repr(info_plist)+")\n"
         spec.write_text(content)
         subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--distpath',str(stage/'frozen'),'--workpath',str(stage/'work'),str(spec)],check=True)
         if sys.platform=='darwin':

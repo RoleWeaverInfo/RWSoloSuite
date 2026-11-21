@@ -1,6 +1,6 @@
 # The Emberseal of Briarwatch
 
-The sole example included with Role Weaver Module Studio 0.21.0-rc3. It uses the latest revised Briarwatch maps, rebuilt with current service checks, companion permissions and NPC conversation defaults. The module filename is **rw_ember_v3.mod**. The project is **emberseal_demo**.
+The sole example included with Role Weaver Module Studio 1.0.0. It uses the latest revised Briarwatch maps, rebuilt with current service checks, companion permissions and NPC conversation defaults. The module filename is **rw_ember_v3.mod**. The project is **emberseal_demo**.
 
 ## Story and setting
 
@@ -23,7 +23,7 @@ There are **three areas, fourteen rooms, fifteen named characters, five combat e
 3. With NWN closed, open **Build & share** and choose **Play in NWN** on the included build. It installs the module and required HAK and opens character selection. No AI generation or module compilation is needed.
 4. Start a new game. Talk to Queen Elowen in the throne room, then use the journal and NPC directions. Native dialogue menus also advance the quests without AI.
 
-For a separate download, get **The-Emberseal-of-Briarwatch-0.21.0-rc3.zip** from the [release page](https://github.com/RoleWeaverInfo/RWSoloSuite/releases). Extract all files. The service launcher registers the matching `.rwproject.json` and installs the module/HAK when supported. Otherwise copy the `.mod` into your NWN `modules` folder and every included `.hak` into `hak`, then import the matching profile on the AI service page. Start NWN yourself. See [installation instructions](INSTALLATION.md).
+For a separate download, get **The-Emberseal-of-Briarwatch-1.0.0.zip** from the [release page](https://github.com/RoleWeaverInfo/RWSoloSuite/releases). Extract all files. The service launcher registers the matching `.rwproject.json` and installs the module/HAK when supported. Otherwise copy the `.mod` into your NWN `modules` folder and every included `.hak` into `hak`, then import the matching profile on the AI service page. Start NWN yourself. See [installation instructions](INSTALLATION.md).
 
 The `.mod` alone is insufficient: its generated geometry HAK is required. No CEP or other downloaded content pack is required. You still need your own NWN:EE installation. Older saved games keep their old resources; use a new game for this build.
 

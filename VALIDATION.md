@@ -1,6 +1,6 @@
 # Current example validation
 
-**The Emberseal of Briarwatch** is the sole packaged example in 0.21.0-rc3. The pinned build is `11b6a6549ebb36e7b5d1`, with module `rw_ember_v3.mod` and project `emberseal_demo`.
+**The Emberseal of Briarwatch** is the sole packaged example in 1.0.0. The pinned build is `11b6a6549ebb36e7b5d1`, with module `rw_ember_v3.mod` and project `emberseal_demo`.
 
 The build preserves the latest revised keep, courtyard/road and cave layouts and embedded floorplans. It contains three areas, fourteen rooms, fifteen named characters, five combat encounters, two quests and 49 compiled scripts. It uses stock assets plus its included generated geometry HAK.
 

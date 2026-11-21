@@ -1,3 +1,5 @@
+> Historical prerelease: superseded by [1.0.0](RELEASE-1.0.0.md), the first stable release.
+
 # Role Weaver Module Studio 0.21.0-rc3
 
 **The Emberseal of Briarwatch** is now the only bundled example. Fresh installations open its full editable adventure and include a ready-to-play build. Existing installations can use **Load Emberseal example**, which backs up an existing Emberseal draft and preserves other projects and installed modules.

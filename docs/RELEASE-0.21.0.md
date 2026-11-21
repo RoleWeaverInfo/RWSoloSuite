@@ -1,4 +1,4 @@
-> Previous release: see [0.21.0-rc3](RELEASE-0.21.0-rc3.md) for the current Emberseal example and downloads.
+> Historical prerelease: see [1.0.0](RELEASE-1.0.0.md) for the first stable release and current downloads.
 
 # Role Weaver Module Studio 0.21.0-rc1
 
