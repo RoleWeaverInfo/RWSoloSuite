@@ -17,6 +17,11 @@ const editor={document:{querySelector:s=>els[s]??=el(),querySelectorAll:()=>[]},
 const code=fs.readFileSync('web/editor.js','utf8');vm.runInContext(code.slice(0,code.indexOf("$('#saveProject').onclick")),editor);
 vm.runInContext("project={id:'keep_this',areas:[],title:'Unsaved adventure'};dirty=true;page='analyser';render();",editor);
 assert(editor.mounted);assert.equal(vm.runInContext('project.id',editor),'keep_this');assert.equal(vm.runInContext('dirty',editor),true);assert(els['#saveProject'].disabled);assert(els['#deleteProject'].disabled);assert(els['#reviewProject'].disabled);
-vm.runInContext("project=null;page='publish';render();",editor);assert(!els['nav[aria-label="Authoring workflow"]'].hidden);assert(!els['#buildNavigation'].hidden);assert.equal(vm.runInContext('page',editor),'analyser');
-vm.runInContext("project={id:'room_only',design_mode:'area'};page='publish';render();",editor);assert.equal(vm.runInContext('page',editor),'analyser');assert(!els['#buildNavigation'].hidden);
-console.log('Module analyser: escaped untrusted content, qualified evidence, source-absent scripts, and read-only draft preservation passed.');
+vm.runInContext("project=null;page='publish';render();",editor);assert(!els['nav[aria-label="Authoring workflow"]'].hidden);assert.equal(vm.runInContext('page',editor),'analyser');
+vm.runInContext("project={id:'room_only',design_mode:'area'};page='publish';render();",editor);assert.equal(vm.runInContext('page',editor),'analyser');
+const html=fs.readFileSync('web/author.html','utf8');assert(html.includes('id="analyserButton" data-page="analyser"'));assert(!html.includes('id="buildNavigation"'));assert(!html.includes('Module analyser'));
+const navigation=['brief','publish','analyser','settings'].map(page=>({dataset:{page},hidden:false,attrs:{},setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},classList:{toggle(k,v){this[k]=v;}}}));
+editor.document.querySelectorAll=s=>s==='nav [data-page]'?navigation:[];
+vm.runInContext("project=null;page='analyser';syncNavigation();",editor);
+assert(!navigation[2].hidden);assert(navigation[2].classList.active);assert.equal(navigation[2].attrs['aria-current'],'page');assert(navigation[1].hidden);assert(!navigation[1].classList.active);
+console.log('Module Conversion: escaped untrusted content, qualified evidence, source-absent scripts, and read-only draft preservation passed.');

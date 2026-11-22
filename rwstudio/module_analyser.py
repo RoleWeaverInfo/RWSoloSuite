@@ -10,7 +10,7 @@ from .module_analysis import build_report
 from .storage import write_json
 
 MAX_UPLOAD=4_000_000_000
-ACTIVE={'copying','analysing','explaining','converting'}
+ACTIVE={'copying','analysing','explaining','converting','profiling'}
 
 def analysis_config(config,dependency_folder='',source_folder=None):
     result=dict(config)
@@ -143,7 +143,11 @@ class ModuleAnalyser:
         self.status(ident)
         path=self.folder(ident)/'report.json'
         if not path.is_file():raise ValueError('The report is not ready')
-        return json.loads(path.read_text(encoding='utf-8'))
+        report=json.loads(path.read_text(encoding='utf-8'))
+        if report.get('merchant_metadata_version')!=1:
+            from .conversion_merchants import add_store_metadata
+            report=add_store_metadata(report,self.folder(ident)/'input.mod');write_json(path,report)
+        return report
     def script(self,ident,name):
         self.status(ident);folder=self.folder(ident)
         index=json.loads((folder/'scripts.json').read_text(encoding='utf-8'))
@@ -171,11 +175,33 @@ class ModuleAnalyser:
 
     def conversion_plan(self,ident):
         from .imported_module import plan
+        from .conversion_profiles import refresh
         self.status(ident);folder=self.folder(ident);file=folder/'conversion-plan.json'
         p=json.loads(file.read_text(encoding='utf-8')) if file.is_file() else plan(self.report(ident))
+        p=refresh(p,self.report(ident))
         location=folder/'dependency-location.json'
         dependency=json.loads(location.read_text(encoding='utf-8')).get('folder','') if location.is_file() else ''
         return {'project':p,'dependency_folder':dependency,'build':self.status(ident).get('conversion_build')}
+
+    def generate_profiles(self,ident,profile,provider,config,dependency_folder=''):
+        from .module_conversion import validate_plan_for_report
+        from .conversion_profiles import generate
+        with self.lock:
+            if any(j['status'] in ACTIVE for j in self.jobs.values()):raise ValueError('Wait for the current import operation to finish')
+            report=self.report(ident);p=validate_plan_for_report(profile,report)
+            cfg=analysis_config(config,dependency_folder)
+            # Save the user's draft before work; replace it only on full success.
+            write_json(self.folder(ident)/'conversion-plan.json',p)
+            write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
+            self.update(ident,status='profiling',message='Preparing character evidence for the authoring model',profile_error='')
+        def work():
+            try:
+                result=generate(provider,p,report,lambda msg:self.update(ident,message=msg))
+                write_json(self.folder(ident)/'conversion-plan.json',result)
+                self.update(ident,status='complete',message='Detailed profiles ready. Review their backgrounds, then create a new AI copy.',profile_error='')
+            except Exception as exc:
+                self.update(ident,status='complete',message='Saved profiles retained; generation did not finish',profile_error=str(exc)[:1200] if isinstance(exc,ValueError) else 'Character generation failed. Check the authoring model and API settings.')
+        threading.Thread(target=work,daemon=True).start();return self.status(ident)
 
     def convert(self,ident,profile,store,config,dependency_folder=''):
         from .module_conversion import build,validate_plan_for_report

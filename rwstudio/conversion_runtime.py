@@ -29,12 +29,15 @@ def runtime(p,build,game,hooks):
     scripts['aw_cp_visual']='#include "aw_cp_ui"\nvoid main(){AWCVisualInventory(GetPCSpeaker(),OBJECT_SELF);}'
     cfg={k:v for k,v in p['companions'].items() if k!='templates'};cfg['live_ai']=True
     arrays={'AWItems':[],'AWDoors':[],'AWAConfig':[dict(patrols=False,social=False)],'AWABehaviors':[dict(n['behavior'],id=n['id'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']],
-            'AWQuests':[],'AWRooms':[],'AWEncounters':[],'AWShops':[],
+            'AWQuests':[],'AWRooms':[],'AWEncounters':[],
+            'AWShops':[dict(n['merchant'],id=n['id'],conversation=n.get('native_store',{}).get('conversation',''),store_variables=n.get('native_store',{}).get('variables',[]),store_tags=n.get('native_store',{}).get('tags',[])) for n in p['npcs'] if n['merchant']['enabled'] and n['ai_enabled']],
             'AWCompanionConfig':[cfg],'AWCompanionTemplates':p['companions']['templates'],
             'AWCompanionNPCs':[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']]}
     profiles='string RWProfile(object body){string tag=GetTag(body);string ref=GetResRef(body);'+''.join('if(tag=='+literal(n['native_tag'])+' && ref=='+literal(n['native_resref'])+')return '+literal(n['id'])+';' for n in p['npcs'])+'return "";}'
     scripts['aw_config']='\n'.join([*(json_function(k,v) for k,v in arrays.items()),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return "";}','int AWLevelMax(){return 40;}',profiles,
         'object RWFindActor(object pc,string id){object match=OBJECT_INVALID;object body=GetFirstObjectInArea(GetArea(pc));int count=0;while(GetIsObjectValid(body)){if(GetObjectType(body)==OBJECT_TYPE_CREATURE && !GetIsPC(body) && !GetIsDead(body) && RWProfile(body)==id && GetDistanceBetween(pc,body)<=12.0 && GetObjectSeen(body,pc) && LineOfSightObject(pc,body)){match=body;count++;}body=GetNextObjectInArea(GetArea(pc));}if(count!=1)return OBJECT_INVALID;return match;}'])
+    from .conversion_merchants import adapt_runtime
+    adapt_runtime(scripts,p,literal,replace)
     from .inventory_icons import native_icons
     scripts['aw_g_icons']=native_icons(game,literal)
     scripts['nw_inc_nui']=game.get('nw_inc_nui',2009).decode('latin1')
@@ -59,7 +62,10 @@ def runtime(p,build,game,hooks):
     inc=replace(inc,'tag=GetTag(npc);','tag=RWProfile(npc);')
     inc=replace(inc,'return GetIsObjectValid(npc) && !GetIsDead(pc)', 'return GetIsObjectValid(npc) && GetObjectType(npc)==OBJECT_TYPE_CREATURE && !IsInConversation(pc) && !IsInConversation(npc) && !GetIsInCombat(pc) && !GetIsInCombat(npc) && GetObjectSeen(npc,pc) && !GetIsDead(pc)')
     inc=inc.replace('"SP_HIST_"+tag','"SP_HIST_"+GetObjectUUID(npc)')
-    inc=replace(inc,'json observed=SPSnapshot(pc);','json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"actor_name",JsonString(GetName(npc)));observed=JsonObjectSet(observed,"native_dialogue",JsonString(GetLocalString(pc,"RWC_HEARD_"+GetObjectUUID(npc))));')
+    inc='#include "rwc_memory"\n'+inc
+    scripts['rwc_memory']=(ROOT/'scripts/rwc_memory.nss').read_text(encoding='utf-8')
+    scripts['aw_ct_request']=replace(scripts['aw_ct_request'],'json observed=JsonObject();','json observed=JsonObject();observed=JsonObjectSet(observed,"native_seen",RWSeen(pc,target));observed=JsonObjectSet(observed,"native_dialogue",JsonString(GetLocalString(pc,"RWC_HEARD_"+GetObjectUUID(target))));')
+    inc=replace(inc,'json observed=SPSnapshot(pc);','json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"actor_name",JsonString(GetName(npc)));observed=JsonObjectSet(observed,"area",JsonString(GetName(GetArea(npc))));observed=JsonObjectSet(observed,"native_dialogue",JsonString(GetLocalString(pc,"RWC_HEARD_"+GetObjectUUID(npc))));observed=JsonObjectSet(observed,"native_seen",RWSeen(pc,npc));observed=JsonObjectSet(observed,"native_shared",JsonString(GetLocalString(pc,"RWC_SHARED")));')
     inc=replace(inc,'if(!SPNear(pc,npc) || GetLocalObject(pc,"SP_FOCUS")!=npc)', 'if(!SPNear(pc,npc) || (kind=="npc" && RWProfile(npc)!=tag) || GetLocalObject(pc,"SP_FOCUS")!=npc)')
     chat=chat.replace('GetObjectByTag(tag)','RWFindActor(pc,tag)')
     chat=replace(chat,'SPAsk(pc,"dm",GetSubString(s,4,1200));','SendMessageToPC(pc,"This adventure uses its original quest dialogue and journal. AI does not direct its quests.");')
@@ -78,7 +84,7 @@ def runtime(p,build,game,hooks):
     scripts['rwc_can_chat']='#include "sp_inc"\nint StartingConditional(){return GetObjectType(OBJECT_SELF)==OBJECT_TYPE_CREATURE && SPIsNPC(RWProfile(OBJECT_SELF));}'
     # Retain includes plus actual companion/merchant UI event handlers. Do not
     # ship the authoring builder\'s module/area/quest startup entry points.
-    keep={'sp_inc','sp_chat','sp_select','sp_config','aw_story','aw_config','nw_inc_nui','aw_g_icons','rwc_load','rwc_enter','rwc_beat','rwc_chat','rwc_can_chat'}
+    keep={'sp_inc','sp_chat','sp_select','sp_config','aw_story','aw_config','nw_inc_nui','aw_g_icons','rwc_load','rwc_enter','rwc_beat','rwc_chat','rwc_can_chat','rwc_memory'}
     keep.update(k for k in scripts if k.startswith(('aw_cp_','aw_ct_','aw_g_','aw_m_')))
     keep.update(('aw_companion','aw_merchant','aw_ambient','aw_quest','aw_encounter','aw_items','aw_ui','aw_shop_evt'))
     # Walk include dependencies rather than assuming a particular file layout.

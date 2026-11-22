@@ -22,6 +22,12 @@ def reply(provider,p,payload):
     states=payload.get('quests',{});states=states if isinstance(states,dict) else {}
     if not target['reveal_after'] or states.get(target['reveal_after'])==-1:profile['secret']=target['secret']
     profile['dialogue']=[d for d in target['dialogue'] if not d['after_quest'] or states.get(d['after_quest'])==-1]
+    if p.get('schema_version')==3:
+        from .conversion_profiles import learned
+        profile['background']=target.get('background','')
+        profile['setting']=p['summary']
+        profile['remembered_dialogue']=learned(target,payload.get('game',{}),str(payload.get('question','')))
+        profile['heard_dialogue']=str(payload.get('game',{}).get('native_dialogue',''))[-9000:]
     from .ambient import clean
     from .merchants import context as merchant_context,ground_quote
     shop=merchant_context(target,payload.get('game',{})) if target['merchant']['enabled'] else None

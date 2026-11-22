@@ -89,6 +89,7 @@ class Application:
             result['build']=result['builds'][-1] if result['builds'] else None
             return result
         if route=='/api/analyser/conversion-save':return self.analyser.save_conversion(b.get('id'),b.get('project'),self.config,b.get('dependency_folder',''))
+        if route=='/api/analyser/profiles':return self.analyser.generate_profiles(b.get('id'),b.get('project'),self.authoring_provider,self.config,b.get('dependency_folder',''))
         if route=='/api/analyser/convert':return self.analyser.convert(b.get('id'),b.get('project'),self.store,self.config,b.get('dependency_folder',''))
         if route=='/api/example/load':
             if b.get('confirm') is not True:raise ValueError('Confirm loading the included example. Any existing Emberseal draft will be backed up first.')
@@ -176,7 +177,7 @@ class Application:
             return {'project':self.store.save(p)}
         if route=='/api/project/import':
             wrapped=b['document'];p=validate_project(wrapped.get('project',wrapped))
-            if p['schema_version']==3:raise ValueError('Import converted module profiles on AI service status. Edit their conversion settings in Module analyser.')
+            if p['schema_version']==3:raise ValueError('Import converted module profiles on AI service status. Edit their conversion settings in Module Conversion.')
             ident=wrapped.get('build_id')
             if ident is not None:
                 if not re.fullmatch(r'[0-9a-f]{20}',ident):raise ValueError('Invalid build ID')

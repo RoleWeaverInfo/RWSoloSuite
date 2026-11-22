@@ -1,7 +1,7 @@
 /* Native module inspection is independent of the editable project draft. */
 window.ModuleAnalyser=(()=>{
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const active=j=>['copying','analysing','explaining','converting'].includes(j?.status);
+  const active=j=>['copying','analysing','explaining','converting','profiling'].includes(j?.status);
   const state={id:'',report:null,tab:'overview',search:'',page:0};
   const tabs=['overview','areas','characters','encounters','quests','dialogue','scripts','dependencies'];
   const title=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -48,7 +48,7 @@ window.ModuleAnalyser=(()=>{
       const explain=q('#analysisExplain');if(explain)explain.disabled=busy;
     }
     async function safely(fn){error(null);pending=true;controls();try{await fn();}catch(e){error(e);}finally{pending=false;if(alive())controls();}}
-    function status(){q('#analysisStatus').textContent=job?`${title(job.status)} · ${job.message}`:'';const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${job.status}`;controls();if(job?.ai_error||job?.conversion_error)error(job.conversion_error||job.ai_error);}
+    function status(){q('#analysisStatus').textContent=job?`${title(job.status)} · ${job.message}`:'';const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${job.status}`;controls();if(job?.profile_error||job?.ai_error||job?.conversion_error)error(job.profile_error||job.conversion_error||job.ai_error);}
     async function list(){
       const data=await api('/api/analyser/list',{});if(!alive())return;
       q('#analysisSelect').innerHTML='<option value="">Select a report</option>'+data.analyses.map(j=>`<option value="${esc(j.id)}">${esc(j.name||j.filename)} · ${esc(j.status)}</option>`).join('');
@@ -62,7 +62,7 @@ window.ModuleAnalyser=(()=>{
       if(!id){job=null;status();show();return;}
       const next=await api('/api/analyser/status',{id});if(!alive()||state.id!==id||seq!==selection)return;
       job=next;status();
-      if(['complete','explaining','converting'].includes(job.status)){
+      if(['complete','explaining','converting','profiling'].includes(job.status)){
         const report=await api('/api/analyser/report',{id});if(!alive()||state.id!==id||seq!==selection)return;
         state.report=report;show();
       }else if(state.report?.analysis_id!==id){state.report=null;show();}

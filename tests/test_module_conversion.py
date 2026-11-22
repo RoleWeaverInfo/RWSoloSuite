@@ -31,14 +31,15 @@ class ConversionTests(unittest.TestCase):
         self.assertEqual(validate_project(self.p)['schema_version'],3)
         self.assertTrue(self.p['companions']['enabled'])
         self.assertNotIn('The seal is returned',json.dumps(self.p))
-        self.assertNotIn('lost seal',json.dumps(self.p))
+        self.assertIn('lost seal',self.p['npcs'][0]['knowledge']) # Authored examine description is public.
+        self.assertNotIn('missing seal from the cave',self.p['npcs'][0]['knowledge'])
         self.assertTrue(all(n['id'].startswith('cv_n') for n in self.p['npcs']))
         self.assertEqual(len({(n['native_tag'],n['native_resref']) for n in self.p['npcs']}),len(self.p['npcs']))
         bad=copy.deepcopy(self.p);bad['npcs'][0]['native_tag']='different'
         with self.assertRaisesRegex(ValueError,'identities'):validate_plan_for_report(bad,self.report)
         bad=copy.deepcopy(self.p);bad['module_name']='original'
         with self.assertRaisesRegex(ValueError,'different filename'):validate_plan_for_report(bad,self.report)
-        with self.assertRaisesRegex(ValueError,'Module analyser'):Store(self.root/'store').save(self.p)
+        with self.assertRaisesRegex(ValueError,'Module Conversion'):Store(self.root/'store').save(self.p)
 
     def test_append_only_at_safe_farewell_not_quest_choice_or_cutscene(self):
         dlg=conversation([('Welcome',[0,1]),('Hidden later reveal',[2]),('Forced quest decision',[3])],
@@ -49,11 +50,16 @@ class ConversionTests(unittest.TestCase):
         after=read(entries['mara_talk',2029])[1]
         self.assertEqual(changed['mara_talk']['entries'],[0,1]);self.assertEqual(len(after[1]['ReplyList'][1]),6)
         self.assertEqual(after[1]['StartingList'],original[1]['StartingList'])
-        self.assertEqual(after[1]['EntryList'][1][2],original[1]['EntryList'][1][2])
+        self.assertEqual(after[1]['EntryList'][1][2][1]['RepliesList'],original[1]['EntryList'][1][2][1]['RepliesList'])
+        for item in changed['mara_talk']['action_wrappers']:
+            self.assertEqual(scripts[item['wrapper']].count('ExecuteScript("'+item['original_action']+'",OBJECT_SELF);'),1 if item['original_action'] else 0)
+            row=after[1][item['collection']][1][item['index']][1]
+            row['Script']=original[1][item['collection']][1][item['index']][1]['Script']
         self.assertEqual(after[1]['ReplyList'][1][:4],original[1]['ReplyList'][1])
         self.assertEqual(after[1]['EntryList'][1][1][1]['RepliesList'][1][-1][1]['Active'][1],b'rwc_can_chat')
-        # Secret text is only in the action of its own gated native entry.
-        self.assertNotIn('Hidden later reveal',scripts['rwc_s00000']);self.assertIn('Hidden later reveal',scripts['rwc_s00001'])
+        # Secret text is recorded only by its own reached node, never conditions.
+        self.assertNotIn('Hidden later reveal',scripts['rwc_m00000']);self.assertIn('Hidden later reveal',scripts['rwc_m00001'])
+        self.assertNotIn('RWRemember',scripts['rwc_s00001']) # Selecting AI never overwrites the transcript.
 
     def test_roundtrip_copy_preserves_original_resources_and_registration(self):
         game=self.root/'game';(game/'data').mkdir(parents=True);compiler=self.root/'compiler';compiler.touch()
@@ -71,7 +77,7 @@ class ConversionTests(unittest.TestCase):
         folder=store.root/'builds'/manifest['build_id'];output=folder/manifest['module'];converted=Archive(output);old=Archive(self.path)
         self.assertEqual(self.path.read_bytes(),before)
         for key in old.index:
-            if key!=('module',2014):self.assertEqual(old.get(*key),converted.get(*key),key)
+            if key not in [('module',2014),('mara_talk',2029)]:self.assertEqual(old.get(*key),converted.get(*key),key)
         ifo=gff(converted.get('module',2014));self.assertEqual(ifo['Mod_OnModLoad'],'rwc_load')
         self.assertEqual(adventure_document(output)['project'],self.p)
         self.assertEqual(store.built_project(manifest['build_id']),self.p)

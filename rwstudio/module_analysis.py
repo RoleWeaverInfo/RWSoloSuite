@@ -251,4 +251,5 @@ def build_report(path,config,progress=lambda s:None,actions=None):
     report['resource_types']=dict(Counter(TYPES.get(k,str(k)) for _,k in res.module.index))
     report['missing_scripts']=missing
     report['warnings']=list(dict.fromkeys(warnings))
-    return report,details
+    from .conversion_merchants import add_store_metadata
+    return add_store_metadata(report,path),details

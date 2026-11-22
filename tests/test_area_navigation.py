@@ -24,7 +24,7 @@ class AreaNavigation(unittest.TestCase):
         app=dict(projects=[],settings=dict(content_root=''),area_presets=catalog(),authoring_catalog=dict(area_types=AREA_TYPES))
         setup=r"""
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),els={},groups={};
-function element(dataset={}){return {dataset,hidden:false,attrs:{},classList:{toggle(){}},setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];}};}
+function element(dataset={}){return {dataset,hidden:false,attrs:{},classList:{toggle(){}},scrollTo(options){this.lastScroll=options;},focus(){this.focused=true;},setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];}};}
 const ctx={console,window:{scrollTo(){}},document:{querySelector:s=>els[s]??=element(),querySelectorAll:s=>groups[s]||[]}};
 vm.createContext(ctx);
 for(const file of ['catalog','spatial','design','presets'])vm.runInContext(fs.readFileSync('web/'+file+'.js','utf8'),ctx);
@@ -48,6 +48,7 @@ ctx.render=()=>assert.fail('Subsection navigation must retain existing form node
 const html=[];
 for(const key of keys){ctx.showAreaSection(key);assert.equal(groups['[data-area-panel]'].filter(p=>!p.hidden).length,1);assert(!groups['[data-area-panel]'].find(p=>p.dataset.areaPanel===key).hidden);assert.equal(els['#aiDirection'],draft);assert.equal(draft.value,'Keep this unfinished instruction');assert.equal(vm.runInContext('areaIndex',ctx),1);html.push(ctx.world());}
 assert.equal(vm.runInContext('JSON.stringify(project)',ctx),initial);
+assert.equal(els['main'].lastScroll.top,0);assert(els['main'].focused);
 fold.open=true;fold.ontoggle();assert(ctx.foldAttributes('asset-catalog').includes('open'));
 fold.open=false;fold.ontoggle();assert(!ctx.foldAttributes('asset-catalog').includes('open'));
 vm.runInContext('generating=true',ctx);ctx.notify=()=>{};ctx.showAreaSection('overview');assert.equal(vm.runInContext('areaSection',ctx),'assets');

@@ -53,7 +53,7 @@ def validate(project):
             if t['kind'] in fallbacks:raise ValueError('Use only one fallback template for each companion kind')
             fallbacks.add(t['kind'])
     for n in project['npcs']:
-        if n['companion']['recruitable'] and n['merchant']['enabled']:raise ValueError(n['name']+': use separate NPCs for recruitable companions and merchants')
+        if project.get('schema_version')!=3 and n['companion']['recruitable'] and n['merchant']['enabled']:raise ValueError(n['name']+': use separate NPCs for recruitable companions and merchants')
 
 def selected_template(project,kind,resref,familiar_type=-1):
     templates=[t for t in project['companions']['templates'] if t['kind']==kind]
@@ -87,7 +87,7 @@ def context(project,snapshot,npc_id=None):
     if isinstance(raw.get('name'),str):profile['name']=raw['name'][:100]
     profile.pop('merchant',None);profile.pop('companion',None)
     if project.get('schema_version')==3:
-        for key in ('native_tag','native_resref','secret','reveal_after','dialogue'):profile.pop(key,None)
+        for key in ('native_tag','native_resref','native_store','secret','reveal_after','dialogue','native_lines','profile_sources','profile_origin'):profile.pop(key,None)
     supplied=raw.get('allowed_actions',[]);supplied=supplied if isinstance(supplied,list) else []
     allowed=[]
     for command in COMMANDS:
@@ -108,6 +108,8 @@ def context(project,snapshot,npc_id=None):
                 reply_style=raw.get('reply_style',1),tone=raw.get('tone',0),status=raw.get('status',''),observation=raw.get('observation',{}))
     from .task_intent import targets
     ctx['task_targets']=targets(project,snapshot,ctx)
+    if project.get('schema_version')==3 and raw.get('owned')==1:
+        ctx['shared_conversations']=str(snapshot.get('native_shared',''))[-9000:]
     return ctx
 
 def reply(provider,project,message,snapshot,history=''):

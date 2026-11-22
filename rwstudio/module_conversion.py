@@ -23,48 +23,79 @@ from .conversion_runtime import runtime
 EVENTS={'Mod_OnModLoad':'rwc_load','Mod_OnClientEntr':'rwc_enter','Mod_OnHeartbeat':'rwc_beat','Mod_OnPlrChat':'rwc_chat'}
 
 def patch_dialogues(entries,report,res,scripts):
-    """Only append to non-quest, unconditional, script-free farewell choices."""
-    changed={};counter=0
+    """Remember executed nodes; retain native actions and append safe AI exits."""
+    changed={};counter=0;memory_count=0
     names={n['conversation'] for n in report['characters'] if n['conversation']}
     for name in sorted(names):
         key=name,2029
         if key not in entries:continue  # Never override an external HAK dialogue.
         raw=entries[key];plain=gff(raw);kind,dlg=read(raw)
         originals=copy.deepcopy(dlg);replies=dlg[1].get('ReplyList',(15,[]))[1]
-        added=[]
+        original_reply_count=len(replies);added=[];wrapped=[]
         for idx,entry in enumerate(dlg[1].get('EntryList',(15,[]))[1]):
             links=entry[1].get('RepliesList',(15,[]))[1];safe=False
             for link in links:
                 ri=link[1].get('Index',(4,-1))[1]
-                if not 0<=ri<len(replies) or link[1].get('Active',(11,b''))[1]:continue
+                if not 0<=ri<original_reply_count or link[1].get('Active',(11,b''))[1]:continue
                 reply=replies[ri][1]
                 label=res.text(plain['ReplyList'][ri].get('Text',''))
                 if (not reply.get('EntriesList',(15,[]))[1] and not reply.get('Script',(11,b''))[1]
                     and not reply.get('Quest',(10,b''))[1] and re.search(r'\b(farewell|goodbye|good bye|leave|bye|never mind|nothing else|see you later|perhaps later|right now|for now|on our way|thank(?:s| you) for your time)\b',label,re.I)):
                     safe=True;break
-            if not safe:continue
+            # Ordinary one-line greetings previously closed without any AI option.
+            terminal=not links and not any(entry[1].get(k,(11,b''))[1] for k in ('Script','Quest','Speaker'))
+            if not safe and not terminal:continue
             script='rwc_s'+str(counter).zfill(5);counter+=1
-            heard=res.text(plain['EntryList'][idx].get('Text',''))[:2000]
-            # This text becomes available only after the player reaches this
-            # exact native entry and chooses its AI reply. Later branches stay hidden.
-            scripts[script]='#include "sp_inc"\nvoid main(){object pc=GetPCSpeaker();SetLocalString(pc,"RWC_HEARD_"+GetObjectUUID(OBJECT_SELF),'+literal(heard)+');ExecuteScript("sp_select",OBJECT_SELF);}'
+            scripts[script]='#include "sp_inc"\nvoid main(){ExecuteScript("sp_select",OBJECT_SELF);}'
             reply=conversation([('',[0])],[('Talk freely with AI.',[],script)])[1]['ReplyList'][1][0]
             replies.append((len(replies),reply[1]))
             links.append(node(len(links),Index=(4,len(replies)-1),Active=(11,b'rwc_can_chat'),IsChild=(0,0)))
-            added.append(idx)
-        if added:
-            entries[key]=write(kind,dlg);changed[name]=dict(entries=added,added_replies=len(added))
+            if terminal:
+                farewell=conversation([('',[0])],[('Farewell.',[])])[1]['ReplyList'][1][0]
+                replies.append((len(replies),farewell[1]));links.append(node(len(links),Index=(4,len(replies)-1),Active=(11,b''),IsChild=(0,0)))
+            put(entry,'RepliesList',links,15);added.append(dict(index=idx,links=2 if terminal else 1))
+        # Actions execute only on the node actually reached. Do not wrap Active
+        # conditions: the engine can probe conditions for unseen branches.
+        for collection,short in [('EntryList','e'),('ReplyList','r')]:
+            for idx,line in enumerate(dlg[1].get(collection,(15,[]))[1][:len(plain.get(collection,[]))]):
+                original=plain[collection][idx];spoken=res.text(original.get('Text',''))[:6000]
+                if not spoken:continue
+                script='rwc_m'+str(memory_count).zfill(5);memory_count+=1
+                old=original.get('Script','')
+                speaker=original.get('Speaker','')
+                label=literal('Player') if short=='r' else (literal(speaker) if speaker else 'GetName(actor)')
+                action='ExecuteScript('+literal(old)+',OBJECT_SELF);' if old else ''
+                scripts[script]='#include "rwc_memory"\nvoid main(){object pc=GetPCSpeaker();object actor=OBJECT_SELF;'+action+'RWRemember(pc,actor,'+literal(name+':'+short+':'+str(idx))+','+label+','+literal(spoken)+');}'
+                string(line,'Script',script,11);wrapped.append(dict(collection=collection,index=idx,original_action=old,wrapper=script))
+        if added or wrapped:
+            if added:put(dlg,'ReplyList',replies,15)
+            entries[key]=write(kind,dlg)
+            changed[name]=dict(entries=[a['index'] for a in added],added_replies=len(replies)-original_reply_count,memory_nodes=len(wrapped),action_wrappers=wrapped)
             check=copy.deepcopy(dlg)
-            check[1]['ReplyList'][1][:]=check[1]['ReplyList'][1][:-len(added)]
-            for idx in added:check[1]['EntryList'][1][idx][1]['RepliesList'][1].pop()
+            # Reconstruct the original structure and demand exact equality.
+            for item in wrapped:
+                fields=check[1][item['collection']][1][item['index']][1]
+                old=originals[1][item['collection']][1][item['index']][1]
+                if 'Script' in old:fields['Script']=old['Script']
+                else:fields.pop('Script',None)
+            if 'ReplyList' in originals[1]:check[1]['ReplyList'][1][:]=check[1]['ReplyList'][1][:original_reply_count]
+            else:check[1].pop('ReplyList',None)
+            for item in added:
+                idx=item['index'];fields=check[1]['EntryList'][1][idx][1]
+                old=originals[1]['EntryList'][1][idx][1]
+                if 'RepliesList' in old:del fields['RepliesList'][1][-item['links']:]
+                else:fields.pop('RepliesList',None)
             if check!=originals:raise ValueError('Original dialogue changed unexpectedly: '+name)
     return changed
+
 
 def validate_plan_for_report(p,report):
     p=validate(p);base=plan(report)
     if p['source_sha256']!=report['module']['sha256'] or p['id']!=base['id']:raise ValueError('The conversion plan belongs to a different imported module')
     identity=lambda rows:{n['id']:(n['native_tag'],n['native_resref']) for n in rows}
     if identity(p['npcs'])!=identity(base['npcs']):raise ValueError('Native character identities cannot be changed during conversion')
+    from .conversion_profiles import refresh
+    p=validate(refresh(p,report))
     source_stem=Path(report['module']['filename']).stem
     if p['module_name'].casefold()==source_stem.casefold():raise ValueError('Choose a different filename for the AI copy')
     return p
@@ -103,7 +134,8 @@ def _build(path,report,profile,store,config,progress):
     for filename,archive in res.packs:dependencies.append((archive.path,dict(file=filename,kind='hak',sha256=sha256(archive.path))))
     if 'custom' in res.tables:
         file=res.tables['custom'].path;dependencies.append((file,dict(file=file.name,kind='tlk',sha256=sha256(file))))
-    digest=hashlib.sha256(canonical(dict(profile=p,scripts=scripts,extra={n+'.'+str(k):hashlib.sha256(v).hexdigest() for (n,k),v in extra.items()},dependencies=[d for _,d in dependencies],format=1)).encode()).hexdigest()[:20]
+    instructions=play_instructions(p,report,changes)
+    digest=hashlib.sha256(canonical(dict(profile=p,scripts=scripts,extra={n+'.'+str(k):hashlib.sha256(v).hexdigest() for (n,k),v in extra.items()},dependencies=[d for _,d in dependencies],instructions=instructions,format=1)).encode()).hexdigest()[:20]
     scripts['sp_config']=scripts['sp_config'].replace('"'+'0'*20+'"','"'+digest+'"')
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').is_file():
@@ -152,7 +184,6 @@ def _build(path,report,profile,store,config,progress):
         for file,dep in dependencies:
             target=out/dep['kind']/dep['file'];target.parent.mkdir(exist_ok=True);shutil.copy2(file,target)
             if sha256(target)!=dep['sha256']:raise ValueError('Dependency changed during conversion: '+dep['file'])
-        instructions=play_instructions(p,report,changes)
         (out/'PLAY.txt').write_text(instructions,encoding='utf-8')
         shutil.copy2(ROOT/'ROLE-WEAVER-LICENSE.txt',out/'ROLE-WEAVER-LICENSE.txt')
         # A converted community adventure is not a Studio authoring project.
@@ -177,12 +208,13 @@ AI-enabled copy of {report['module']['filename']}
 Requires NWN: Enhanced Edition and a Role Weaver Module Studio build with module conversion support. Original module/HAK authors retain their rights. This local conversion grants no redistribution permission. Obtain permission before sharing somebody else's adventure or content packs.
 
 1. Keep the .mod and matching .rwproject.json together. Start the updated Role Weaver service, import the sidecar on AI service status, and configure your own OpenAI or Gemini key.
-2. With NWN closed, install the module using Module analyser > AI conversion > Install copy. For a downloaded copy, copy the .mod to Neverwinter Nights/modules, hak files to hak, and tlk files to tlk; preserve their original names. Do not overwrite different existing packs.
+2. With NWN closed, install the module using Module Conversion > AI conversion > Install copy. For a downloaded copy, copy the .mod to Neverwinter Nights/modules, hak files to hak, and tlk files to tlk; preserve their original names. Do not overwrite different existing packs.
 3. Start NWN separately and choose a NEW GAME with {p['module_name']}. Existing saves of the original module do not contain these additions. Keep Role Weaver running.
 4. Original NPC menus handle quest acceptance, journal progress, rewards, stores, recruitment and dismissal. AI roleplay does not control those choices. Original maps, creature blueprints, encounters, journal and all original compiled scripts were retained byte-for-byte.
-5. At an ordinary farewell choice, eligible conversations include Talk freely with AI ({len(changes)} dialogue files enhanced). Close the menu and speak in Talk. Else use !talk <alias> <message> nearby, or address a unique nearby NPC by name followed by a colon. Use !end to finish. Duplicate nearby creatures must be selected individually through dialogue; aliases never guess between them.
+5. At safe farewell choices and ordinary one-line greetings, eligible conversations include Talk freely with AI ({len(changes)} dialogue files enhanced). Close the menu and speak in Talk. Else use !talk <alias> <message> nearby, or address a unique nearby NPC by name followed by a colon. Use !end to finish. Duplicate nearby creatures must be selected individually through dialogue; aliases never guess between them.
 6. Recruit allies through the module's original dialogue. Type !companions for AI chat, follow/stay/guard, inventory and errands with recruited allies, familiars or summons. Native recruitment, party limits, XP rules and dismissal remain unchanged. Locked/trapped containers, protected items, possession and combat restrictions still apply. Animals use nonverbal responses.
-7. Companion errands are optional and may interact with module-specific item scripts; test ordinary quest pickup and reward paths. AI profiles begin with conservative public facts, not hidden quest solutions. Only the current native line is supplied when you choose its AI reply; other dialogue is not automatically learned. Creator-edited knowledge is treated as public.
+7. Companion errands are optional and may interact with module-specific item scripts; test ordinary quest pickup and reward paths. AI profiles include public descriptions, setting and optional generated characterization. Original NPC lines and player replies are remembered as they occur and persist in saves. Unvisited branches are withheld from AI prompts. Companions can discuss recent conversations shared by their owner. Creator-edited knowledge is public. Native quest state is not inferred from static scripts; use original menus for progression and rewards.
+8. Detected native merchants have AI merchant abilities enabled by default unless the creator disables them. Open their original shop once before asking AI about current stock. Requests to browse, buy or negotiate return to the original trading conversation; choose its shop option to trade. Native access conditions, prices, Appraise rules, discounts and item transfers stay in control. AI cannot grant an extra discount or complete a sale outside that interface.
 
 Open the AI copy in Aurora to edit it. Keep edits in another file: converting again always starts from the original snapshot. The preservation.json file records resource hashes and dialogue additions. Static checks do not prove a full playthrough; test quest completion, transitions, rest/death, recruitment/dismissal, save/load, summoned companion conversation and inventory.
 
