@@ -103,6 +103,9 @@ def schema_check(value, spec, path='project'):
 
 
 def validate_project(value):
+    if isinstance(value,dict) and value.get('schema_version')==3:
+        from .imported_module import validate
+        return validate(value)
     if isinstance(value,dict) and value.get('schema_version')==2:
         from .authoring import validate
         return validate(value)

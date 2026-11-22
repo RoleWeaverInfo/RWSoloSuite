@@ -1,7 +1,7 @@
 /* Native module inspection is independent of the editable project draft. */
 window.ModuleAnalyser=(()=>{
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const active=j=>['copying','analysing','explaining'].includes(j?.status);
+  const active=j=>['copying','analysing','explaining','converting'].includes(j?.status);
   const state={id:'',report:null,tab:'overview',search:'',page:0};
   const tabs=['overview','areas','characters','encounters','quests','dialogue','scripts','dependencies'];
   const title=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -31,7 +31,7 @@ window.ModuleAnalyser=(()=>{
       ${r.limitations.map(text).join('')}${detail('Module identity and resource counts',json(r.module)+json(r.resource_types))}${detail('Object descriptions and lore',r.lore.slice(0,100).map(l=>`<h4>${esc(l.name)}</h4>${text(l.text)}${source(l.source)}`).join('')+text('First 100 entries shown; the JSON report contains all recovered descriptions.'))}`;
   }
   function mount(host,api,getApp){
-    host.innerHTML=`<div class="module-analyser"><div class="analysis-intro"><span class="eyebrow">READ-ONLY MODULE IMPORT</span><h2>Explore an existing adventure</h2><p>Import a normal NWN 1 / Enhanced Edition .mod to review its story, characters, encounters, quests and compiled scripts. The original stays unchanged. This does not convert it to an AI module.</p></div>
+    host.innerHTML=`<div class="module-analyser"><div class="analysis-intro"><span class="eyebrow">MODULE IMPORT AND AI CONVERSION</span><h2>Explore an existing adventure</h2><p>Import a normal NWN 1 / Enhanced Edition .mod to review its story, characters, encounters, quests and compiled scripts. Analysis is read-only. After reviewing it, create a separate AI-enabled copy below.</p></div>
       <section class="analysis-import"><h3>Import a module</h3><label>Module file <input type="file" accept=".mod" id="analysisFile"></label><button id="analysisUpload" class="primary">Import and analyse</button>
       <details><summary>Or use a path on this computer</summary><label>Full path to .mod <input id="analysisPath" placeholder="C:\\…\\modules\\adventure.mod"></label><button id="analysisStart">Analyse local file</button></details><label>Dependency folder (optional) <input id="analysisDependencies" placeholder="Folder containing the required HAK and TLK files"></label><p class="muted">Subfolders are searched. Local-path imports also search beside the module. Local analysis needs no API key. Installed NWN resources, declared HAKs and talk tables are read using Local settings. Reports may contain story spoilers.</p></section>
       <div id="analysisError" role="alert" hidden></div><div id="analysisStatus" role="status"></div>
@@ -48,7 +48,7 @@ window.ModuleAnalyser=(()=>{
       const explain=q('#analysisExplain');if(explain)explain.disabled=busy;
     }
     async function safely(fn){error(null);pending=true;controls();try{await fn();}catch(e){error(e);}finally{pending=false;if(alive())controls();}}
-    function status(){q('#analysisStatus').textContent=job?`${title(job.status)} · ${job.message}`:'';const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${job.status}`;controls();if(job?.ai_error)error(job.ai_error);}
+    function status(){q('#analysisStatus').textContent=job?`${title(job.status)} · ${job.message}`:'';const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${job.status}`;controls();if(job?.ai_error||job?.conversion_error)error(job.conversion_error||job.ai_error);}
     async function list(){
       const data=await api('/api/analyser/list',{});if(!alive())return;
       q('#analysisSelect').innerHTML='<option value="">Select a report</option>'+data.analyses.map(j=>`<option value="${esc(j.id)}">${esc(j.name||j.filename)} · ${esc(j.status)}</option>`).join('');
@@ -62,7 +62,7 @@ window.ModuleAnalyser=(()=>{
       if(!id){job=null;status();show();return;}
       const next=await api('/api/analyser/status',{id});if(!alive()||state.id!==id||seq!==selection)return;
       job=next;status();
-      if(['complete','explaining'].includes(job.status)){
+      if(['complete','explaining','converting'].includes(job.status)){
         const report=await api('/api/analyser/report',{id});if(!alive()||state.id!==id||seq!==selection)return;
         state.report=report;show();
       }else if(state.report?.analysis_id!==id){state.report=null;show();}
@@ -74,12 +74,13 @@ window.ModuleAnalyser=(()=>{
       if(!r||r.analysis_id!==state.id){box.innerHTML='';return;}
       const provider=getApp().settings.provider,model=provider==='gemini'?getApp().settings.authoring_gemini_model:getApp().settings.authoring_model;
       box.innerHTML=`<div class="analysis-report-heading"><div><h2>${esc(r.module.name)}</h2><p>${esc(r.module.filename)} · Read-only snapshot</p></div><a href="/api/analyser/download?id=${encodeURIComponent(state.id)}" download>Download JSON report</a></div>
-        <details class="analysis-ai"><summary>Optional AI explanation</summary><p>Send selected recovered excerpts to ${esc(provider)} using ${esc(model)} for an interpretation with evidence references. This uses your saved key and counts as module-creation usage; provider charges or limits apply. The local report already works without AI.</p><button id="analysisExplain">Explain with AI</button></details>
+        <section id="analysisConversion"></section><details class="analysis-ai"><summary>Optional AI explanation</summary><p>Send selected recovered excerpts to ${esc(provider)} using ${esc(model)} for an interpretation with evidence references. This uses your saved key and counts as module-creation usage; provider charges or limits apply. The local report already works without AI.</p><button id="analysisExplain">Explain with AI</button></details>
         <div class="analysis-tabs" role="tablist" aria-label="Module analysis">${tabs.map(t=>`<button role="tab" aria-selected="${state.tab===t}" data-analysis-tab="${t}">${title(t)}</button>`).join('')}</div>
         <div id="analysisFilter" ${state.tab==='overview'?'hidden':''}><label>Search this section <input id="analysisSearch" type="search" value="${esc(state.search)}" placeholder="Name, tag, text or function…"></label></div><div id="analysisResults" role="tabpanel"></div>`;
       box.querySelectorAll('[data-analysis-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.analysisTab;state.search='';state.page=0;show();});
       q('#analysisSearch').oninput=e=>{state.search=e.target.value;state.page=0;rows();};
       q('#analysisExplain').onclick=()=>safely(async()=>{job=await api('/api/analyser/explain',{id:state.id});status();await watch();});
+      window.ModuleConversion?.mount(q('#analysisConversion'),api,state.id,active(job),async next=>{job=next;status();await watch();});
       rows();controls();
     }
     function rows(){

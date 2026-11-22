@@ -156,6 +156,9 @@ class Provider:
                     self.usage_store.finish(ident,'failed',seconds=time.monotonic()-start,category='request_unavailable')
 
     def npc(self,project,tag,prompt,snapshot,history=''):
+        if project.get('schema_version')==3:
+            from .imported_module import npc_reply
+            return npc_reply(self,project,tag,prompt,snapshot,history)
         if project.get('schema_version')==2:
             from .authoring_ai import npc_reply
             return npc_reply(self,project,tag,prompt,snapshot,history)
@@ -190,6 +193,8 @@ class Provider:
         return reply(self,project,prompt,snapshot,history)
 
     def dm(self,project,prompt,snapshot):
+        if project.get('schema_version')==3:
+            raise AIError('This imported adventure uses its original quest dialogue and journal. AI conversations cannot direct its quests.')
         if project.get('schema_version')==2:
             from .authoring_ai import dm_reply
             return dm_reply(self,project,prompt,snapshot)

@@ -222,6 +222,8 @@ def _build(p,store,game_root,compiler):
     return manifest
 
 def install_build(store,ident,user_dir):
+    from .launcher import game_running
+    if game_running():raise ValueError('Save and exit NWN before installing a module or its dependencies')
     project=store.built_project(ident);folder=store.root/'builds'/ident
     manifest=json.loads((folder/'manifest.json').read_text(encoding='utf-8'))
     source=folder/manifest['module'];target=Path(user_dir)/'modules'/source.name

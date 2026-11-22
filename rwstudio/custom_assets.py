@@ -189,9 +189,11 @@ def install_dependencies(folder,user_dir):
     folder=Path(folder);manifest=folder/'dependencies.json'
     if not manifest.exists():return
     for dep in json.loads(manifest.read_text(encoding='utf8')):
-        if not re.fullmatch(r'rw[a-f0-9]{14}\.hak',dep['file']):raise ValueError('Invalid content dependency filename')
-        source=folder/'hak'/dep['file']
+        kind=dep.get('kind','hak');filename=dep['file']
+        if kind not in ('hak','tlk') or not isinstance(filename,str) or not re.fullmatch(r'[^/\\:\x00-\x1f?*"<>|]{1,64}\.'+kind,filename,re.I) or filename.startswith('.') or re.fullmatch(r'(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])\..*',filename,re.I):raise ValueError('Invalid content dependency filename')
+        source=folder/kind/filename
+        if source.is_symlink() or source.resolve().parent!=(folder/kind).resolve():raise ValueError('Invalid content dependency path')
         if file_digest(source)!=dep['sha256']:raise ValueError('Custom content checksum mismatch')
-        dest=Path(user_dir)/'hak'/dep['file'];dest.parent.mkdir(parents=True,exist_ok=True)
+        dest=Path(user_dir)/kind/filename;dest.parent.mkdir(parents=True,exist_ok=True)
         if dest.exists() and file_digest(dest)!=dep['sha256']:raise ValueError('A different content pack exists at '+dest.name)
-        shutil.copy2(source,dest)
+        if not dest.exists():shutil.copy2(source,dest)

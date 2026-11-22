@@ -35,6 +35,7 @@ class Store:
 
     def save(self,project):
         project=validate_project(project)
+        if project['schema_version']==3:raise ValueError('Converted module profiles belong to Module analyser, not the area authoring editor')
         with self.lock: write_json(self.path(project['id']),project)
         return project
 

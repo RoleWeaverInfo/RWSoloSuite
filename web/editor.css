@@ -17,3 +17,11 @@
 .usage-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:20px 0}.usage-total{padding:18px;background:#0b1d31;border:1px solid var(--line);border-radius:8px}.usage-total>strong{font-size:26px;color:var(--accent)}.usage-total dl{display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:0}.usage-total dt{color:var(--muted)}.usage-total dd{margin:0;font-variant-numeric:tabular-nums}.usage-table-wrap{overflow-x:auto}.usage-bar{display:block;width:200px;height:14px}.sidebar-bottom #guardrailsButton{display:block;margin:9px 0}#guardrailsStatus{color:var(--accent)}@media(max-width:760px){.usage-totals{grid-template-columns:1fr}}
 .usage-total h3{margin-top:0}#tokenUsage{scroll-margin-top:20px}@media(max-width:760px){.sidebar-bottom{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.sidebar-bottom>p,.sidebar-bottom>.service-link{display:none}.sidebar-bottom #guardrailsButton{margin:0}}
 .ai-setup{max-width:1100px}.setup-providers{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 10px}.setup-providers button{min-width:190px;text-align:left}.setup-providers small{display:block;font-size:12px;margin-top:5px;opacity:.85}.setup-step{border-top:1px solid var(--line);padding-top:20px;margin-top:20px}.setup-step h3{display:flex;align-items:center;gap:10px}.setup-number{display:inline-grid;place-items:center;width:28px;height:28px;border:1px solid var(--accent);border-radius:50%;color:var(--accent);font-size:14px;flex-shrink:0}.setup-models{display:grid;grid-template-columns:1fr 1fr;gap:18px}.setup-models>div{min-width:0}.setup-key-status{color:var(--accent)}.setup-feedback:not(:empty){padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);overflow-wrap:anywhere}.setup-feedback.error{color:#ffc2ae;border-color:#986656}.ai-setup [hidden]{display:none!important}@media(max-width:1000px){.setup-models{grid-template-columns:1fr}}@media(max-width:600px){.setup-providers button{flex:1;min-width:140px}}
+/* Keep long reports reachable independently of the fixed navigation. */
+@media(min-width:761px){
+ html,body{height:100%;overflow:hidden}
+ body>main{height:100vh;height:100dvh;overflow-y:scroll;scrollbar-gutter:stable;scrollbar-color:#5688ad #0c1c30;min-width:0}
+ .sidebar{overflow-y:auto;overscroll-behavior:contain}
+ .sidebar>*{flex-shrink:0}
+}
+body>main:focus{outline:none}

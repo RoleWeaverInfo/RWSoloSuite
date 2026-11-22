@@ -86,9 +86,12 @@ def context(project,snapshot,npc_id=None):
     if mode=='auto':mode='nonverbal' if raw.get('animal')==1 or (type(raw.get('intelligence')) is int and raw['intelligence']<3) else 'speech'
     if isinstance(raw.get('name'),str):profile['name']=raw['name'][:100]
     profile.pop('merchant',None);profile.pop('companion',None)
+    if project.get('schema_version')==3:
+        for key in ('native_tag','native_resref','secret','reveal_after','dialogue'):profile.pop(key,None)
     supplied=raw.get('allowed_actions',[]);supplied=supplied if isinstance(supplied,list) else []
     allowed=[]
     for command in COMMANDS:
+        if project.get('schema_version')==3 and command in ('recruit','dismiss'):continue
         if command not in supplied:continue
         if command=='recruit' and (kind!='party' or raw.get('owned')==1):continue
         if command=='recruit' and policy['requires_quest'] and snapshot.get('quests',{}).get(policy['requires_quest'])!=-1:continue

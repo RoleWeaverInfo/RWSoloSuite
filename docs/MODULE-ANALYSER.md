@@ -1,8 +1,8 @@
-# Read-only module analyser
+# Module analyser and AI conversion
 
 This feature is available in the current source checkout; it is not included in the published 1.0.0 packages yet.
 
-Open **Module analyser** in the dashboard sidebar. Choose an existing Neverwinter Nights 1 / Enhanced Edition `.mod` file and click **Import and analyse**. Alternatively, expand **Or use a path on this computer**, enter its full path, and click **Analyse local file**. A `.rwproject.json` file is not required.
+Open **Build & share → Module analyser** in the dashboard sidebar. The main workspace has its own scrollbar; scroll over the report to reach its lower sections. Choose an existing Neverwinter Nights 1 / Enhanced Edition `.mod` file and click **Import and analyse**. Alternatively, expand **Or use a path on this computer**, enter its full path, and click **Analyse local file**. A `.rwproject.json` file is not required.
 
 Studio makes a private snapshot in its workspace under `module-analysis`. It reads the module without executing its scripts, loading NWN, changing maps, adding AI NPCs or overwriting your editable project. You can leave the page while the analysis runs and return to select the saved report. Keep the service running until it finishes.
 
@@ -41,4 +41,35 @@ The explanation cites numbered evidence entries that you can expand. Missing cit
 
 **Delete analysis** asks for confirmation and removes only that report and its private snapshot. It does not delete the original module, installed modules, saves or Studio projects. Reports are local and are not automatically shared. Respect the module author's permissions before distributing extracted content.
 
-Importing does **not** convert a conventional module to Role Weaver gameplay. AI NPC conversion, companion injection and replacement of quest scripts remain future work; this analyser supplies the evidence needed to review such a conversion first.
+Importing alone is read-only. Conversion is a separate action described below. Deleting an analysis does not delete its exported AI copies. Use **Delete exported copy** in the conversion panel before deleting its analysis if you also want to remove the export. Installed modules and runtime registrations are retained. Keep the original module outside the analysis workspace.
+
+## Create an AI-enabled copy
+
+1. Select a completed analysis. Check missing dependencies and script warnings first. Set the installed NWN folder and NWScript compiler in **Local settings**.
+2. Expand **Create an AI-enabled copy**. Choose a distinct module filename and supply the folder containing the original HAK/TLK files. Subfolders are searched. Conversion refuses missing dependencies and conflicting Role Weaver resource names.
+3. Expand **Review creature profiles**. Enable or disable AI per creature, edit its chat alias, personality and public knowledge, and choose speech or nonverbal reactions. These are conservative starting profiles, not recovered personalities. Do not put secrets here unless the character may freely reveal them. **Save AI profile** keeps these settings independently of authoring projects.
+4. Keep companion support enabled for already recruited party members, familiars and summons, or turn it off. Recruitment, dismissal, party limits and their original quest/XP scripts remain native.
+5. Click **Create AI-enabled copy**. Studio compiles its added runtime, verifies the exported resources and registers the matching runtime profile. No LLM call or payment is needed for this step. It never runs the imported scripts during conversion or starts NWN.
+6. With NWN closed, choose **Install copy locally**. Start the updated Role Weaver service before NWN, configure your own API key, enable the AI service, and start a **new game** in the copied module. Existing saves of the original module do not contain the additions.
+
+The ZIP contains the converted `.mod`, matching `.rwproject.json`, required HAK/TLK files, added NWScript sources, play instructions and `preservation.json`. The original pack filenames and bytes are retained. Installation refuses to replace a different pack with the same name. Keep `.mod` and `.rwproject.json` together. On another computer, install the updated Studio, import the sidecar on **AI service status**, and copy the module to NWN's `modules` folder and its dependencies to `hak` and `tlk`. The published 1.0.0 service cannot load these converted profiles yet.
+
+Aurora can edit the copied module. Save Aurora edits under another name: converting again starts from the imported original, not from those edits. Do not import a converted profile into the area authoring editor; it describes an existing native module, not a generated room graph.
+
+## Play the converted adventure
+
+Use original NPC dialogue for quests, stores, recruitment and dismissal. At eligible ordinary dialogue exits there is an added **Talk freely with AI** choice. Select it, close the menu and speak in Talk. Alternatively, stand near a creature and use `!talk <alias> <message>`, or a unique character name followed by a colon. The play instructions list the aliases. `!end` stops the conversation.
+
+The AI receives a public profile and the current native dialogue line only when you select that line's AI exit. It does not receive the full dialogue tree, journal endings, compiled-script strings or concealed identities. Other native lines are not automatically learned in this first conversion version. Add reviewed public facts in the profile for richer roleplay. Speech cannot advance the original quest system; continue the original menu choices for those actions.
+
+Recruit an ally through the original adventure first, then use `!companions` for AI chat, follow/stay/guard, visual inventory and optional container/visit errands. Familiars and summoned creatures attach to their real native owners. Animals use nonverbal responses by default. Combat, possession, ownership, protected-item and locked/trapped-container checks remain enforced. Native companion dialogue, combat AI and death handlers are retained; the added dialogue/death hooks chain to the originals. Native rest, death, resurrection, item-acquisition and area scripts are not replaced.
+
+## Preservation and testing limits
+
+Every original area, creature, encounter, journal, faction, item and original source/compiled script resource must remain byte-for-byte identical. Only the module name/identity and four module event assignments change, plus append-only AI choices at script-free, unconditional dialogue exits. Existing dialogue entries, replies, conditions, actions and indices are preserved. Original module load, client entry, heartbeat and chat handlers are called once by wrappers when assigned. Automatic ambient patrol/social control and AI quest rewards are not injected.
+
+Conversion currently supports module archives up to 512 MB and 1,000 distinct creature identities; external HAKs are streamed without that size limit. Only inventoried creatures receive profiles; dynamically created creatures from unexamined external resources may need a later import extension. Familiar/summon template support is independent. Duplicate creatures retain their native tags and use per-instance chat history; ambiguous nearby aliases are rejected rather than selecting an arbitrary actor. Menus belonging to external HAKs are not rewritten. Some dialogues have no safe exit to extend, so use chat commands or companion controls instead.
+
+Static checks are not a playthrough guarantee. Custom engine extensions, dynamic module transitions, overrides, event-context assumptions and quest-specific inventory mechanics need manual testing. The original missing-script warnings still apply. Test transitions, quest acceptance/completion/rewards, stores, rest/death, native recruitment/dismissal, saving/loading and requested item transfers before sharing. The original adventure remains playable without AI; the added AI conversations require the updated service and your API key. Gameplay guardrails and token tracking apply normally.
+
+The local **Snow Hunt** test uses its original 17 areas, three journal quests and required content packs. Begin a new game in `rw_snow_hunt.mod`. Talk with the original quest characters, recruit Durthan through his original menu, then use `!companions`. Test a familiar or summon separately. Compare native quest rewards, XP changes, cold/rest rules and transitions with the original adventure. Snow Hunt and its content packs are local test inputs, not bundled Studio examples or release assets; obtain the original authors' permission before redistributing them.

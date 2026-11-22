@@ -20,7 +20,7 @@ async function checks(){
  // Last deletion clears every draft/proposal/undo reference and leaves create/import usable.
  await ctx.deleteSavedProject('saved_id');assert.deepEqual(requests,[{path:'/api/project/delete',body:{id:'saved_id',confirm:true}}]);
  assert.equal(run('project'),null);assert.equal(run('previousDraft'),null);assert.equal(run('proposal'),null);assert.equal(run('dirty'),false);
- assert(els['#workspace'].innerHTML.includes('No projects yet'));assert(els['#saveProject'].disabled);assert(els['#deleteProject'].disabled);assert(els['#projectSelect'].disabled);assert(!els['#newProject'].disabled);assert(!els['#importProject'].disabled);assert(els['nav[aria-label="Authoring workflow"]'].hidden);
+ assert(els['#workspace'].innerHTML.includes('No projects yet'));assert(els['#saveProject'].disabled);assert(els['#deleteProject'].disabled);assert(els['#projectSelect'].disabled);assert(!els['#newProject'].disabled);assert(!els['#importProject'].disabled);assert(!els['nav[aria-label="Authoring workflow"]'].hidden);
  run("page='settings'");ctx.render();assert(els['#workspace'].innerHTML.includes('providerSetup'));assert.equal(binds,1);
  // An unsuccessful deletion retains the selected project and its unsaved changes.
  reset();const before=run('JSON.stringify(project)');ctx.api=async()=>{throw Error('Permission denied');};

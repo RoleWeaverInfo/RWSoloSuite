@@ -132,6 +132,7 @@ class Bridge:
         session=next((s for s in self.sessions() if s['session_id']==session_id),None)
         if session is None: raise ValueError('No current game connection; resume the module and retry')
         project=self.store.built_project(session['build_id'])
+        if project.get('schema_version')==3 and action!='narrate':raise ValueError('Converted adventures keep their original encounters and quest scripts')
         if action not in ('narrate','spawn','cleanup'): raise ValueError('Unsupported game action')
         if action!='narrate':
             e=next((e for e in project['encounters'] if e['id']==encounter_id and e.get('mode')=='director'),None)

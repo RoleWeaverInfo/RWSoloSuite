@@ -10,7 +10,7 @@ from .module_analysis import build_report
 from .storage import write_json
 
 MAX_UPLOAD=4_000_000_000
-ACTIVE={'copying','analysing','explaining'}
+ACTIVE={'copying','analysing','explaining','converting'}
 
 def analysis_config(config,dependency_folder='',source_folder=None):
     result=dict(config)
@@ -104,6 +104,7 @@ class ModuleAnalyser:
         self.update(ident,status='failed',message=str(exc)[:1200] if isinstance(exc,(ValueError,KeyError,OSError)) else 'Analysis could not finish. The module may be malformed or use an unsupported format.')
     def run(self,ident,config):
         try:
+            write_json(self.folder(ident)/'dependency-location.json',{'folder':config.get('analysis_bundle_root','')})
             self.update(ident,status='analysing',message='Reading module resources')
             report,details=build_report(self.folder(ident)/'input.mod',config,lambda msg:self.update(ident,message=msg))
             report['module']['filename']=self.status(ident)['filename']
@@ -167,3 +168,37 @@ class ModuleAnalyser:
                 self.update(ident,status='complete',message='AI explanation ready; review the cited evidence')
             except Exception as exc:self.update(ident,status='complete',message='Local analysis is ready; AI explanation failed',ai_error=str(exc)[:1200] if isinstance(exc,ValueError) else 'The provider could not complete the explanation. Check the authoring model and API settings.')
         threading.Thread(target=work,daemon=True).start();return self.status(ident)
+
+    def conversion_plan(self,ident):
+        from .imported_module import plan
+        self.status(ident);folder=self.folder(ident);file=folder/'conversion-plan.json'
+        p=json.loads(file.read_text(encoding='utf-8')) if file.is_file() else plan(self.report(ident))
+        location=folder/'dependency-location.json'
+        dependency=json.loads(location.read_text(encoding='utf-8')).get('folder','') if location.is_file() else ''
+        return {'project':p,'dependency_folder':dependency,'build':self.status(ident).get('conversion_build')}
+
+    def convert(self,ident,profile,store,config,dependency_folder=''):
+        from .module_conversion import build,validate_plan_for_report
+        with self.lock:
+            if any(j['status'] in ACTIVE for j in self.jobs.values()):raise ValueError('Wait for the current import operation to finish')
+            report=self.report(ident);p=validate_plan_for_report(profile,report)
+            cfg=analysis_config(config,dependency_folder or self.conversion_plan(ident)['dependency_folder'])
+            write_json(self.folder(ident)/'conversion-plan.json',p)
+            write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
+            self.update(ident,status='converting',message='Preparing a separate AI-enabled copy',conversion_error='')
+        def work():
+            try:
+                result=build(self.folder(ident)/'input.mod',report,p,store,cfg,lambda msg:self.update(ident,message=msg))
+                self.update(ident,status='complete',message='AI copy ready. Original resources verified; gameplay testing still required.',conversion_build=result,conversion_error='')
+            except Exception as exc:
+                self.update(ident,status='complete',message='The original analysis is intact; conversion did not finish',conversion_error=str(exc)[:6500] if isinstance(exc,(ValueError,OSError,KeyError)) else 'Conversion could not finish. Check the module resources and compiler configuration.')
+        threading.Thread(target=work,daemon=True).start();return self.status(ident)
+
+    def save_conversion(self,ident,profile,config,dependency_folder=''):
+        from .module_conversion import validate_plan_for_report
+        with self.lock:
+            if self.status(ident)['status'] in ACTIVE:raise ValueError('Wait for the current import operation to finish')
+            p=validate_plan_for_report(profile,self.report(ident));cfg=analysis_config(config,dependency_folder)
+            write_json(self.folder(ident)/'conversion-plan.json',p)
+            write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
+        return {'saved':True}

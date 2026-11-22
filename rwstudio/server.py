@@ -83,6 +83,13 @@ class Application:
         if route=='/api/analyser/script':return self.analyser.script(b.get('id'),b.get('script'))
         if route=='/api/analyser/delete':return self.analyser.delete(b.get('id'),b.get('confirm'))
         if route=='/api/analyser/explain':return self.analyser.explain(b.get('id'),self.authoring_provider)
+        if route=='/api/analyser/conversion-plan':
+            result=self.analyser.conversion_plan(b.get('id'))
+            result['builds']=[m for m in self.store.builds() if m.get('converted') and m['project_id']==result['project']['id']]
+            result['build']=result['builds'][-1] if result['builds'] else None
+            return result
+        if route=='/api/analyser/conversion-save':return self.analyser.save_conversion(b.get('id'),b.get('project'),self.config,b.get('dependency_folder',''))
+        if route=='/api/analyser/convert':return self.analyser.convert(b.get('id'),b.get('project'),self.store,self.config,b.get('dependency_folder',''))
         if route=='/api/example/load':
             if b.get('confirm') is not True:raise ValueError('Confirm loading the included example. Any existing Emberseal draft will be backed up first.')
             from .bundled_example import install
@@ -169,6 +176,7 @@ class Application:
             return {'project':self.store.save(p)}
         if route=='/api/project/import':
             wrapped=b['document'];p=validate_project(wrapped.get('project',wrapped))
+            if p['schema_version']==3:raise ValueError('Import converted module profiles on AI service status. Edit their conversion settings in Module analyser.')
             ident=wrapped.get('build_id')
             if ident is not None:
                 if not re.fullmatch(r'[0-9a-f]{20}',ident):raise ValueError('Invalid build ID')
@@ -305,12 +313,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,{'builds':app.store.builds()})
             if route=='/download':
                 ident=query.get('build',[''])[0];p=app.store.built_project(ident);kind=query.get('kind',['zip'])[0]
+                if kind=='preservation' and p['schema_version']==3:
+                    file=app.store.root/'builds'/ident/'preservation.json'
+                    return self.send(200,file.read_bytes(),'application/json','preservation.json')
                 suffix={'zip':'-aurora.zip','mod':'.mod','project':'.rwproject.json'}.get(kind)
                 if suffix is None:raise ValueError('Unknown download type')
                 file=app.store.root/'builds'/ident/(p['module_name']+suffix)
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
             static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/updates.js':'updates.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
-            static.update({'/analyser.js':'analyser.js','/analyser.css':'analyser.css'})
+            static.update({'/analyser.js':'analyser.js','/analyser.css':'analyser.css','/conversion.js':'conversion.js'})
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))
