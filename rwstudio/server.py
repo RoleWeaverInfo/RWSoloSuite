@@ -61,6 +61,8 @@ class Application:
         self.bridge.start()
         from .updates import Updater
         self.updater=Updater(self.store.root)
+        from .module_analyser import ModuleAnalyser
+        self.analyser=ModuleAnalyser(self.store.root/'module-analysis')
 
     def state(self):
         from .area_presets import catalog as preset_catalog
@@ -74,6 +76,13 @@ class Application:
 
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
+        if route=='/api/analyser/list':return self.analyser.list()
+        if route=='/api/analyser/start':return self.analyser.start(b.get('path'),self.config,b.get('dependency_folder',''))
+        if route=='/api/analyser/status':return self.analyser.status(b.get('id'))
+        if route=='/api/analyser/report':return self.analyser.report(b.get('id'))
+        if route=='/api/analyser/script':return self.analyser.script(b.get('id'),b.get('script'))
+        if route=='/api/analyser/delete':return self.analyser.delete(b.get('id'),b.get('confirm'))
+        if route=='/api/analyser/explain':return self.analyser.explain(b.get('id'),self.authoring_provider)
         if route=='/api/example/load':
             if b.get('confirm') is not True:raise ValueError('Confirm loading the included example. Any existing Emberseal draft will be backed up first.')
             from .bundled_example import install
@@ -273,6 +282,8 @@ class Handler(BaseHTTPRequestHandler):
         parts=urlsplit(self.path);route=parts.path;query=parse_qs(parts.query);app=self.server.app
         try:
             if route=='/api/state':return self.send(200,app.state())
+            if route=='/api/analyser/download':return self.send(200,app.analyser.report(query.get('id',[''])[0]),filename='module-analysis.json')
+            if route=='/api/analyser/disassembly':return self.send(200,app.analyser.script(query.get('id',[''])[0],query.get('script',[''])[0])['disassembly'].encode('utf-8'),'text/plain; charset=utf-8','script-disassembly.txt')
             if route=='/api/guardrails':return self.send(200,app.guardrails.status())
             if route=='/api/usage':return self.send(200,app.ai_usage.report(query.get('period',['24h'])[0]))
             if route=='/api/assets/preview':
@@ -299,12 +310,23 @@ class Handler(BaseHTTPRequestHandler):
                 file=app.store.root/'builds'/ident/(p['module_name']+suffix)
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
             static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/updates.js':'updates.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
+            static.update({'/analyser.js':'analyser.js','/analyser.css':'analyser.css'})
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))
         except (ValueError,FileNotFoundError,KeyError):self.send(400,{'error':'Project or artifact not found'})
     def do_POST(self):
         if not self.trusted() or not secrets.compare_digest(self.headers.get('X-Studio-Token',''),self.server.app.token):return self.send(403,{'error':'Reload Studio to establish a local session'})
+        if urlsplit(self.path).path=='/api/analyser/upload':
+            try:
+                if self.headers.get('Content-Type','').split(';')[0]!='application/octet-stream':raise ValueError('Upload a binary .mod file')
+                if self.headers.get('Transfer-Encoding'):raise ValueError('Upload requires a known file size')
+                self.connection.settimeout(120)
+                query=parse_qs(urlsplit(self.path).query)
+                result=self.server.app.analyser.upload(query.get('filename',[''])[0],self.rfile,int(self.headers.get('Content-Length','0')),self.server.app.config,query.get('dependencies',[''])[0])
+                return self.send(200,result)
+            except (ValueError,OSError) as exc:return self.send(400,{'error':str(exc)[:1200]})
+            except Exception:return self.send(500,{'error':'Module upload could not finish. Retry the import.'})
         if self.headers.get('Content-Type','').split(';')[0]!='application/json':return self.send(415,{'error':'JSON required'})
         try:
             length=int(self.headers.get('Content-Length','0'))

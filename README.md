@@ -9,6 +9,7 @@ Download **version 1.0.0, the first stable release**, from [GitHub Releases](htt
 - [Installation, API keys and updates](docs/INSTALLATION.md)
 - [Talk to AI NPCs and use companions](docs/PLAYER-GUIDE.md)
 - [Create an adventure with ChatGPT and Studio](docs/CREATE-AN-ADVENTURE.md)
+- [Read-only module analyser (current source; not yet in 1.0.0 downloads)](docs/MODULE-ANALYSER.md)
 - [Included Emberseal adventure](docs/EMBERSEAL.md)
 - [Release notes](docs/RELEASE-1.0.0.md)
 - [Guardrails and token usage](GUARDRAILS-AND-USAGE.md)
@@ -41,6 +42,8 @@ The included Emberseal build already uses these defaults and service checks. For
 Saved keys use Windows DPAPI, macOS Keychain or Linux Secret Service and are excluded from project exports. Environment keys remain supported. Gameplay guardrails and token tracking are available in the dashboard.
 
 ## Source development and packaging
+
+The current source adds **Module analyser** in the dashboard sidebar. Import a normal NWN `.mod` to inspect its story evidence, characters, encounters, journal quests, dialogue branches and compiled NWScript. Imports preserve the original and stay separate from editable projects. Local inspection needs no API key; an optional authoring-model explanation cites recovered evidence. This is read-only inspection, not automatic AI conversion. See the [analyser guide](docs/MODULE-ANALYSER.md) for dependencies, exports and static-analysis limits.
 
 The source ZIP is separate from the Python-included application downloads. Use Python 3.12+ (release builds use 3.13). Create a virtual environment and install `requirements-guardrails.txt` and `requirements-platform.txt`. On Linux/Mac, build the native NWScript compiler using `python installer/build_nwnsc.py`; CMake, Bison 3+ and a C++ compiler are needed. Start with `python service.py` or the supplied source launcher.
 
