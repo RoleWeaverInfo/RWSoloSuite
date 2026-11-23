@@ -89,6 +89,7 @@ class Profiles(unittest.TestCase):
         from rwstudio.storage import write_json
         manager=ModuleAnalyser(Path(self.temp.name)/'analysis');ident=manager.begin('original.mod')
         self.report['module']['filename']='original.mod'
+        (manager.folder(ident)/'input.mod').write_bytes(self.path.read_bytes())
         write_json(manager.folder(ident)/'report.json',self.report);manager.update(ident,status='complete')
         def wait():
             until=time.monotonic()+3
@@ -97,12 +98,14 @@ class Profiles(unittest.TestCase):
         with patch('rwstudio.conversion_profiles.generate',side_effect=ValueError('Provider unavailable')):
             manager.generate_profiles(ident,self.p,Mock(),{});wait()
         self.assertEqual(manager.status(ident)['profile_error'],'Provider unavailable')
-        self.assertEqual(manager.conversion_plan(ident)['project'],self.p)
+        saved=manager.conversion_plan(ident)['project'];self.assertIn('mission_editor',saved);saved.pop('mission_editor')
+        self.assertEqual(saved,self.p)
         expected=copy.deepcopy(self.p);expected['npcs'][0]['background']='Keeps a notebook.'
         with patch('rwstudio.conversion_profiles.generate',return_value=expected):
             manager.generate_profiles(ident,self.p,Mock(),{});wait()
         self.assertEqual(manager.status(ident)['profile_error'],'')
-        self.assertEqual(manager.conversion_plan(ident)['project'],expected)
+        saved=manager.conversion_plan(ident)['project'];saved.pop('mission_editor')
+        self.assertEqual(saved,expected)
 
 
 if __name__=='__main__':unittest.main()

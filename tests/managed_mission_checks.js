@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),ctx={window:{}};vm.createContext(ctx);
+for(const f of ['managed-mission-model','native-mission-model'])vm.runInContext(fs.readFileSync('web/'+f+'.js','utf8'),ctx);
+const M=ctx.window.ManagedMissionModel,N=ctx.window.NativeMissionModel,m=JSON.parse(fs.readFileSync(0,'utf8'));
+const targets={visit:[{id:'ar_cave001',name:'Icy Cave'}],talk:[{id:'oberagh001',name:'Oberagh'}],retrieve:[],defeat:[]};
+const added=M.add(m,targets);assert.equal(m.quest.steps.at(-2).id,added.id);assert.equal(m.quest.steps.at(-1).target,'oberagh001');
+M.move(m,added.id,-1);assert.equal(m.quest.steps[1].id,added.id);
+M.remove(m,'defeat_obzul');assert.equal(m.quest.steps[0].id,added.id);
+assert.throws(()=>M.remove(m,m.quest.steps.at(-1).id),/final/);
+for(let i=0;i<m.quest.steps.length;i++)assert.equal(m.quest.steps[i].next,m.quest.steps[i+1]?.id||'');
+const p={summary:'',mission_editor:{quests:[{id:'nq_2',tag:'j_ogre',stages:[]}],links:[]},mission_control:{version:1,missions:[m]}};
+assert(N.graph(p,'nq_2').nodes.every(n=>n.kind==='controlled-stage'));
+assert(N.graph(p,'nq_2').edges.every(e=>e.managed&&!e.review));
+assert.equal(N.graph(p,'nq_2',{},false,true).nodes.length,0);
+const before=N.snapshot(p);m.quest.gold=321;assert.equal(before.mission_control.missions[0].quest.gold,0);
+assert(M.controls(m,null,false).includes('Keep original module quest'));assert(M.controls(m,null,false).includes('experimental'));
+process.stdout.write(JSON.stringify(m));

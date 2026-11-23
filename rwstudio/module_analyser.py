@@ -178,10 +178,39 @@ class ModuleAnalyser:
         from .conversion_profiles import refresh
         self.status(ident);folder=self.folder(ident);file=folder/'conversion-plan.json'
         p=json.loads(file.read_text(encoding='utf-8')) if file.is_file() else plan(self.report(ident))
-        p=refresh(p,self.report(ident))
+        report=self.report(ident);p=refresh(p,report)
+        from .conversion_missions import workspace,evidence,review
+        from .managed_missions import catalog
+        p.setdefault('mission_editor',workspace(report))
         location=folder/'dependency-location.json'
         dependency=json.loads(location.read_text(encoding='utf-8')).get('folder','') if location.is_file() else ''
-        return {'project':p,'dependency_folder':dependency,'build':self.status(ident).get('conversion_build')}
+        return {'project':p,'dependency_folder':dependency,'build':self.status(ident).get('conversion_build'),
+                'mission_evidence':evidence(report,folder/'input.mod'),'mission_baseline':workspace(report),
+                'mission_review':review(p['mission_editor'],report),'mission_conversion':catalog(report,folder/'input.mod')}
+
+    def copy_mission(self,ident,profile,tag):
+        from .module_conversion import validate_plan_for_report
+        from .managed_missions import draft
+        report=self.report(ident);validate_plan_for_report(profile,report)
+        if any(m['source_tag']==tag for m in profile.get('mission_control',{}).get('missions',[])):
+            raise ValueError('This mission already has an editable copy. Switch its control mode or edit that draft.')
+        return {'mission':draft(report,tag)}
+
+    def validate_mission_targets(self,ident,p,report):
+        if p.get('mission_control',{}).get('missions'):
+            from .managed_missions import validate,catalog
+            validate(p['mission_control'],report,catalog(report,self.folder(ident)/'input.mod')['targets'])
+
+    def review_missions(self,ident,profile):
+        from .module_conversion import validate_plan_for_report
+        from .conversion_missions import review
+        report=self.report(ident);p=validate_plan_for_report(profile,report)
+        self.validate_mission_targets(ident,p,report)
+        if 'mission_editor' not in p:raise ValueError('Open the native mission editor first')
+        result=review(p['mission_editor'],report)
+        from .managed_missions import active
+        if active(p):result['warnings'].append('Experimental Studio control replaces Rival Ogre Mages progression/rewards. Build a separate copy and start a new game. Native journal edits for this quest are superseded by the editable objectives.')
+        return result
 
     def generate_profiles(self,ident,profile,provider,config,dependency_folder=''):
         from .module_conversion import validate_plan_for_report
@@ -208,6 +237,7 @@ class ModuleAnalyser:
         with self.lock:
             if any(j['status'] in ACTIVE for j in self.jobs.values()):raise ValueError('Wait for the current import operation to finish')
             report=self.report(ident);p=validate_plan_for_report(profile,report)
+            self.validate_mission_targets(ident,p,report)
             cfg=analysis_config(config,dependency_folder or self.conversion_plan(ident)['dependency_folder'])
             write_json(self.folder(ident)/'conversion-plan.json',p)
             write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
@@ -224,7 +254,7 @@ class ModuleAnalyser:
         from .module_conversion import validate_plan_for_report
         with self.lock:
             if self.status(ident)['status'] in ACTIVE:raise ValueError('Wait for the current import operation to finish')
-            p=validate_plan_for_report(profile,self.report(ident));cfg=analysis_config(config,dependency_folder)
+            report=self.report(ident);p=validate_plan_for_report(profile,report);self.validate_mission_targets(ident,p,report);cfg=analysis_config(config,dependency_folder)
             write_json(self.folder(ident)/'conversion-plan.json',p)
             write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
         return {'saved':True}

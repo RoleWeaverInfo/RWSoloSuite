@@ -38,7 +38,7 @@ window.ModuleAnalyser=(()=>{
       <div class="analysis-controls"><label>Saved analyses <select id="analysisSelect"><option value="">Select a report</option></select></label><button id="analysisRefresh">Refresh</button><button id="analysisDelete" class="danger" disabled>Delete analysis</button></div>
       <section id="analysisReport"></section><section id="analysisScript" hidden></section></div>`;
     const root=host.querySelector('.module-analyser'),q=s=>root.querySelector(s);
-    let job=null,timer=null,pending=false,selection=0;
+    let job=null,timer=null,pending=false,selection=0,conversionController=null;
     const alive=()=>root.isConnected;
     const error=e=>{if(alive()){q('#analysisError').hidden=!e;q('#analysisError').textContent=e?.message||String(e||'');}};
     function controls(){
@@ -70,6 +70,7 @@ window.ModuleAnalyser=(()=>{
       if(active(job))timer=setTimeout(()=>{if(alive())watch().catch(error);},1800);
     }
     function show(){
+      conversionController?.destroy();conversionController=null;
       const r=state.report,box=q('#analysisReport');q('#analysisScript').hidden=true;
       if(!r||r.analysis_id!==state.id){box.innerHTML='';return;}
       const provider=getApp().settings.provider,model=provider==='gemini'?getApp().settings.authoring_gemini_model:getApp().settings.authoring_model;
@@ -80,7 +81,7 @@ window.ModuleAnalyser=(()=>{
       box.querySelectorAll('[data-analysis-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.analysisTab;state.search='';state.page=0;show();});
       q('#analysisSearch').oninput=e=>{state.search=e.target.value;state.page=0;rows();};
       q('#analysisExplain').onclick=()=>safely(async()=>{job=await api('/api/analyser/explain',{id:state.id});status();await watch();});
-      window.ModuleConversion?.mount(q('#analysisConversion'),api,state.id,active(job),async next=>{job=next;status();await watch();});
+      conversionController=window.ModuleConversion?.mount(q('#analysisConversion'),api,state.id,active(job),async next=>{job=next;status();await watch();},name=>safely(()=>inspect(name)));
       rows();controls();
     }
     function rows(){
@@ -119,6 +120,7 @@ window.ModuleAnalyser=(()=>{
       await api('/api/analyser/delete',{id:state.id,confirm:true});state.id='';state.report=null;await list();await watch();
     });
     safely(async()=>{await list();await watch();});
+    return {destroy(){clearTimeout(timer);conversionController?.destroy();}};
   }
   return {mount};
 })();

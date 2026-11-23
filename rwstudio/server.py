@@ -77,6 +77,8 @@ class Application:
     def post(self,route,b):
         if not isinstance(b,dict):raise ValueError('Expected a JSON object')
         if route=='/api/analyser/list':return self.analyser.list()
+        if route=='/api/analyser/missions-review':return self.analyser.review_missions(b.get('id'),b.get('project'))
+        if route=='/api/analyser/mission-copy':return self.analyser.copy_mission(b.get('id'),b.get('project'),b.get('tag'))
         if route=='/api/analyser/start':return self.analyser.start(b.get('path'),self.config,b.get('dependency_folder',''))
         if route=='/api/analyser/status':return self.analyser.status(b.get('id'))
         if route=='/api/analyser/report':return self.analyser.report(b.get('id'))
@@ -323,6 +325,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,file.read_bytes(),'application/octet-stream',file.name)
             static={'/':'author.html','/legacy':'index.html','/app.js':'app.js','/style.css':'style.css','/spatial.js':'spatial.js','/presets.js':'presets.js','/design.js':'design.js','/catalog.js':'catalog.js','/editor.js':'editor.js','/provider-setup.js':'provider-setup.js','/updates.js':'updates.js','/safety.js':'safety.js','/editor.css':'editor.css','/player':'player.html','/player.js':'player.js','/startup':'startup.html','/startup.js':'startup.js','/startup.css':'startup.css','/branding/splash.png':'branding/splash.png'}
             static.update({'/analyser.js':'analyser.js','/analyser.css':'analyser.css','/conversion.js':'conversion.js'})
+            static.update({('/'+name):name for name in ('mission-graph.js','mission-model.js','mission-editor.js','mission-editor.css')})
+            static.update({('/'+name):name for name in ('managed-mission-model.js','native-mission-model.js','native-mission-editor.js')})
             if route not in static:return self.send(404,{'error':'Not found'})
             file=ROOT/'web'/static[route];mime=mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
             return self.send(200,file.read_bytes(),mime+('; charset=utf-8' if mime.startswith('text/') or mime=='application/javascript' else ''))

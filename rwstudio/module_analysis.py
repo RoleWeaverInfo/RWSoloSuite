@@ -173,7 +173,7 @@ def build_report(path,config,progress=lambda s:None,actions=None):
                         target=link.get('Index');condition=link.get('Active','')
                         if condition:todo_scripts.add(condition.lower());hooks.append({'owner':name,'event':'Dialogue condition','script':condition.lower(),'source':at+'/link['+str(target)+']'})
                         links.append({'index':target,'condition':condition,'is_link':bool(link.get('IsChild'))})
-                    lines.append({'id':collection+':'+str(i),'role':role,'text':res.text(line.get('Text')),'speaker':line.get('Speaker',''),'action':line.get('Script',''),'links':links,'source':at})
+                    lines.append({'id':collection+':'+str(i),'role':role,'text':res.text(line.get('Text')),'speaker':line.get('Speaker',''),'action':line.get('Script',''),'links':links,'source':at,'quest':line.get('Quest',''),'quest_entry':line.get('QuestEntry')})
             starts=[]
             for link in node.get('StartingList',[]):
                 condition=link.get('Active','');starts.append({'index':link.get('Index'),'condition':condition})

@@ -193,8 +193,29 @@ class HTTPTests(unittest.TestCase):
         self.request('/api/project/save',{'project':draft});status,raw=self.request('/api/player/register',{'build_id':'d'*20,'project':built})
         self.assertEqual(status,200);self.assertTrue(json.loads(raw)['registered']);self.assertEqual(self.app.store.get(built['id'])['story'],draft['story'])
     def test_static_dashboard_assets(self):
-        for url in ['/','/app.js','/style.css']:
+        for url in ['/','/app.js','/style.css','/mission-graph.js','/mission-model.js','/mission-editor.js','/mission-editor.css','/native-mission-model.js','/native-mission-editor.js','/managed-mission-model.js']:
             status,raw=self.request(url);self.assertEqual(status,200);self.assertGreater(len(raw),100)
+    def test_native_mission_review_save_and_identity_protection(self):
+        from test_module_analyser import fixture, ACTIONS
+        from rwstudio.module_analysis import build_report
+        ident=self.app.analyser.begin('original.mod');folder=self.app.analyser.folder(ident)
+        source=folder/'input.mod';source.write_bytes(fixture())
+        report,_=build_report(source,{},actions=ACTIONS);report['module']['filename']='original.mod'
+        write_json(folder/'report.json',report);self.app.analyser.update(ident,status='complete')
+        _,raw=self.request('/api/analyser/conversion-plan',{'id':ident});p=json.loads(raw)['project']
+        p['mission_editor']['quests'][0]['stages'][0]['text']='Reviewed quest instruction.'
+        _,raw=self.request('/api/analyser/missions-review',{'id':ident,'project':p})
+        self.assertEqual(len(json.loads(raw)['journal_changes']),1)
+        self.request('/api/analyser/conversion-save',{'id':ident,'project':p})
+        _,raw=self.request('/api/analyser/conversion-plan',{'id':ident});self.assertEqual(json.loads(raw)['project'],p)
+        invalid=copy.deepcopy(p);invalid['mission_editor']['quests'][0]['stages'][0]['native_id']=999
+        for route,body,headers,expected in [
+            ('missions-review',p,{'X-Studio-Token':'bad'},403),
+            ('missions-review',invalid,{},400),('conversion-save',invalid,{},400)]:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.request('/api/analyser/'+route,{'id':ident,'project':body},headers)
+            self.assertEqual(error.exception.code,expected)
+        self.assertEqual(source.read_bytes(),fixture())
+        self.assertEqual(self.app.analyser.conversion_plan(ident)['project'],p)
     def test_project_delete_requires_confirmation_and_csrf(self):
         ident='emberseal_demo';path=self.app.store.path(ident)
         for headers,body,status in [({'X-Studio-Token':'bad'},{'id':ident,'confirm':True},403),({}, {'id':ident},400),({}, {'id':'../settings','confirm':True},400)]:

@@ -20,7 +20,10 @@ class NativeStoreContextTests(unittest.TestCase):
   snapshot=dict(merchant=dict(npc='bram',available=1,price_mode='native',items=[dict(name='Dagger',quantity=2),dict(name='Dagger',quantity=1),dict(name='Returned silver ring',quantity=1)]))
   shop=context(n,snapshot);self.assertEqual(shop['items'][0]['quantity'],3)
   self.assertNotIn('price',shop['items'][0]);answer=ground_quote('A dagger costs 999 gold','How much are daggers?',shop)
-  self.assertNotIn('999',answer);self.assertIn('Returned silver ring',answer);self.assertIn('exact buying and selling prices',answer)
+  self.assertNotIn('999',answer);self.assertIn('Dagger (3 available)',answer);self.assertIn('exact buying and selling prices',answer)
+  # Specific stock questions now filter to the requested goods. A general stock
+  # question must still include player-sold items from the native observation.
+  self.assertIn('Returned silver ring',ground_quote('A ring costs 999 gold','What do you have in stock?',shop))
   self.assertNotIn('999',ground_quote('999 gold','Hello',shop))
  def test_native_merchant_dialogue_keeps_policy_until_observation_is_read(self):
   p=example();p['npcs'][-1]['merchant']['interface']='native';provider=Provider('unused')

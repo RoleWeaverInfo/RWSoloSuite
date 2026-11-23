@@ -1,0 +1,21 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const ctx={window:{}};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync('web/native-mission-model.js','utf8'),ctx);
+const M=ctx.window.NativeMissionModel,{project:p,baseline,evidence}=JSON.parse(fs.readFileSync(0,'utf8'));
+const w=p.mission_editor,q=w.quests[0],from=M.key(q,q.stages[0]),to=M.key(q,q.stages[1]);
+assert.equal(M.graph(p,q.id).edges.length,0,'Journal numbers must not fabricate progression edges');
+const writes=M.graph(p,q.id,evidence,true);
+assert(writes.edges.some(e=>e.to===from&&e.label==='Journal write'));
+assert(!writes.edges.some(e=>e.from===from&&e.to===to));
+M.link(w,from,to);assert(M.graph(p,q.id).edges.every(e=>e.review&&e.optional));
+assert.equal(M.changes(w,baseline).length,0,'Review links must not become journal edits');
+assert.throws(()=>M.link(w,from,to),/already/);assert.throws(()=>M.link(w,from,'unknown'),/different/);
+assert.throws(()=>M.link(w,from,q.id),/missions/);
+// Revisit loops can be legitimate native behavior. An annotation is not a new engine path.
+M.link(w,to,from);assert.equal(w.links.length,2);
+q.name='The missing seal';q.stages[0].text='Recover the seal and bring it back safely.';
+q.stages[0].label='Seek the seal';q.stages[1].notes='Creator-only ending discussion';
+assert.equal(M.changes(w,baseline).length,2);
+assert.equal(M.snapshot(p).mission_editor.quests[0].stages[1].notes,'Creator-only ending discussion');
+assert(!Object.hasOwn(M.snapshot(p),'npcs'));
+process.stdout.write(JSON.stringify(p));
