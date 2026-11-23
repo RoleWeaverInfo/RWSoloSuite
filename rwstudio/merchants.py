@@ -36,7 +36,7 @@ def context(npc,snapshot):
     if observed.get('price_mode')=='native':
         if npc['merchant'].get('interface')!='native':return dict(available=False,items=[])
         grouped={}
-        for item in observed.get('items',[])[:32]:
+        for item in observed.get('items',[])[:256]:
             if not isinstance(item,dict):continue
             name=item.get('name');qty=item.get('quantity')
             if not isinstance(name,str) or not 1<=len(name)<=100 or type(qty) is not int or not 0<qty<=1000000:continue
@@ -58,6 +58,12 @@ def ground_quote(reply,message,shop):
     items=[i for i in shop['items'] if i['quantity']>0]
     if not items:return 'My stock is sold out for now.'
     if shop.get('price_mode')=='native':
+        # Prefer the actual goods named in a question, including plural forms
+        # such as "swords" matching "Longsword +2". Do not claim absence when
+        # the bounded observation says more stock exists.
+        terms={w.rstrip('s') for w in re.findall(r'[a-z]{3,}',message.lower())}-{'what','which','have','you','your','the','for','sale','stock','stack','sell','selling','price','cost','how','much','any','please','show','tell','about','available','there','are','with','can','could','would','like','inventory','ware','good','carry','carrying'}
+        matches=[i for i in items if any(t in i['name'].lower() for t in terms)]
+        if matches:items=matches
         goods='; '.join(f'{i["name"]} ({i["quantity"]} available)' for i in items[:8])
         more=' There are more goods to browse.' if shop.get('more_items') or len(items)>8 else ''
         return 'On my shelves: '+goods+'.'+more+' Browse my goods for your exact buying and selling prices before confirming a trade.'

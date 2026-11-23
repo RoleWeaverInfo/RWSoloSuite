@@ -1,6 +1,22 @@
 """Link imported merchants to native shops without recreating stock or prices."""
 import copy
+import re
 from .merchants import defaults
+
+
+def trade_intent(message):
+    """Only explicit requests may open a shop; questions stay in conversation."""
+    s=message.lower().replace('\u2019', "'")
+    if re.search(r"\b(don't|do not|not now|never mind|no thanks|wouldn't|if|hypothetically)\b",s):return ''
+    if re.search(r'\b(story|background|childhood|history|your life|your past)\b',s):return ''
+    if re.search(r'\b(tell me|what|why|how|who|where|when|do you|have you|is there|are there)\b',s) and not re.search(r'\b(show|showing|open|browse|see|look|let me|let us|let\'s)\b',s):
+        return ''
+    request=bool(re.search(r"\b(please|want|like|can i|can we|can you|could i|could we|could you|would you|may i|let me|let us|let's)\b",s) or re.match(r'\s*(show|shoe|open|browse|trade|barter|buy|purchase|sell|haggle|negotiate)\b',s))
+    if not request:return ''
+    if re.search(r'\b(haggle|negotiate)\b',s) or re.search(r'\b(discount|better price|lower.*price)\b',s):return 'haggle'
+    if re.search(r'\b(trade|barter|buy|purchase|sell)\b',s):return 'browse'
+    if re.search(r'\b(show|showing|shoe|open|browse|see|look at)\b',s) and re.search(r'\b(store|shop|wares|goods|inventory|stock|merchandise|equipment|selection|for sale)\b',s):return 'browse'
+    return ''
 
 
 def add_store_metadata(report, path):
@@ -83,15 +99,67 @@ def adapt_runtime(scripts, p, literal, replace):
     src=replace(src,'JsonInt(valid && AWMNear(pc,actor))','JsonInt(valid && GetLastOpenedBy(store)==pc && AWMNear(pc,actor))')
     src=replace(src,'JsonInt(!valid)','JsonInt(!valid || GetLastOpenedBy(store)!=pc)')
     src=replace(src,'object item=GetFirstItemInInventory(store);int count=0;', 'object item=OBJECT_INVALID;if(valid && GetLastOpenedBy(store)==pc)item=GetFirstItemInInventory(store);int count=0;')
+    src=replace(src,'count<32','count<256')
     start=src.index('void AWMOpen(');end=src.index('\nvoid AWMBuy(',start)
-    src=src[:start]+'''void AWMOpen(object pc,object actor,int haggle=FALSE){
+    src=src[:start]+'''string RWMTradeDialogue(object actor){return "";}
+void AWMOpen(object pc,object actor,int haggle=FALSE){
  json shop=AWMShop(actor);if(AWText(shop,"id")=="" || !AWMNear(pc,actor) || IsInConversation(pc) || IsInConversation(actor))return;
- // Re-enter the original dialogue. Its conditions, trade scripts, Appraise
- // rules, discounts and purchase/sale events remain authoritative.
- string dlg=AWText(shop,"conversation");if(dlg==""){SendMessageToPC(pc,"Use this character's original trading interaction.");return;}
+ // A separate trading dialogue retains native starting conditions and runs
+ // the original store action in its required GetPCSpeaker context.
+ string dlg=RWMTradeDialogue(actor);if(dlg=="")dlg=AWText(shop,"conversation");if(dlg==""){SendMessageToPC(pc,"Use this character's original trading interaction.");return;}
  AssignCommand(actor,ActionStartConversation(pc,dlg,TRUE,FALSE));
 }'''+src[end:]
     # There is no custom transaction path for imported native stores.
     start=src.index('void AWMBuy(')
     src=src[:start]+'void AWMBuy(object pc,object actor,int index){}\n'
     scripts['aw_merchant']=src
+
+
+def add_trade_dialogues(entries, extra, report, p, scripts, literal, replace):
+    """Shortcut only script-free roots with one unconditional terminal shop choice.
+
+    Clone the enhanced native dialogue, retaining start-condition order and all
+    other paths. Native quest/action gates are never skipped. No NCS is changed.
+    """
+    from .nwn.gff import read,write,text
+    from .nwn.area_tools import set_value
+    records=[];dispatch=[];cache={}
+    for n in p['npcs']:
+        if not n['ai_enabled'] or not n['merchant']['enabled']:continue
+        link=n.get('native_store',{});name=link.get('conversation','');key=(name,2029)
+        if key not in entries:continue
+        if name not in cache:
+            original=next((d for d in report['dialogues'] if d['id']==name),None)
+            if original is None:continue
+            # Wrapped actions keep their original names in the report.
+            actions={line['id']:line.get('action','') for line in original.get('lines',[])}
+            kind,dlg=read(entries[key]);roots=dlg[1].get('StartingList',(15,[]))[1]
+            changed=[]
+            for idx in dict.fromkeys(r[1].get('Index',(4,-1))[1] for r in roots):
+                nodes=dlg[1].get('EntryList',(15,[]))[1];replies=dlg[1].get('ReplyList',(15,[]))[1]
+                if not 0<=idx<len(nodes):continue
+                entry=nodes[idx];fields=entry[1]
+                if 'EntryList:'+str(idx) not in actions or actions['EntryList:'+str(idx)] or any(fields.get(k,(10,b''))[1] for k in ('Quest','Speaker')):continue
+                choices=[]
+                for edge in fields.get('RepliesList',(15,[]))[1]:
+                    ri=edge[1].get('Index',(4,-1))[1]
+                    if not 0<=ri<len(replies):continue
+                    action=actions.get('ReplyList:'+str(ri),'')
+                    if action not in link.get('scripts',[]):continue
+                    r=replies[ri][1]
+                    if edge[1].get('Active',(11,b''))[1] or r.get('Quest',(10,b''))[1] or r.get('EntriesList',(15,[]))[1]:choices.append(None)
+                    else:choices.append((ri,action))
+                if len(choices)!=1 or choices[0] is None:continue
+                ri,action=choices[0]
+                set_value(entry,'Text',text(''),12);set_value(entry,'RepliesList',[],15)
+                set_value(entry,'Script',action.encode('ascii'),11)
+                changed.append(dict(entry=idx,reply=ri,action=action))
+            if not changed:cache[name]='';continue
+            target='rwc_t'+str(len(records)).zfill(5)
+            extra[target,2029]=write(kind,dlg);cache[name]=target
+            records.append(dict(dialogue=target,original=name,shortcuts=changed))
+        if cache[name]:dispatch.append('if(RWProfile(actor)=='+literal(n['id'])+')return '+literal(cache[name])+';')
+    if dispatch:
+        scripts['aw_merchant']=replace(scripts['aw_merchant'],'string RWMTradeDialogue(object actor){return "";}',
+            'string RWMTradeDialogue(object actor){'+''.join(dispatch)+'return "";}')
+    return records

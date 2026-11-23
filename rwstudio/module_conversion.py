@@ -18,7 +18,7 @@ from .nwn.analysis_formats import Archive,gff
 from .nwn.gff import read,write,text
 from .nwn.area_tools import set_value as put,pack_module,node
 from .imported_module import plan,validate
-from .conversion_runtime import runtime
+from .conversion_runtime import runtime,replace
 
 EVENTS={'Mod_OnModLoad':'rwc_load','Mod_OnClientEntr':'rwc_enter','Mod_OnHeartbeat':'rwc_beat','Mod_OnPlrChat':'rwc_chat'}
 
@@ -130,6 +130,8 @@ def _build(path,report,profile,store,config,progress):
     hooks={k:res.ifo.get(k,'') for k in EVENTS}
     scripts,extra=runtime(p,'0'*20,Game(),hooks)
     changes=patch_dialogues(entries,report,res,scripts)
+    from .conversion_merchants import add_trade_dialogues
+    merchant_shortcuts=add_trade_dialogues(entries,extra,report,p,scripts,literal,replace)
     dependencies=[]
     for filename,archive in res.packs:dependencies.append((archive.path,dict(file=filename,kind='hak',sha256=sha256(archive.path))))
     if 'custom' in res.tables:
@@ -175,7 +177,7 @@ def _build(path,report,profile,store,config,progress):
         if set(packed.index)!=set(entries) or any(packed.get(*key)!=value for key,value in entries.items()):raise ValueError('Exported module failed resource verification')
         preservation=dict(source_sha256=p['source_sha256'],source_filename=report['module']['filename'],original_resources=len(original),unchanged_resources=len(original)-len(allowed),
             maps_byte_identical=True,original_scripts_byte_identical=True,creatures_byte_identical=True,quests_byte_identical=True,
-            wrapped_events=hooks,dialogue_additions=changes,gameplay_tested=False,
+            wrapped_events=hooks,dialogue_additions=changes,merchant_shortcuts=merchant_shortcuts,gameplay_tested=False,
             note='Static preservation checks passed. Native callbacks still require in-game regression testing.',
             resources=[dict(name=n,type=k,sha256=hashlib.sha256(v).hexdigest(),unchanged=entries[n,k]==v) for (n,k),v in original.items()])
         manifest=dict(build_id=digest,project_id=p['id'],title=p['title'],module=mod.name,sha256=sha256(mod),resources=len(entries),areas=len(report['areas']),rooms=0,quests=len(report['quests']),compiled_scripts=sum(k==2010 for n,k in entries),standalone=True,optional_live_ai=True,gameplay_tested=False,converted=True,path=str(destination/mod.name))
@@ -214,7 +216,7 @@ Requires NWN: Enhanced Edition and a Role Weaver Module Studio build with module
 5. At safe farewell choices and ordinary one-line greetings, eligible conversations include Talk freely with AI ({len(changes)} dialogue files enhanced). Close the menu and speak in Talk. Else use !talk <alias> <message> nearby, or address a unique nearby NPC by name followed by a colon. Use !end to finish. Duplicate nearby creatures must be selected individually through dialogue; aliases never guess between them.
 6. Recruit allies through the module's original dialogue. Type !companions for AI chat, follow/stay/guard, inventory and errands with recruited allies, familiars or summons. Native recruitment, party limits, XP rules and dismissal remain unchanged. Locked/trapped containers, protected items, possession and combat restrictions still apply. Animals use nonverbal responses.
 7. Companion errands are optional and may interact with module-specific item scripts; test ordinary quest pickup and reward paths. AI profiles include public descriptions, setting and optional generated characterization. Original NPC lines and player replies are remembered as they occur and persist in saves. Unvisited branches are withheld from AI prompts. Companions can discuss recent conversations shared by their owner. Creator-edited knowledge is public. Native quest state is not inferred from static scripts; use original menus for progression and rewards.
-8. Detected native merchants have AI merchant abilities enabled by default unless the creator disables them. Open their original shop once before asking AI about current stock. Requests to browse, buy or negotiate return to the original trading conversation; choose its shop option to trade. Native access conditions, prices, Appraise rules, discounts and item transfers stay in control. AI cannot grant an extra discount or complete a sale outside that interface.
+8. Detected native merchants have AI merchant abilities enabled by default unless the creator disables them. Open their native shop once before asking AI about current stock. Stock and background questions receive spoken answers without opening a menu. Explicit requests such as "Show me your wares" open the native store directly when its current opening dialogue has one unconditional shop choice. Required introductions, quest actions and conditional or ambiguous choices still use their original menus. Native prices, Appraise rules, discounts and item transfers stay in control. AI cannot grant an extra discount or complete a sale outside that interface.
 
 Open the AI copy in Aurora to edit it. Keep edits in another file: converting again always starts from the original snapshot. The preservation.json file records resource hashes and dialogue additions. Static checks do not prove a full playthrough; test quest completion, transitions, rest/death, recruitment/dismissal, save/load, summoned companion conversation and inventory.
 
