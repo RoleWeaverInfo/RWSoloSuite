@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+global.window={};vm.runInThisContext(fs.readFileSync('web/managed-mission-model.js','utf8'));
+const {project:p,metadata}=JSON.parse(fs.readFileSync(0,'utf8')),M=window.ManagedMissionModel;
+const m=p.mission_control.missions[0],meta=metadata.missions.find(q=>q.tag===m.source_tag);
+assert(M.controls(m,meta,false).includes('Keep original module quest'));
+const html=M.details(m,null,metadata.targets,meta);assert(html.includes('Recovered reward evidence'));assert(html.includes('mission.objectives_reviewed'));assert(html.includes('managed.giver'));assert(!html.includes('Obzul'));
+const added=M.add(m,metadata.targets);assert.equal(added.kind,'visit');M.move(m,added.id,-1);M.remove(m,added.id);
+assert.throws(()=>M.remove(m,m.quest.steps.at(-1).id));m.quest.gold=123;
+assert.equal(M.graph(m,'nq_0').edges.length,m.quest.steps.length-1);
+assert(M.controls(m,{...meta,controllable:false,blockers:['Shared rewards']},false).includes('Shared rewards'));
+process.stdout.write(JSON.stringify(p));

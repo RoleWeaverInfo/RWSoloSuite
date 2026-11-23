@@ -194,12 +194,17 @@ class ModuleAnalyser:
         report=self.report(ident);validate_plan_for_report(profile,report)
         if any(m['source_tag']==tag for m in profile.get('mission_control',{}).get('missions',[])):
             raise ValueError('This mission already has an editable copy. Switch its control mode or edit that draft.')
-        return {'mission':draft(report,tag)}
+        return {'mission':draft(report,tag,self.folder(ident)/'input.mod')}
 
     def validate_mission_targets(self,ident,p,report):
         if p.get('mission_control',{}).get('missions'):
             from .managed_missions import validate,catalog
-            validate(p['mission_control'],report,catalog(report,self.folder(ident)/'input.mod')['targets'])
+            metadata=catalog(report,self.folder(ident)/'input.mod')
+            validate(p['mission_control'],report,metadata['targets'])
+            from .managed_missions import active_all
+            for m in active_all(p):
+                info=next(x for x in metadata['missions'] if x['tag']==m['source_tag'])
+                if not info.get('controllable',False):raise ValueError(m['quest']['name']+': '+('; '.join(info.get('blockers',[])) or info['reason']))
 
     def review_missions(self,ident,profile):
         from .module_conversion import validate_plan_for_report
@@ -208,8 +213,14 @@ class ModuleAnalyser:
         self.validate_mission_targets(ident,p,report)
         if 'mission_editor' not in p:raise ValueError('Open the native mission editor first')
         result=review(p['mission_editor'],report)
-        from .managed_missions import active
-        if active(p):result['warnings'].append('Experimental Studio control replaces Rival Ogre Mages progression/rewards. Build a separate copy and start a new game. Native journal edits for this quest are superseded by the editable objectives.')
+        from .managed_missions import active_all
+        for m in active_all(p):result['warnings'].append(m['quest']['name']+': experimental Studio objectives and rewards replace this mission in the copy. Build separately and start a new game; test native conditions and unrelated quests.')
+        from .general_missions import ADAPTER,inspect
+        for m in p.get('mission_control',{}).get('missions',[]):
+            if m['adapter']==ADAPTER:
+                info=inspect(report,m['source_tag'],self.folder(ident)/'input.mod')
+                result['warnings'].extend(m['quest']['name']+': '+v for v in info['blockers'])
+                if not m['objectives_reviewed'] or not m['rewards_reviewed']:result['warnings'].append(m['quest']['name']+': inactive drafts may be saved before all objectives and rewards have been reviewed.')
         return result
 
     def generate_profiles(self,ident,profile,provider,config,dependency_folder=''):

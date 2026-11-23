@@ -39,7 +39,7 @@ def prototypes(source):
     if len(result)<100:raise ValueError('Engine function definitions are incomplete.')
     return result
 
-def analyse(raw,actions=None):
+def analyse(raw,actions=None,include_instructions=False):
     actions=actions or {};warnings=[];instructions=[];offset=13
     if len(raw)<13 or raw[:8]!=b'NCS V1.0' or raw[8]!=0x42:raise ValueError('Not a supported NCS V1.0 compiled script.')
     if struct.unpack_from('>I',raw,9)[0]!=len(raw):raise ValueError('Compiled script size does not match its header.')
@@ -129,6 +129,8 @@ def analyse(raw,actions=None):
         if len(stack)>4096:stack=[]
         listing.append('%08X  %-12s %02X  %s'%(at,op,r['aux'],display))
     categories={key:sum(c['name'] in names for c in calls) for key,names in CATEGORIES.items()}
-    return {'status':'partial' if warnings else 'decoded','bytes':len(raw),'instructions':len(instructions),'decoded_bytes':offset,'warnings':warnings[:80],
+    result = {'status':'partial' if warnings else 'decoded','bytes':len(raw),'instructions':len(instructions),'decoded_bytes':offset,'warnings':warnings[:80],
             'functions':dict(counts),'categories':{k:v for k,v in categories.items() if v},'calls':calls,'strings':strings,'branches':branches,'disassembly':'\n'.join(listing),
             'interpretation':'Static call sites and locally traceable constants. Calls may be conditional or unreachable; null arguments are unresolved. No execution or complete source recovery.'}
+    if include_instructions: result['bytecode'] = instructions
+    return result

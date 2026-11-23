@@ -134,16 +134,25 @@ def _build(path,report,profile,store,config,progress):
     raw=path.read_bytes();entries=OrderedDict((key,res.module.get(*key)) for key in res.module.index)
     original=dict(entries);ifo_kind,module=read(entries['module',2014])
     from .conversion_missions import patch_journals
-    from .managed_missions import active,validate as validate_control,catalog as mission_catalog
-    controlled=active(p)
+    from .managed_missions import active_all,validate as validate_control,catalog as mission_catalog
+    controlled=active_all(p)
     if p.get('mission_control',{}).get('missions'):validate_control(p['mission_control'],report,mission_catalog(report,path)['targets'])
-    journal_edits=patch_journals(entries,report,p.get('mission_editor'),skip_tags={controlled['source_tag']} if controlled else set())
+    journal_edits=patch_journals(entries,report,p.get('mission_editor'),skip_tags={m['source_tag'] for m in controlled})
     hooks={k:res.ifo.get(k,'') for k in EVENTS}
     scripts,extra=runtime(p,'0'*20,Game(),hooks)
     from .managed_mission_runtime import apply as apply_mission,add_observers
     takeover=apply_mission(entries,report,p,scripts)
+    from .general_mission_runtime import apply as apply_general,add_dialogue_links
+    from .general_missions import ADAPTER as GENERAL
+    from .nwn.script_analysis import prototypes
+    general=apply_general(entries,report,p,scripts,prototypes(Game().get('nwscript',2009)),path) if any(m['adapter']==GENERAL for m in controlled) else dict(scripts=[],dialogues=[],journals=[],removed_resources=[],missions=[])
     changes=patch_dialogues(entries,report,res,scripts)
     add_observers(scripts,changes)
+    add_dialogue_links(entries,report,p,scripts,general,changes)
+    if general['missions']:
+        takeover['general']=general
+        for key in ('scripts','dialogues','journals'):takeover[key]=sorted(set(takeover[key]+general[key]))
+        takeover['adapter']=takeover['adapter'] or GENERAL
     from .conversion_merchants import add_trade_dialogues
     merchant_shortcuts=add_trade_dialogues(entries,extra,report,p,scripts,literal,replace)
     dependencies=[]
@@ -151,7 +160,7 @@ def _build(path,report,profile,store,config,progress):
     if 'custom' in res.tables:
         file=res.tables['custom'].path;dependencies.append((file,dict(file=file.name,kind='tlk',sha256=sha256(file))))
     instructions=play_instructions(p,report,changes)
-    digest=hashlib.sha256(canonical(dict(profile=p,scripts=scripts,extra={n+'.'+str(k):hashlib.sha256(v).hexdigest() for (n,k),v in extra.items()},dependencies=[d for _,d in dependencies],instructions=instructions,format=1)).encode()).hexdigest()[:20]
+    digest=hashlib.sha256(canonical(dict(profile=p,scripts=scripts,mission_changes={n+'.'+str(k):hashlib.sha256(v).hexdigest() for (n,k),v in entries.items() if original.get((n,k))!=v},extra={n+'.'+str(k):hashlib.sha256(v).hexdigest() for (n,k),v in extra.items()},dependencies=[d for _,d in dependencies],instructions=instructions,format=2)).encode()).hexdigest()[:20]
     scripts['sp_config']=scripts['sp_config'].replace('"'+'0'*20+'"','"'+digest+'"')
     destination=store.root/'builds'/digest
     if (destination/'manifest.json').is_file():
@@ -161,7 +170,7 @@ def _build(path,report,profile,store,config,progress):
         return manifest
     # Never replace a resource from the module or its required HAKs. Includes
     # from the installed engine are compile-only and not injected into a module.
-    candidates=set(extra)|{(k,t) for k in scripts if k!='nw_inc_nui' for t in (2009,2010)}
+    candidates=set(extra)|(set(entries)-set(original))|{(k,t) for k in scripts if k!='nw_inc_nui' for t in (2009,2010)}
     collisions=candidates.intersection(original)
     replacements={(n,k) for n in takeover['scripts'] for k in (2009,2010)}
     collisions-=replacements
@@ -184,7 +193,8 @@ def _build(path,report,profile,store,config,progress):
             if ('void main(' in body or 'StartingConditional(' in body) and not ncs.is_file():raise ValueError('Missing compiled script: '+name)
             if ncs.is_file():entries[name,2010]=ncs.read_bytes()
         progress('Verifying original maps, quests, creatures and compiled scripts')
-        allowed={('module',2014)}|{(name,2029) for name in changes}|{(name,2056) for name in journal_edits}|replacements|{(n,2056) for n in takeover['journals']}
+        removed={tuple(key) for key in general['removed_resources']}
+        allowed={('module',2014)}|{(name,2029) for name in changes}|{(name,2029) for name in takeover['dialogues']}|{(name,2056) for name in journal_edits}|replacements|removed|{(n,2056) for n in takeover['journals']}
         unexpected=[k for k,v in original.items() if entries.get(k)!=v and k not in allowed]
         if unexpected:raise ValueError('Preservation check failed: '+str(unexpected[:10]))
         old_ifo=read(original['module',2014])[1][1];new_ifo=module[1]
@@ -196,7 +206,7 @@ def _build(path,report,profile,store,config,progress):
             journal_text_edits=journal_edits,journal_structure_preserved=not bool(controlled),mission_takeover=takeover,
             wrapped_events=hooks,dialogue_additions=changes,merchant_shortcuts=merchant_shortcuts,gameplay_tested=False,
             note='Static preservation checks passed. Native callbacks still require in-game regression testing.',
-            resources=[dict(name=n,type=k,sha256=hashlib.sha256(v).hexdigest(),unchanged=entries[n,k]==v) for (n,k),v in original.items()])
+            resources=[dict(name=n,type=k,sha256=hashlib.sha256(v).hexdigest(),unchanged=entries.get((n,k))==v,removed=(n,k) not in entries) for (n,k),v in original.items()])
         manifest=dict(build_id=digest,project_id=p['id'],title=p['title'],module=mod.name,sha256=sha256(mod),resources=len(entries),areas=len(report['areas']),rooms=0,quests=len(report['quests']),compiled_scripts=sum(k==2010 for n,k in entries),standalone=True,optional_live_ai=True,gameplay_tested=False,converted=True,path=str(destination/mod.name))
         write_json(out/'project.json',p);write_json(out/(p['module_name']+'.rwproject.json'),dict(build_id=digest,project=p));write_json(out/'manifest.json',manifest);write_json(out/'preservation.json',preservation)
         write_json(out/'dependencies.json',[d for _,d in dependencies])
@@ -206,8 +216,8 @@ def _build(path,report,profile,store,config,progress):
         (out/'PLAY.txt').write_text(instructions,encoding='utf-8')
         if replacements:
             backup=out/'original-scripts';backup.mkdir()
-            for name,kind in sorted(replacements):
-                if (name,kind) in original:(backup/(name+('.nss' if kind==2009 else '.ncs'))).write_bytes(original[name,kind])
+            for name,kind in sorted(replacements|removed):
+                if (name,kind) in original:(backup/(name+{2009:'.nss',2010:'.ncs',2064:'.ndb'}[kind])).write_bytes(original[name,kind])
         shutil.copy2(ROOT/'ROLE-WEAVER-LICENSE.txt',out/'ROLE-WEAVER-LICENSE.txt')
         # A converted community adventure is not a Studio authoring project.
         # Package only this copy and explicit dependencies, never local settings.
@@ -225,9 +235,9 @@ def _build(path,report,profile,store,config,progress):
     return manifest
 
 def play_instructions(p,report,changes):
-    from .managed_missions import active
-    control=active(p)
-    mission_note=('EXPERIMENTAL STUDIO MISSION: Rival Ogre Mages uses your edited objectives and rewards. Other quests remain native. Speak to Oberagh for the agreement and final hand-in, or use his offered AI quest actions. Possession objectives and consumed items use the player character inventory. Test every objective, reward, repeat hand-in, save/reload and original side quest. Switching back to original control requires rebuilding and a NEW GAME; it does not migrate existing saves.\n' if control else 'All quests retain their original progression and rewards.\n')
+    from .managed_missions import active_all
+    control=active_all(p)
+    mission_note=('EXPERIMENTAL STUDIO MISSIONS: '+', '.join(m['quest']['name'] for m in control)+'. These missions use edited objectives and checked rewards. Other quests retain native control. For general imported missions, speak to each quest giver, choose Discuss our tasks, or use !missions <name or alias> nearby; AI can also offer the checked actions. Dedicated adapters retain their original quest menus. Possession and consumed items use the player inventory. Test each objective, repeat hand-in, rewards, save/reload and unrelated quests. Changing control requires rebuilding and a NEW GAME, not an old save. Native conditions and side effects remain and may conflict with edits. preservation.json lists isolated call edits; original-scripts backs up original bytecode/source/debug files. Patched native scripts are compiled-only: stale source is removed so Aurora cannot silently restore old reward calls.\n' if control else 'All quests retain their original progression and rewards.\n')
     return f'''{p['title']}
 AI-enabled copy of {report['module']['filename']}
 

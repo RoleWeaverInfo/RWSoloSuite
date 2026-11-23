@@ -1,8 +1,4 @@
-"""Opt-in executable mission copies with explicitly audited native adapters.
-
-No journal numbering, inferred edges or LLM output authorizes script replacement.
-The first adapter is pinned to the inspected Snow Hunt 1.01 archive.
-"""
+"""Opt-in mission copies: evidence-based imports plus dedicated native adapters."""
 import copy
 import re
 
@@ -37,15 +33,22 @@ def catalog(report, path):
         label=obj.get('LocalizedName', '')
         if isinstance(label,dict):label=label.get('text','')
         if tag: items[tag] = dict(id=tag, name=label or tag)
-    return dict(missions=[dict(tag=q['tag'], supported=eligible(report, q['tag']),
-        reason='Audited Snow Hunt 1.01 adapter: native maps and other quests retained.' if eligible(report, q['tag']) else
-        'No audited control adapter yet. Journal review remains available; executable takeover is not supported for this quest.') for q in report['quests']],
+    from .general_missions import inspect
+    missions=[];cache={}
+    for q in report['quests']:
+        if eligible(report,q['tag']): missions.append(dict(tag=q['tag'],supported=True,controllable=True,reason='Dedicated native adapter: maps and other quests retained.'))
+        else:
+            try: missions.append(inspect(report,q['tag'],archive,cache))
+            except ValueError as exc: missions.append(dict(tag=q['tag'],supported=False,controllable=False,reason=str(exc)))
+    return dict(missions=missions,
         targets=dict(talk=actors, visit=areas, retrieve=sorted(items.values(), key=lambda x: x['name']),
-                     defeat=[x for x in actors if x['id'] == 'obzul001']))
+                     defeat=actors))
 
 
-def draft(report, tag):
-    if not eligible(report, tag): raise ValueError('Executable conversion currently supports Rival Ogre Mages in the audited Snow Hunt 1.01 module only.')
+def draft(report, tag, path=None):
+    if not eligible(report, tag):
+        from .general_missions import draft as imported_draft
+        return imported_draft(report,tag,catalog(report,path)['targets'] if path else None,path)
     def step(ident, name, kind, target, next_id='', consume=False):
         return dict(id=ident, name=name, description=name, kind=kind, target=target, next=next_id, consume=consume)
     return dict(adapter=ADAPTER, source_tag=TAG, mode='original', risk_acknowledged=False,
@@ -70,8 +73,14 @@ def _int(v, name):
 def validate(value, report=None, targets=None):
     if not isinstance(value, dict) or set(value) != {'version', 'missions'} or type(value['version']) is not int or value['version'] != 1:
         raise ValueError('Unsupported mission control settings')
-    if not isinstance(value['missions'], list) or len(value['missions']) > 1: raise ValueError('This adapter supports one controlled quest')
+    if not isinstance(value['missions'], list) or len(value['missions']) > 64: raise ValueError('Use at most 64 editable missions')
+    seen=set()
     for m in value['missions']:
+        if not isinstance(m,dict) or not isinstance(m.get('source_tag'),str) or m['source_tag'] in seen: raise ValueError('Use one editable copy per native mission')
+        seen.add(m['source_tag'])
+        from .general_missions import ADAPTER as GENERAL,validate as validate_general
+        if m.get('adapter')==GENERAL:
+            validate_general(m,report,targets);continue
         if not isinstance(m, dict) or set(m) != {'adapter', 'source_tag', 'mode', 'risk_acknowledged', 'quest', 'rewards'}:
             raise ValueError('Invalid mission control fields')
         if m['adapter'] != ADAPTER or m['source_tag'] != TAG: raise ValueError('Unknown mission control adapter')
@@ -115,7 +124,11 @@ def validate(value, report=None, targets=None):
 
 
 def active(p):
-    return next((m for m in p.get('mission_control', {}).get('missions', []) if m['mode'] == 'studio'), None)
+    return next((m for m in active_all(p) if m['adapter']==ADAPTER), None)
+
+
+def active_all(p):
+    return [m for m in p.get('mission_control', {}).get('missions', []) if m['mode']=='studio']
 
 
 def reward_text(m):
@@ -155,12 +168,14 @@ def update_memory(p):
 
 
 def ai_context(p, npc, snapshot):
+    from .general_missions import ai_context as general_context
+    imported, imported_actions=general_context(p,npc,snapshot)
     m=active(p)
     raw=snapshot.get('managed_mission')
-    if not m or not isinstance(raw,dict):return None,[]
+    if not m or not isinstance(raw,dict):return imported,imported_actions
     state=raw.get('state'); q=m['quest']; owner=npc['native_tag']=='oberagh001'
-    if type(state) is not int or state not in [-1,*range(len(q['steps'])+1)]:return None,[]
-    if state==0 and not owner:return None,[]
+    if type(state) is not int or state not in [-1,*range(len(q['steps'])+1)]:return imported,imported_actions
+    if state==0 and not owner:return imported,imported_actions
     out=dict(name=q['name'],state='completed' if state==-1 else 'offered' if state==0 else 'active')
     if owner:out.update(agreement=q['description'],rewards=reward_text(m))
     actions=[]
@@ -169,4 +184,4 @@ def ai_context(p, npc, snapshot):
         s=q['steps'][state-1];out['current_objective']=s['description']
         if owner and raw.get('ready')==1:actions=['rwm_claim']
         elif s['kind']=='talk' and s['next'] and s['target']==npc['native_tag']:actions=['rwm_talk']
-    return out,actions
+    return ([out,*imported] if imported else out),actions+imported_actions

@@ -39,14 +39,15 @@ There are three different kinds of editing:
 
 ### Optional: change a supported mission's objectives and rewards
 
-For your first conversion, leaving **Keep original module quest** selected provides the broadest compatibility. The editor shows whether an audited adapter is available for the selected quest.
+For your first conversion, leaving **Keep original module quest** selected provides the broadest compatibility. The general importer in the current source version can copy any uniquely tagged journal mission into an inactive draft. It shows script conflicts separately from editable objective/reward fields. **Released 1.1.0 downloads contain only the earlier dedicated mission adapter; these general-import controls require the updated source version or a subsequent release.**
 
-1. If available, choose **Copy to editable Studio mission**. This makes an inactive draft; it does not turn on new rules automatically.
-2. Open **Mission settings & rewards** to edit the agreement, completion text and supported rewards. Select objective cards to change their instructions, types and native targets. Add, remove or reorder objectives using the editor controls.
-3. Review the agreement after changing objectives so NPC instructions match the task. Use **Check edits** to find invalid targets and ordering.
-4. Select **Use editable Studio mission (experimental)** and accept the warning. Save, then rebuild a separate copy. A valid graph can still describe an impossible task or contradict retained dialogue, so playtest it.
+1. Choose **Copy to editable Studio mission**. This makes an inactive draft; it does not turn on new rules automatically.
+2. Open **Mission settings & rewards**. Choose the quest giver, edit the agreement and completion text, and review recovered gold/XP calls before choosing completion totals.
+3. Select objective cards. Resolve **Needs review** objectives, choose native targets, and add, remove or reorder objectives. Supported types are possession, visit, talk and defeat. The final hand-in returns to the chosen quest giver. Journal numbers are not proof of chronological order.
+4. Review the agreement and both review checkboxes. Use **Check edits**. Script conflicts can require original control even when the draft is editable; incomplete drafts can be saved in original mode.
+5. Where supported, select **Use editable Studio mission (experimental)** and accept the warning. Choose independently for every mission. Save, then rebuild a separate copy and start a new game. Test native conditions as well as the edited quest.
 
-In 1.1.0, executable takeover is limited to **Rival Ogre Mages in the specifically audited Snow Hunt 1.01 archive**, obtained separately. It supports ordered objectives and a final hand-in to Oberagh, with the adapter's supported targets and rewards. Other quests retain native control and remain available for journal review. This is not a general-purpose decompiler or automatic rewrite of every module's missions. The [adapter reference](MODULE-ANALYSER.md#optional-studio-control-rival-ogre-mages) explains its exact limits.
+The [general importer guide](GENERAL-MISSION-IMPORT.md) explains supported script patterns, blockers and backups. This does not automatically reconstruct branching logic or every reward type. The older [dedicated adapter](MODULE-ANALYSER.md#optional-studio-control-rival-ogre-mages) remains compatible with its original source fingerprint; that third-party adventure is not bundled.
 
 To return to native execution, choose **Keep original module quest**, save and rebuild. The inactive draft is retained. This does not migrate an existing save game.
 
@@ -95,7 +96,7 @@ Use **Delete exported copy** to remove a local export, and **Delete analysis** t
 | Matching adventure build not found | Register the sidecar from that exact module build; test with a new game |
 | No AI reply | Studio running, AI service enabled, key/model access and quota, gameplay guardrails, game unpaused |
 | No AI option in a forced dialogue | Complete the native choice first, or use the nearby character's chat alias |
-| Mission editing unavailable | Native journal review works broadly; executable takeover needs an adapter for that exact source module |
+| Studio control unavailable | Read the mission's script conflicts. Supply missing dependencies and reimport, or retain original control; dynamic/shared/unsupported effects can require a dedicated adapter |
 | Changed rewards do not appear | Save conversion edits, rebuild, install the new copy and start a new game |
 
 For technical coverage and preservation details, see [Module Conversion reference](MODULE-ANALYSER.md).
