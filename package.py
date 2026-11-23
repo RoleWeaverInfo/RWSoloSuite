@@ -23,6 +23,8 @@ def package(build=None,examples=(),output=None):
     for name in ('rwstudio','scripts','authoring_scripts','web','assets','vendor','docs','installer'):
         for file in (ROOT/name).rglob('*'):
             if file.is_file() and file.name!='DEVELOPMENT-HISTORY.md' and '__pycache__' not in file.parts and file.suffix not in ('.pyc','.log'):
+                if file.suffix.lower() in ('.mod','.hak','.tlk') or file.name.lower().endswith('.rwproject.json'):
+                    raise ValueError('Adventure content outside the pinned Emberseal bundle cannot be released: '+file.relative_to(ROOT).as_posix())
                 files[file.relative_to(ROOT).as_posix()]=file
     for name,file in checked_files():files['bundled/emberseal/'+name]=file
     files['bundled/emberseal/bundle.json']=BUNDLE/'bundle.json'

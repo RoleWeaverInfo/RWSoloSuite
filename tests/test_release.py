@@ -72,6 +72,16 @@ class ServiceStartupTests(unittest.TestCase):
 
 
 class ReleasePackageTests(unittest.TestCase):
+    def test_rejects_adventure_content_copied_into_application_folders(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'assets').mkdir()
+            for name in ('community.mod','content.hak','custom.tlk','profile.rwproject.json'):
+                candidate=root/'assets'/name;candidate.write_bytes(b'local test content')
+                with patch.object(release,'ROOT',root),patch.object(release,'information',return_value={'build_id':'test'}):
+                    with self.assertRaisesRegex(ValueError,'outside the pinned Emberseal bundle'):
+                        release.package(output=root/'dist')
+                candidate.unlink()
+
     def test_clean_release_allowlist_branding_and_checksum(self):
         with tempfile.TemporaryDirectory() as tmp:
             result=release.package(output=tmp);path=Path(result['package'])

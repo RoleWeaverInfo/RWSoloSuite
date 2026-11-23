@@ -14,3 +14,8 @@ __pycache__/
 vendor/nwnsc/nwnsc
 build/
 *.spec
+
+# Third-party conversion inputs and their generated Snow Hunt test copies.
+# Keep these local even if copied outside the ignored data/ or dist/ folders.
+[Ss][Nn][Oo][Ww][ _-][Hh][Uu][Nn][Tt]*
+[Rr][Ww]_[Ss][Nn][Oo][Ww]*

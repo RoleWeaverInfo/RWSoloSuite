@@ -22,6 +22,8 @@ You need your own NWN:EE installation for its game resources. Aurora editing req
 
 **The Emberseal of Briarwatch** is the only bundled example. Fresh installations open its editable project and include a compiled `rw_ember_v3.mod` build with its matching AI profile, required geometry HAK and three annotated floorplans. Queen Elowen asks you to recover a stolen ward from the goblin chieftain Skarn Ashhand and promises 300 gold. Explore the keep, walled market courtyard and farm/forest road, then Ember Hollow. Designed for levels 3–4 with a two-member party.
 
+Third-party conversion inputs, including Snow Hunt, are not included in the repository or release downloads. Import your own legally obtained modules. Conversion compatibility support does not include the original adventure, extracted profiles, maps, dialogue or content packs.
+
 Use **Build & share → Play in NWN** to install and start the included build, or download **Share / Aurora ZIP** there. The release page also provides **The-Emberseal-of-Briarwatch-1.0.0.zip**, ready for play and Aurora editing. Extract the complete ZIP; its HAK is required. No regeneration or AI generation credit is needed to play the supplied build.
 
 On an existing installation, choose **Load Emberseal example** in the sidebar. An existing Emberseal draft is backed up before replacement; other projects, modules and saves are preserved. Silent Bell, the Courier and their trial modules are not included as examples. The internal `authoring-template.erf` is a build resource, not a selectable adventure.
