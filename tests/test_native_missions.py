@@ -145,7 +145,7 @@ class NativeMissions(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node required')
     def test_browser_graph_edits_roundtrip_to_native_journal(self):
         payload = dict(project=self.p, baseline=workspace(self.report), evidence=evidence(self.report, self.path))
-        result = subprocess.run(['node', 'tests/native_mission_checks.js'], input=json.dumps(payload), cwd=ROOT, capture_output=True, text=True)
+        result = subprocess.run(['node', 'tests/native_mission_fixture.js'], input=json.dumps(payload), cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         edited = validate_plan_for_report(json.loads(result.stdout), self.report)
         self.assertEqual(len(review(edited['mission_editor'], self.report)['journal_changes']), 2)

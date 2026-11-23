@@ -51,7 +51,7 @@ An annotated plan with a clear scale usually works better than a richly painted 
 
 ## 6. Edit the story and missions visually
 
-The current source includes a visual editor in **Quests & endings**. It uses the same mission definitions as AI generation and the native module builder. This feature is not in the existing 1.0.0 downloads yet.
+Version 1.1.0 includes a visual editor in **Quests & endings**. It uses the same mission definitions as AI generation and the native module builder.
 
 1. Expand **Generate missions with AI**, describe the missions you want, and generate a proposal. Review it and choose **Apply proposal to draft**. Applied mission or full-adventure proposals open the mission editor automatically.
 2. Use **Adventure overview** to see main missions, optional missions, prerequisites and the adventure ending. Select a mission to edit its name, purpose, starting NPC, prerequisite missions, completion text and gold/XP rewards. All selected prerequisites must finish before that mission starts. All main missions must finish before the adventure ending appears.
@@ -61,7 +61,7 @@ The current source includes a visual editor in **Quests & endings**. It uses the
 6. Resolve highlighted missing targets, unreachable objectives and invalid connections. Loops are rejected when linking objectives. Removal requires confirmation; removing an objective reconnects its incoming paths as explained in the confirmation. A mission referenced by other adventure content cannot be removed until those references are cleared.
 7. Choose **Check adventure** for full checks, then **Save project**. Rebuild to include edits in the playable module. Editing the map does not change an already exported module or an existing NWN save.
 
-Targets come from the existing characters, rooms, encounters and items in your draft. Add those in their respective dashboard sections when needed. Imported adventures use the shared visual editor under **Module Conversion → Missions & storyline**. Original-journal notes and arrows document your review. Where an audited adapter is available, **Copy to editable Studio mission** offers optional executable objective and reward edits; original control remains the default until you opt in. The first adapter supports Snow Hunt's Rival Ogre Mages. See [native mission review and conversion](MODULE-ANALYSER.md#optional-studio-control-rival-ogre-mages).
+Targets come from the existing characters, rooms, encounters and items in your draft. Add those in their respective dashboard sections when needed. Imported adventures use the shared visual editor under **Module Conversion → Missions & storyline**. Original-journal notes and arrows document your review. Where an audited adapter is available, **Copy to editable Studio mission** offers optional executable objective and reward edits; original control remains the default until you opt in. The first adapter supports Snow Hunt's Rival Ogre Mages. Start with the [conversion walkthrough](CONVERT-A-MODULE.md), or see [native mission review and conversion](MODULE-ANALYSER.md#optional-studio-control-rival-ogre-mages).
 
 ## 7. Build, inspect and playtest
 

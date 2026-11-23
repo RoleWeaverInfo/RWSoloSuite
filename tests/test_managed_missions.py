@@ -76,7 +76,7 @@ class ManagedMissions(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which('node'),'Node required')
     def test_visual_objective_edits_roundtrip(self):
-        result=subprocess.run(['node','tests/managed_mission_checks.js'],input=json.dumps(self.m),text=True,capture_output=True,cwd=ROOT)
+        result=subprocess.run(['node','tests/managed_mission_fixture.js'],input=json.dumps(self.m),text=True,capture_output=True,cwd=ROOT)
         self.assertEqual(result.returncode,0,result.stderr)
         self.value['missions'][0]=json.loads(result.stdout);validate(self.value,report())
         self.assertEqual(self.value['missions'][0]['quest']['gold'],321)

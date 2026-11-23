@@ -1,3 +1,4 @@
+// Run by test_managed_missions.py with its validated mission fixture on stdin.
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),ctx={window:{}};vm.createContext(ctx);
 for(const f of ['managed-mission-model','native-mission-model'])vm.runInContext(fs.readFileSync('web/'+f+'.js','utf8'),ctx);
 const M=ctx.window.ManagedMissionModel,N=ctx.window.NativeMissionModel,m=JSON.parse(fs.readFileSync(0,'utf8'));

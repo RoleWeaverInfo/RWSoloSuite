@@ -1,3 +1,4 @@
+// Run by test_native_missions.py with its synthetic native module fixture on stdin.
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const ctx={window:{}};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('web/native-mission-model.js','utf8'),ctx);

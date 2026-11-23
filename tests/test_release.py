@@ -94,6 +94,8 @@ class ReleasePackageTests(unittest.TestCase):
                 self.assertIn(prefix+'bundled/emberseal/project.json',names)
                 self.assertIn(prefix+'bundled/emberseal/rw_ember_v3-aurora.zip',names)
                 self.assertIn(prefix+'docs/EMBERSEAL.md',names)
+                for name in ('docs/CONVERT-A-MODULE.md','docs/RELEASE-1.1.0.md','scripts/missions/rwm_quest.nss','web/mission-editor.js','web/native-mission-editor.js','web/managed-mission-model.js'):
+                    self.assertIn(prefix+name,names)
                 self.assertNotIn(prefix+'docs/DEVELOPMENT-HISTORY.md',names)
                 self.assertEqual(len(names),len(set(names)));self.assertIsNone(archive.testzip());self.assertIn(b'Python 3.12',archive.read(prefix+'README.md'))
                 self.assertEqual(archive.read(prefix+'web/branding/splash.png'),(ROOT/'web/branding/splash.png').read_bytes())

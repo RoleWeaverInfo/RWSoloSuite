@@ -26,7 +26,7 @@ def edited_project():
     response['quests'][1]['name'] = 'A generated mission'
     with patch.object(Provider, 'request', return_value=response):
         proposal = generate(Provider('unused'), project, 'Revise the missions', 'quests')['proposal']
-    result = subprocess.run(['node', 'tests/mission_editor_checks.js'], input=json.dumps(proposal),
+    result = subprocess.run(['node', 'tests/mission_editor_fixture.js'], input=json.dumps(proposal),
                             cwd=ROOT, capture_output=True, text=True)
     if result.returncode:
         raise AssertionError(result.stderr)
@@ -36,7 +36,7 @@ def edited_project():
 @unittest.skipUnless(shutil.which('node'), 'Node required for browser adapter checks')
 class MissionEditorTests(unittest.TestCase):
     def test_controller_history_confirmations_and_save_object_replacement(self):
-        result = subprocess.run(['node', 'tests/mission_controller_checks.js'], input=json.dumps(seed()),
+        result = subprocess.run(['node', 'tests/mission_controller_fixture.js'], input=json.dumps(seed()),
                                 cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 

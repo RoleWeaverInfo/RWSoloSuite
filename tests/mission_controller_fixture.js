@@ -1,3 +1,4 @@
+// Run by test_mission_editor.py with its authoring fixture on stdin.
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 // Minimal event surface, like the existing dashboard tests. Graph geometry is
 // checked separately; these tests exercise real field/action handlers and history.

@@ -18,7 +18,8 @@ def main():
     tls=context()
     assert tls.check_hostname and tls.verify_mode==ssl.CERT_REQUIRED
     assert tls.get_ca_certs(),'Trusted HTTPS roots are missing'
-    for name in ('web/author.html','web/branding/splash.png','rwstudio/adventure_builder.py','authoring_scripts/aw_cp_ui.nss'):
+    for name in ('web/author.html','web/branding/splash.png','rwstudio/adventure_builder.py','authoring_scripts/aw_cp_ui.nss',
+                 'docs/CONVERT-A-MODULE.md','scripts/missions/rwm_quest.nss','rwstudio/managed_mission_runtime.py'):
         assert (ROOT/name).is_file(),name
     with patch('socket.socket.connect',side_effect=RuntimeError('External network forbidden')):
         validator=LocalValidation()
@@ -35,13 +36,15 @@ def main():
         worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
         url='http://127.0.0.1:'+str(server.server_port)
         try:
-            for route in ('/','/player','/provider-setup.js','/branding/splash.png'):
+            for route in ('/','/player','/provider-setup.js','/branding/splash.png','/analyser.js','/conversion.js',
+                          '/mission-editor.js','/native-mission-editor.js','/managed-mission-model.js'):
                 with urllib.request.urlopen(url+route,timeout=10) as response:assert response.status==200
             with urllib.request.urlopen(url+'/api/state',timeout=10) as response:state=json.load(response)
             assert state['version']==VERSION
             example=state['bundled_example']
             assert example and example['project_id']=='emberseal_demo','Emberseal example is missing'
             assert [p['id'] for p in state['projects']]==['emberseal_demo'],'Fresh dashboard contains unexpected examples'
+            assert not app.analyser.list()['analyses'],'A personal conversion workspace was bundled'
             build=app.store.built_project(example['build_id'])
             assert build['module_name']=='rw_ember_v3' and len(build['areas'])==3
             download=url+'/download?build='+example['build_id']+'&kind=zip'

@@ -70,8 +70,11 @@ class UpdateTests(unittest.TestCase):
 
     def test_background_check_and_failure_states_are_reviewable(self):
         updater = updates.Updater(self.root)
-        with patch.object(updates,'release_list',return_value=([release()],False)),patch.object(updates,'package_suffix',return_value='Setup-x64.exe'):
-            updater._run('check');self.assertEqual(updater.status()['state'],'available');self.assertEqual(updater.status()['release']['version'],'1.1.0')
+        newer=str(int(updates.VERSION.split('.')[0])+1)+'.0.0'
+        with patch.object(updates,'release_list',return_value=([release(newer)],False)),patch.object(updates,'package_suffix',return_value='Setup-x64.exe'):
+            updater._run('check');self.assertEqual(updater.status()['state'],'available');self.assertEqual(updater.status()['release']['version'],newer)
+        with patch.object(updates,'release_list',return_value=([release(updates.VERSION)],False)),patch.object(updates,'package_suffix',return_value='Setup-x64.exe'):
+            updater._run('check');self.assertEqual(updater.status()['state'],'current')
         with patch.object(updates,'release_list',side_effect=ValueError('No access')):
             updater._run('check');self.assertEqual(updater.status()['state'],'error');self.assertEqual(updater.status()['error'],'No access')
 

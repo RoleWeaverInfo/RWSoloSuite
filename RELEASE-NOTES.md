@@ -1,3 +1,11 @@
+# 1.1.0 — module conversion and editable missions
+
+Import and analyse existing NWN modules, including compiled scripts, then build separate AI-enabled copies with character profiles, dialogue memory, native merchants and companions. The shared visual mission editor supports generated adventures and native journal review. Supported missions can be copied into an editable draft and explicitly switched to experimental Studio control; other quests remain native.
+
+Windows, Linux x64/ARM64 and macOS Intel/Apple Silicon packages include Python and Emberseal as the only example. Third-party conversion inputs and generated copies are excluded. Release packaging rejects adventure files outside the pinned bundle. The CI interface runner now distinguishes standalone checks from Python-driven fixture helpers.
+
+See [1.1.0 release notes](docs/RELEASE-1.1.0.md), the new [conversion walkthrough](docs/CONVERT-A-MODULE.md), [installation instructions](docs/INSTALLATION.md), and the [conversion reference](docs/MODULE-ANALYSER.md). Previous entries describe historical releases.
+
 # 1.0.0 — first stable release
 
 Role Weaver Module Studio graduates from prerelease to its first stable version. Windows, Linux and macOS application packages include Python and **The Emberseal of Briarwatch** as the sole bundled example, with a separate adventure/Aurora ZIP. The application, dashboard version display, Mac bundle metadata and download filenames now use 1.0.0. GitHub marks this release Latest; existing release-candidate installations can find it through **Update software**. The reviewed Emberseal maps and compiled module remain unchanged from rc3.

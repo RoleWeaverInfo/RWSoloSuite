@@ -1,4 +1,4 @@
-// Run the same graph adapter used by the browser against a real authoring draft.
+// Run by test_mission_editor.py with a real authoring draft on stdin.
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const ctx={window:{}};vm.createContext(ctx);
 for(const name of ['mission-model','mission-graph'])vm.runInContext(fs.readFileSync('web/'+name+'.js','utf8'),ctx);

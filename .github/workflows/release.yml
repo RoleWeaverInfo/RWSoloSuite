@@ -130,4 +130,4 @@ jobs:
           if [[ "$version" == *-* ]]; then
             flags=(--prerelease --latest=false)
           fi
-          gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag "${flags[@]}" --title "Role Weaver Module Studio $GITHUB_REF_NAME — Emberseal example, Windows, Linux and macOS" --notes-file "$notes"
+          gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag "${flags[@]}" --title "Role Weaver Module Studio $GITHUB_REF_NAME — Module conversion and editable missions" --notes-file "$notes"

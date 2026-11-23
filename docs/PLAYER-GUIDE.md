@@ -22,6 +22,8 @@ The normal dialogue menu remains available for quest choices and other authored 
 
 ## Use an AI companion
 
+For adventures created from existing modules, use Studio 1.1.0 or later and the matching converted profile. Native recruitment and quest menus remain available; supported Studio-controlled missions expose only actions allowed by their observed state. Ask a merchant what it stocks for a spoken answer, or explicitly ask to trade to open its native shop. The [conversion walkthrough](CONVERT-A-MODULE.md) explains setup and testing.
+
 1. Recruit a party companion through their dialogue if the adventure offers recruitment, or summon your familiar/creature with your normal class abilities. Studio does not grant those abilities to every character.
 2. Type `!companions` in Talk. Select the party member, familiar or summoned creature you want.
 3. Choose **Talk freely with AI**, close the menu, then speak normally. Use `!end` when finished. Newly summoned creatures have conversation support enabled by default in current Studio builds, subject to the adventure's settings.

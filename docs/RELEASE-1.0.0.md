@@ -1,3 +1,5 @@
+> Historical release. See [1.1.0](RELEASE-1.1.0.md) for Module Conversion, editable missions and current downloads.
+
 # Role Weaver Module Studio 1.0.0
 
 **The first stable release** brings AI-assisted single-player module creation and a local AI gameplay service to Neverwinter Nights: Enhanced Edition. This promotes the rc3 feature set, with consistent application/package versions and stable GitHub release publishing. The reviewed Emberseal maps and compiled module are unchanged.
