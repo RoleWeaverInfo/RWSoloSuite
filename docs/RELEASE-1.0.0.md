@@ -1,4 +1,4 @@
-> Historical release. See [1.1.0](RELEASE-1.1.0.md) for Module Conversion, editable missions and current downloads.
+> Historical release. See [1.2.0](RELEASE-1.2.0.md) for the general mission importer and current downloads.
 
 # Role Weaver Module Studio 1.0.0
 

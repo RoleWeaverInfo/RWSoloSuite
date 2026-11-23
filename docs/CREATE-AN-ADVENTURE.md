@@ -51,7 +51,7 @@ An annotated plan with a clear scale usually works better than a richly painted 
 
 ## 6. Edit the story and missions visually
 
-Version 1.1.0 includes a visual editor in **Quests & endings**. It uses the same mission definitions as AI generation and the native module builder.
+Version 1.2.0 includes a visual editor in **Quests & endings**. It uses the same mission definitions as AI generation and the native module builder.
 
 1. Expand **Generate missions with AI**, describe the missions you want, and generate a proposal. Review it and choose **Apply proposal to draft**. Applied mission or full-adventure proposals open the mission editor automatically.
 2. Use **Adventure overview** to see main missions, optional missions, prerequisites and the adventure ending. Select a mission to edit its name, purpose, starting NPC, prerequisite missions, completion text and gold/XP rewards. All selected prerequisites must finish before that mission starts. All main missions must finish before the adventure ending appears.

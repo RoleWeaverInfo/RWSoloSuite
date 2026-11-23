@@ -153,7 +153,9 @@ class BytecodeEdits(unittest.TestCase):
 class GeneralBuild(unittest.TestCase):
     def test_actual_compiler_multi_mission_copy_preserves_other_quest_and_original(self):
         cfg=defaults()
-        if not Path(cfg.get('compiler','')).is_file() or not (Path(cfg.get('game_root',''))/'data').is_dir():self.skipTest('Installed NWN/compiler required')
+        game=cfg.get('game_root','')
+        if not Path(cfg.get('compiler','')).is_file() or not game or not any((Path(game)/'data'/name).is_file() for name in ('nwn_base.key','nwn_retail.key')):
+            self.skipTest('Installed NWN game archives and compiler required')
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);src=root/'src';src.mkdir();out=root/'ncs';out.mkdir()
             for name,tag,gold in [('seal_action','seal',40),('patrol_action','patrol',10)]:

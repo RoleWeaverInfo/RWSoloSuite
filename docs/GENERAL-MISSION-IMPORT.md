@@ -1,6 +1,6 @@
 # Import and edit native missions
 
-This feature is in current source development after 1.1.0. It is not included in the existing 1.1.0 application downloads. Emberseal remains the only bundled example; no community module is needed or distributed for the automated tests.
+Available in Role Weaver Module Studio **1.2.0** for Windows, Linux and macOS. Upgrade both the creator's Studio and players' services before using a general-import mission profile. Emberseal remains the only bundled example; no community module is needed or distributed for the automated tests.
 
 ## Review and choose control
 

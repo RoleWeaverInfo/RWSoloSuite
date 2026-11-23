@@ -20,9 +20,11 @@ You can also address a nearby NPC directly with `!talk <alias> <message>`. For a
 
 The normal dialogue menu remains available for quest choices and other authored actions. AI conversation availability, creature speech/nonverbal behavior and what each character knows are controlled by the module creator. An AI promise alone does not complete a quest or transfer an item: check the journal, inventory and game's actual result.
 
+For a converted mission under Studio control, choose **Discuss our tasks.** at its quest character, or type `!missions <name or alias>` while nearby. These menus offer acceptance, the current conversation objective and final hand-in when the game confirms their requirements. They do not need an AI response. Missions left under original control still use the adventure's original quest menus and scripts. General-import missions require Studio 1.2.0 or later and the matching adventure profile.
+
 ## Use an AI companion
 
-For adventures created from existing modules, use Studio 1.1.0 or later and the matching converted profile. Native recruitment and quest menus remain available; supported Studio-controlled missions expose only actions allowed by their observed state. Ask a merchant what it stocks for a spoken answer, or explicitly ask to trade to open its native shop. The [conversion walkthrough](CONVERT-A-MODULE.md) explains setup and testing.
+For adventures created from existing modules, use Studio 1.2.0 or later and the matching converted profile. Native recruitment and quest menus remain available; supported Studio-controlled missions expose only actions allowed by their observed state. Ask a merchant what it stocks for a spoken answer, or explicitly ask to trade to open its native shop. The [conversion walkthrough](CONVERT-A-MODULE.md) explains setup and testing.
 
 1. Recruit a party companion through their dialogue if the adventure offers recruitment, or summon your familiar/creature with your normal class abilities. Studio does not grant those abilities to every character.
 2. Type `!companions` in Talk. Select the party member, familiar or summoned creature you want.

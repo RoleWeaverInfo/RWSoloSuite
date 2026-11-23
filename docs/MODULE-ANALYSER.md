@@ -1,6 +1,6 @@
 # Module Conversion
 
-Included in Role Weaver Module Studio 1.1.0. For a first conversion, follow [Convert an existing module](CONVERT-A-MODULE.md). This page provides the detailed reference and limits.
+Included in Role Weaver Module Studio 1.2.0. For a first conversion, follow [Convert an existing module](CONVERT-A-MODULE.md). This page provides the detailed reference and limits.
 
 Open **Module Conversion** in the dashboard sidebar. The main workspace has its own scrollbar; scroll over the report to reach its lower sections. Choose an existing Neverwinter Nights 1 / Enhanced Edition `.mod` file and click **Import and analyse**. Alternatively, expand **Or use a path on this computer**, enter its full path, and click **Analyse local file**. A `.rwproject.json` file is not required.
 
@@ -56,7 +56,7 @@ Select a completed analysis and open **Missions & storyline**. The shared visual
 
 **Public setting and adventure premise** is shared with gameplay AI. Keep spoilers out of it. The private storyline, review notes, arrows and unreached journal endings are not sent to gameplay NPCs or companions. Editing journal text does not change the original dialogue or teach an NPC that a quest has advanced; native conversation memory still records only dialogue actually reached during play.
 
-Native review remains available for every analysed quest. The current source version adds a [general mission importer](GENERAL-MISSION-IMPORT.md): create editable drafts from uniquely tagged journals, inspect recovered reward evidence, and choose original or Studio control per mission. Supported native calls are isolated; ambiguous or unsupported scripts remain native with a reason. This extends the dedicated adapter shipped in 1.1.0. For Studio-created adventures, **Quests & endings** edits executable mission definitions directly.
+Native review remains available for every analysed quest. Version **1.2.0** adds a [general mission importer](GENERAL-MISSION-IMPORT.md): create editable drafts from uniquely tagged journals, inspect recovered reward evidence, and choose original or Studio control per mission. Supported native calls are isolated; ambiguous or unsupported scripts remain native with a reason. The older dedicated adapter remains supported. For Studio-created adventures, **Quests & endings** edits executable mission definitions directly.
 
 ## Optional Studio control: Rival Ogre Mages
 
@@ -88,7 +88,7 @@ Build and install your own separately named copy. Test changed rewards, each obj
 5. Click **Create AI-enabled copy**. Studio compiles its added runtime, verifies the exported resources and registers the matching runtime profile. No LLM call or payment is needed for this step. It never runs the imported scripts during conversion or starts NWN.
 6. With NWN closed, choose **Install copy locally**. Start the updated Role Weaver service before NWN, configure your own API key, enable the AI service, and start a **new game** in the copied module. Existing saves of the original module do not contain the additions.
 
-The ZIP contains the converted `.mod`, matching `.rwproject.json`, required HAK/TLK files, added NWScript sources, play instructions and `preservation.json`. The original pack filenames and bytes are retained. Installation refuses to replace a different pack with the same name. Keep `.mod` and `.rwproject.json` together. On another computer, install the updated Studio, import the sidecar on **AI service status**, and copy the module to NWN's `modules` folder and its dependencies to `hak` and `tlk`. Players need Studio 1.1.0 or later for these converted profiles; upgrade older installations first.
+The ZIP contains the converted `.mod`, matching `.rwproject.json`, required HAK/TLK files, added NWScript sources, play instructions and `preservation.json`. The original pack filenames and bytes are retained. Installation refuses to replace a different pack with the same name. Keep `.mod` and `.rwproject.json` together. On another computer, install the updated Studio, import the sidecar on **AI service status**, and copy the module to NWN's `modules` folder and its dependencies to `hak` and `tlk`. Players need Studio 1.2.0 or later for these converted profiles; upgrade older installations first.
 
 Aurora can edit the copied module. Save Aurora edits under another name: converting again starts from the imported original, not from those edits. Do not import a converted profile into the area authoring editor; it describes an existing native module, not a generated room graph.
 

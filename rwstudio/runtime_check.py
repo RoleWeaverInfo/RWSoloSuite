@@ -19,8 +19,15 @@ def main():
     assert tls.check_hostname and tls.verify_mode==ssl.CERT_REQUIRED
     assert tls.get_ca_certs(),'Trusted HTTPS roots are missing'
     for name in ('web/author.html','web/branding/splash.png','rwstudio/adventure_builder.py','authoring_scripts/aw_cp_ui.nss',
-                 'docs/CONVERT-A-MODULE.md','scripts/missions/rwm_quest.nss','rwstudio/managed_mission_runtime.py'):
+                 'docs/CONVERT-A-MODULE.md','docs/GENERAL-MISSION-IMPORT.md','docs/RELEASE-'+VERSION+'.md',
+                 'scripts/missions/rwm_quest.nss','rwstudio/managed_mission_runtime.py',
+                 'scripts/missions/rwg_mission.nss','rwstudio/general_missions.py',
+                 'rwstudio/general_mission_runtime.py','rwstudio/nwn/mission_bytecode.py'):
         assert (ROOT/name).is_file(),name
+    from .general_missions import ident
+    from .general_mission_runtime import apply as apply_imported_missions
+    from .nwn.mission_bytecode import suppress
+    assert ident('release_check').startswith('rwg_') and callable(apply_imported_missions) and callable(suppress)
     with patch('socket.socket.connect',side_effect=RuntimeError('External network forbidden')):
         validator=LocalValidation()
         assert validator.validate('Welcome, traveler.','output',DEFAULTS,'')==''

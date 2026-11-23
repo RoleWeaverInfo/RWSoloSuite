@@ -1,12 +1,12 @@
 # How to convert an existing NWN module
 
-Role Weaver Module Studio 1.1.0 can analyse an existing Neverwinter Nights 1 / Enhanced Edition module and create a separate copy with AI conversations, native merchant support and companion capabilities. It preserves the original maps and placements. Original quests remain in control unless you explicitly enable a supported experimental mission conversion.
+Role Weaver Module Studio 1.2.0 can analyse an existing Neverwinter Nights 1 / Enhanced Edition module and create a separate copy with AI conversations, native merchant support and companion capabilities. It preserves the original maps and placements. Original quests remain in control unless you explicitly enable a supported experimental mission conversion.
 
 **The Emberseal of Briarwatch is the only included example.** Supply your own legally obtained community modules and required content packs. Snow Hunt and its generated copies are not included or hosted by this project. Permission to play a module does not automatically grant permission to redistribute a converted copy.
 
 ## 1. Prepare Studio and the adventure
 
-1. Install [Studio 1.1.0 or later](https://github.com/RoleWeaverInfo/RWSoloSuite/releases/latest) for your computer. Windows, Linux and Mac application packages include Python and the NWScript compiler.
+1. Install [Studio 1.2.0 or later](https://github.com/RoleWeaverInfo/RWSoloSuite/releases/latest) for your computer. Windows, Linux and Mac application packages include Python and the NWScript compiler.
 2. Start NWN once and close it. Start Studio and check **Local settings → Local NWN folders and compiler**. Set the NWN installation and user folders. Keep the supplied compiler selected unless you have configured another compatible compiler.
 3. Extract the adventure download. Locate its `.mod`, required `.hak` packs and any custom `.tlk`. Keep an untouched original outside Studio's workspace. Extraction must happen before import; select the `.mod`, not its ZIP.
 4. To use live AI or optional profile generation, configure your own OpenAI or Gemini key in **Local settings → Set up your AI**. Local analysis, mission review and compilation do not require an AI request. **Explain with AI** and **Generate detailed AI profiles** use the authoring model; conversations during play use the gameplay model.
@@ -39,7 +39,7 @@ There are three different kinds of editing:
 
 ### Optional: change a supported mission's objectives and rewards
 
-For your first conversion, leaving **Keep original module quest** selected provides the broadest compatibility. The general importer in the current source version can copy any uniquely tagged journal mission into an inactive draft. It shows script conflicts separately from editable objective/reward fields. **Released 1.1.0 downloads contain only the earlier dedicated mission adapter; these general-import controls require the updated source version or a subsequent release.**
+For your first conversion, leaving **Keep original module quest** selected provides the broadest compatibility. The general importer in **1.2.0** can copy uniquely tagged journal missions into inactive drafts. It shows script conflicts separately from editable objective/reward fields. Both creators and players need the updated Studio for general-import mission profiles.
 
 1. Choose **Copy to editable Studio mission**. This makes an inactive draft; it does not turn on new rules automatically.
 2. Open **Mission settings & rewards**. Choose the quest giver, edit the agreement and completion text, and review recovered gold/XP calls before choosing completion totals.
@@ -84,7 +84,7 @@ An AI statement is not proof that an item moved or a reward was paid. Check the 
 
 ## 7. Share or remove your conversion
 
-Share the complete exported ZIP only when the original authors' licenses permit it. Players need NWN:EE, Studio 1.1.0 or later, required packs, and their own API key for live AI. On another computer, extract the ZIP, copy `.mod` into the NWN user `modules` folder, `.hak` into `hak`, and `.tlk` into `tlk`. Start Studio and register the matching `.rwproject.json` on **AI service status → Register an adventure** before starting NWN.
+Share the complete exported ZIP only when the original authors' licenses permit it. Players need NWN:EE, Studio 1.2.0 or later, required packs, and their own API key for live AI. On another computer, extract the ZIP, copy `.mod` into the NWN user `modules` folder, `.hak` into `hak`, and `.tlk` into `tlk`. Start Studio and register the matching `.rwproject.json` on **AI service status → Register an adventure** before starting NWN.
 
 Use **Delete exported copy** to remove a local export, and **Delete analysis** to remove the imported snapshot/report. Both ask for confirmation. These controls do not delete the original download, installed modules, saves or retained runtime registrations. Official Studio releases include Emberseal only; your conversion workspace is not uploaded automatically.
 

@@ -1,8 +1,8 @@
 # Build release packages
 
-The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish only after all five build jobs succeed. Plain versions such as `v1.1.0` publish a stable release marked Latest; versions with a prerelease suffix publish a prerelease without changing Latest. The tag must match `rwstudio.VERSION` and have a matching `docs/RELEASE-<version>.md` file. Update both before tagging. Never put keys, game installations or local `data` in a release.
+The GitHub Actions `Build release packages` workflow runs Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon builds on native runners. Branch pushes validate and retain downloadable artifacts. Version tags (`v*`) publish only after all five build jobs succeed. Plain versions such as `v1.2.0` publish a stable release marked Latest; versions with a prerelease suffix publish a prerelease without changing Latest. The tag must match `rwstudio.VERSION` and have a matching `docs/RELEASE-<version>.md` file. Update both before tagging. Never put keys, game installations or local `data` in a release.
 
-Run the Python suite before standalone `tests/*_checks.js`. The `tests/*_fixture.js` helpers require JSON input supplied by Python tests and must not be invoked without that input. Packaged smoke checks verify the conversion/mission editor assets, the conversion guide, the mission runtime template, and an empty analysis workspace alongside the sole Emberseal example.
+Run the Python suite before standalone `tests/*_checks.js`. The `tests/*_fixture.js` helpers require JSON input supplied by Python tests and must not be invoked without that input. Packaged smoke checks verify the conversion/mission editor assets, the conversion and general-import guides, the current release notes, both mission runtime templates and the general-import Python modules, and an empty analysis workspace alongside the sole Emberseal example.
 
 ## Included example and release payload
 

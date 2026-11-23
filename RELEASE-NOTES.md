@@ -1,3 +1,11 @@
+# 1.2.0 — general mission importer
+
+Import native journal missions into editable objective and gold/XP drafts, then choose original scripts or experimental Studio control separately for each mission. Compatible missions gain checked task menus and AI actions. Script conflicts are explained before takeover; inactive drafts remain editable. Maps and placements stay unchanged, and original scripts are backed up with a preservation report.
+
+Windows x64, Linux x64/ARM64 and macOS Intel/Apple Silicon packages include Python, the compiler and **The Emberseal of Briarwatch as the only example**. Updated packaging checks cover the new mission runtime and documentation. CI now detects missing NWN archives correctly and uses the actual published service timestamp in its saved-session test.
+
+See [1.2.0 release notes](docs/RELEASE-1.2.0.md), the [general importer guide](docs/GENERAL-MISSION-IMPORT.md), [conversion walkthrough](docs/CONVERT-A-MODULE.md) and [installation instructions](docs/INSTALLATION.md).
+
 # 1.1.0 — module conversion and editable missions
 
 Import and analyse existing NWN modules, including compiled scripts, then build separate AI-enabled copies with character profiles, dialogue memory, native merchants and companions. The shared visual mission editor supports generated adventures and native journal review. Supported missions can be copied into an editable draft and explicitly switched to experimental Studio control; other quests remain native.

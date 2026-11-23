@@ -50,9 +50,12 @@ class ServicePresenceTests(unittest.TestCase):
 
     def test_native_probe_rejects_old_saved_session_wrong_build_future_and_stale_rows(self):
         self.bridge.enabled=True;self.bridge.publish_presence()
+        # The writer can cross a wall-clock second after setUp. A new saved-game
+        # session must reject the actual earlier acknowledgment, not a guessed time.
+        with connection(self.path) as db:published=db.execute('SELECT updated FROM sp_service').fetchone()[0]
         self.assertIsNone(self.native_status(session='another-session'))
         self.assertIsNone(self.native_status(build='b'*20))
-        self.assertIsNone(self.native_status(start=self.now+1))
+        self.assertIsNone(self.native_status(start=published+1))
         for stamp in (self.now-31,self.now+120):
             with connection(self.path) as db:db.execute('UPDATE sp_service SET updated=?',(stamp,))
             self.assertIsNone(self.native_status(start=0))
