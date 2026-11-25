@@ -14,6 +14,7 @@ import time
 import urllib.error
 import urllib.request
 from .content import validate_project
+from .module_names import valid_module_name, MODULE_NAME_HELP
 from .nwn.module_copy import resources
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -56,7 +57,7 @@ def native_context(module):
 
 def plan(module='rw_invclick',module_file=None,sidecar=None,game_root=None,user_dir=None,resume=False,offline=False,root=ROOT):
     root=Path(root);settings=read_json(root/'data/settings.json') if (root/'data/settings.json').is_file() else {}
-    if not re.fullmatch(r'[a-z][a-z0-9_]{0,15}(?:\.mod)?',module):raise LaunchError('Use the module filename without a path; --module-file accepts a full file path.')
+    if not isinstance(module,str) or not valid_module_name(module.removesuffix('.mod')):raise LaunchError(MODULE_NAME_HELP+' --module-file accepts a full file path.')
     name=module.removesuffix('.mod');user=Path(user_dir or settings.get('user_dir') or Path.home()/'Documents/Neverwinter Nights').expanduser().resolve()
     if not user.is_dir():raise LaunchError('The NWN user folder does not exist. Start NWN once or specify --user-dir.')
     candidates=[Path(game_root)] if game_root else game_candidates(settings.get('game_root'))

@@ -21,7 +21,7 @@ void SPAsk(object pc,string kind,string message)''')
     replace('p=JsonObjectSet(p,"history",JsonString(GetLocalString(pc,"SP_HIST_"+tag)));',
             'p=JsonObjectSet(p,"history",JsonString(GetLocalString(pc,"AWC_PENDING_VERSION")!=""?AWText(AWCRecord(pc,AWCIdentity(pc,npc)),"history"):GetLocalString(pc,"SP_HIST_"+tag)));')
     replace('p=JsonObjectSet(p,"game",SPSnapshot(pc));',
-            'json taskOptions=AWTCandidates(pc,npc);SetLocalString(pc,"AWT_PENDING_OPTIONS",JsonDump(taskOptions));json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"task_targets",taskOptions);p=JsonObjectSet(p,"game",observed);')
+            'json taskOptions=AWTCandidates(pc,npc);SetLocalString(pc,"AWT_PENDING_OPTIONS",JsonDump(taskOptions));json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"dialogue_settings",AWDSettings(pc));observed=JsonObjectSet(observed,"task_targets",taskOptions);p=JsonObjectSet(p,"game",observed);')
     replace('if(kind=="npc") {\n        object npc=GetObjectByTag(tag);','if(kind=="npc" || kind=="companion") {\n        object npc=GetLocalObject(pc,"SP_PENDING_ACTOR");')
     replace('SendMessageToPC(pc,GetName(npc)+": "+reply);',r'''if(AWText(AWMShop(npc),"id")!="" && GetLocalString(pc,"AWM_REQUEST")!=AWMVersion(pc,npc)){
  reply="My stock or prices changed while I was answering. Please reopen my goods panel for current information.";result=JsonObjectSet(result,"merchant_action",JsonString(""));}
@@ -39,10 +39,12 @@ void SPAsk(object pc,string kind,string message)''')
         for name in (n['alias'],n['name'].lower(),n['name'].lower().split()[0]):names[name].add(n['id'])
     resolver='string SPAddress(string name){'+''.join('if(name=='+literal(name)+')return '+literal(next(iter(ids)))+';' for name,ids in sorted(names.items()) if len(ids)==1)+'return "";}'
     chat='''#include "sp_inc"
+#include "aw_dlg_ui"
 '''+resolver+r'''
 object SPActorAddress(object pc,string name){string tag=SPAddress(name);object fixed=tag==""?OBJECT_INVALID:GetObjectByTag(tag);object owned=AWCFind(pc,name);if(GetLocalInt(pc,"AWC_AMBIGUOUS") || (GetIsObjectValid(fixed) && GetIsObjectValid(owned) && fixed!=owned))return OBJECT_INVALID;return GetIsObjectValid(fixed)?fixed:owned;}
 void main(){object pc=GetPCChatSpeaker();string s=GetPCChatMessage();if(!GetIsPC(pc) || GetPCChatVolume()!=TALKVOLUME_TALK)return;
  string lower=GetStringLowerCase(s);
+ if(lower=="!aisettings"){SetPCChatMessage("");AWDOpen(pc);return;}
  if(lower=="!studio"){SetPCChatMessage("");SPServiceCheck(pc,TRUE);return;}
  if(s=="!companions" || s=="!companion" || GetStringLeft(s,11)=="!companion "){SetPCChatMessage("");int handled=AWCChatControl(pc,s);object target=GetLocalObject(pc,"AWC_CHAT_TARGET");string message=GetLocalString(pc,"AWC_CHAT_TEXT");SPEnd(pc,FALSE);if(!handled && GetIsObjectValid(target)){SetLocalObject(pc,"SP_FOCUS",target);SPAsk(pc,"npc",message);}return;}
  if(lower=="!end" || lower=="bye" || lower=="goodbye" || lower=="farewell"){if(lower=="!end")SetPCChatMessage("");SPEnd(pc);return;}
@@ -65,5 +67,5 @@ void main(){object pc=GetPCChatSpeaker();string s=GetPCChatMessage();if(!GetIsPC
 '''
     select=r'''#include "sp_inc"
 void main(){object pc=GetPCSpeaker();SPEnd(pc,FALSE);SetLocalObject(pc,"SP_FOCUS",OBJECT_SELF);SetLocalInt(pc,"SP_FOCUS_AT",SPNow());
- SetLocalObject(GetModule(),"SP_CONTROLLER",pc);SendMessageToPC(pc,"AI conversation: "+GetName(OBJECT_SELF)+". Close the menu and speak normally in Talk, or type !ai <message>. Stay nearby. Use !end to finish. NPC menu choices share the same story progress.");}'''
+ SetLocalObject(GetModule(),"SP_CONTROLLER",pc);SendMessageToPC(pc,"AI conversation: "+GetName(OBJECT_SELF)+". Close the menu and speak normally in Talk, or type !ai <message>. Stay nearby. Use !aisettings for response preferences, or !end to finish. NPC menu choices share the same story progress.");}'''
     return inc,chat,select

@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import threading
+import time
 import uuid
 from .module_analysis import build_report
 from .storage import write_json
@@ -58,12 +59,23 @@ def explain_report(report,provider):
 
 class ModuleAnalyser:
     def __init__(self,root):
-        self.root=Path(root).resolve();self.root.mkdir(parents=True,exist_ok=True);self.lock=threading.RLock();self.jobs={}
+        self.root=Path(root).resolve();self.root.mkdir(parents=True,exist_ok=True);self.lock=threading.RLock();self.jobs={};self.profile_pauses={}
         for p in self.root.glob('*/status.json'):
             try:
                 j=json.loads(p.read_text(encoding='utf-8'));self.folder(j['id'])
                 if j['status'] in ACTIVE:
-                    j.update(status='complete' if (p.parent/'report.json').is_file() else 'failed',message='Previous operation was interrupted. Import again or retry the explanation.');write_json(p,j)
+                    if j['status']=='profiling' and (p.parent/'report.json').is_file():
+                        j.update(status='profile_paused',message='Studio stopped during profile generation. Resume to continue from the last saved batch.',pause_requested=False)
+                        if 'profile_progress' in j:
+                            j['profile_progress']={**j['profile_progress'],'state':'paused','finished_at':time.time()}
+                    else:
+                        j.update(status='complete' if (p.parent/'report.json').is_file() else 'failed',message='Previous operation was interrupted. Import again or retry the explanation.')
+                    write_json(p,j)
+                elif j['status']=='complete' and j.get('profile_error') and j.get('message')=='Saved profiles retained; generation did not finish':
+                    j.update(status='profile_failed',message='The previous profile generation did not finish. Saved conversion edits are available.')
+                    if 'Studio has reached its 60-request hourly limit' in j['profile_error']:
+                        j['profile_error']='The previous attempt hit Studio\'s old 60-request authoring limit. That cap has been removed. Generate detailed AI profiles again; the old version did not save partial batches.'
+                    write_json(p,j)
                 self.jobs[j['id']]=j
             except (ValueError,KeyError,OSError):continue
     def folder(self,ident):
@@ -184,7 +196,12 @@ class ModuleAnalyser:
         p.setdefault('mission_editor',workspace(report))
         location=folder/'dependency-location.json'
         dependency=json.loads(location.read_text(encoding='utf-8')).get('folder','') if location.is_file() else ''
-        return {'project':p,'dependency_folder':dependency,'build':self.status(ident).get('conversion_build'),
+        status=self.status(ident)
+        completed=self.completed_profiles(p,status)
+        return {'project':p,'dependency_folder':dependency,'build':status.get('conversion_build'),
+                'profile_generation':{'completed':len(completed),'total':len(p['npcs']),
+                                      'remaining_requests':(len(p['npcs'])-len(completed)+5)//6,
+                                      'resumable':bool(completed) and len(completed)<len(p['npcs'])},
                 'mission_evidence':evidence(report,folder/'input.mod'),'mission_baseline':workspace(report),
                 'mission_review':review(p['mission_editor'],report),'mission_conversion':catalog(report,folder/'input.mod')}
 
@@ -223,24 +240,74 @@ class ModuleAnalyser:
                 if not m['objectives_reviewed'] or not m['rewards_reviewed']:result['warnings'].append(m['quest']['name']+': inactive drafts may be saved before all objectives and rewards have been reviewed.')
         return result
 
-    def generate_profiles(self,ident,profile,provider,config,dependency_folder=''):
+    @staticmethod
+    def completed_profiles(profile,status):
+        from .conversion_profiles import GENERATED_ORIGIN
+        ids={n['id'] for n in profile['npcs']}
+        # A restarted generation can still contain profiles from an older run.
+        # Its own saved IDs distinguish newly finished batches from old text.
+        if 'profile_completed_ids' in status:
+            return set(status['profile_completed_ids']) & ids
+        return {n['id'] for n in profile['npcs'] if n.get('profile_origin')==GENERATED_ORIGIN}
+
+    def pause_profiles(self,ident):
+        with self.lock:
+            event=self.profile_pauses.get(ident)
+            if self.status(ident)['status']!='profiling' or event is None:
+                raise ValueError('Profile generation is not running')
+            event.set()
+            self.update(ident,pause_requested=True,message='Pausing after the current batch is saved. Waiting for the model response.')
+        return self.status(ident)
+
+    def generate_profiles(self,ident,profile,provider,config,dependency_folder='',restart=False):
         from .module_conversion import validate_plan_for_report
-        from .conversion_profiles import generate
+        from .conversion_profiles import generate,ProfilesPaused
+        if type(restart) is not bool:raise ValueError('Invalid profile generation mode')
         with self.lock:
             if any(j['status'] in ACTIVE for j in self.jobs.values()):raise ValueError('Wait for the current import operation to finish')
             report=self.report(ident);p=validate_plan_for_report(profile,report)
             cfg=analysis_config(config,dependency_folder)
-            # Save the user's draft before work; replace it only on full success.
+            completed=set() if restart else self.completed_profiles(p,self.status(ident))
+            event=threading.Event();self.profile_pauses[ident]=event
+            # The draft and each validated batch are durable before progress is reported.
             write_json(self.folder(ident)/'conversion-plan.json',p)
             write_json(self.folder(ident)/'dependency-location.json',{'folder':cfg.get('analysis_bundle_root','')})
-            self.update(ident,status='profiling',message='Preparing character evidence for the authoring model',profile_error='')
+            now=time.time()
+            progress={'state':'running','completed':len(completed),'total':len(p['npcs']),
+                      'started_at':now,'batch_started_at':None,'saved_at':None,
+                      'current_names':[],'provider':str(provider.provider),'model':str(provider.model)}
+            self.update(ident,status='profiling',message='Preparing character evidence for the authoring model',profile_error='',
+                        pause_requested=False,profile_completed_ids=sorted(completed),profile_progress=progress)
+        def report_progress(fields):
+            with self.lock:
+                old=self.status(ident)['profile_progress']
+                progress={**old,**{k:v for k,v in fields.items() if k!='message'},'batch_started_at':time.time()}
+                message='Pausing after the current batch is saved.' if event.is_set() else fields['message']
+                self.update(ident,message=message,profile_progress=progress)
+        def checkpoint(result,ids):
+            with self.lock:
+                write_json(self.folder(ident)/'conversion-plan.json',result)
+                old=self.status(ident)['profile_progress']
+                progress={**old,'completed':len(ids),'saved_at':time.time(),'batch_started_at':None,'current_names':[]}
+                self.update(ident,profile_completed_ids=ids,profile_progress=progress,message=f'Saved {len(ids)} of {len(p["npcs"])} character profiles')
+        def finish(status,state,message,error=''):
+            with self.lock:
+                old=self.status(ident)['profile_progress']
+                progress={**old,'state':state,'finished_at':time.time(),'batch_started_at':None,'current_names':[]}
+                self.update(ident,status=status,message=message,profile_error=error,pause_requested=False,profile_progress=progress)
         def work():
             try:
-                result=generate(provider,p,report,lambda msg:self.update(ident,message=msg))
-                write_json(self.folder(ident)/'conversion-plan.json',result)
-                self.update(ident,status='complete',message='Detailed profiles ready. Review their backgrounds, then create a new AI copy.',profile_error='')
+                result=generate(provider,p,report,report_progress,completed_ids=completed,checkpoint=checkpoint,should_pause=event.is_set)
+                checkpoint(result,[n['id'] for n in result['npcs']])
+                finish('complete','complete','Detailed profiles ready. Review their backgrounds, then create a new AI copy.')
+            except ProfilesPaused:
+                finish('profile_paused','paused','Profile generation paused. Saved batches are retained; resume when ready.')
             except Exception as exc:
-                self.update(ident,status='complete',message='Saved profiles retained; generation did not finish',profile_error=str(exc)[:1200] if isinstance(exc,ValueError) else 'Character generation failed. Check the authoring model and API settings.')
+                finish('profile_failed','failed','Profile generation stopped. Saved batches are retained; resume to finish the remaining characters.',
+                       str(exc)[:1200] if isinstance(exc,ValueError) else 'Character generation failed. Check the authoring model and API settings.')
+            finally:
+                with self.lock:
+                    if self.profile_pauses.get(ident) is event:self.profile_pauses.pop(ident,None)
         threading.Thread(target=work,daemon=True).start();return self.status(ident)
 
     def convert(self,ident,profile,store,config,dependency_folder=''):

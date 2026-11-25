@@ -1,6 +1,5 @@
 """Launch an exact exported build from the already-running local service."""
 from pathlib import Path
-import re
 import subprocess
 import sys
 import time
@@ -9,6 +8,7 @@ import platform as host_platform
 from . import launcher
 from .builder import install_build
 from .service import adventure_document
+from .module_names import validate_module_name
 
 
 def executable(game_root, platform=None):
@@ -32,8 +32,7 @@ def launch_build(app, build_id):
         raise ValueError('NWN is already running. Save and exit it before starting another build. To load a saved game, use NWN’s Load Game menu.')
     project = app.store.built_project(build_id)
     module = project['module_name']
-    if not re.fullmatch(r'[a-z][a-z0-9_]{0,15}', module):
-        raise ValueError('Invalid module filename. Rebuild this adventure.')
+    validate_module_name(module)
     exe = executable(app.config['game_root'])
     user = Path(app.config['user_dir']).expanduser().resolve()
     if not user.is_dir():

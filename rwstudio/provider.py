@@ -60,7 +60,10 @@ class Provider:
         with self.lock:
             now=time.monotonic()
             self.calls=[t for t in self.calls if now-t<3600]
-            if len(self.calls)>=60 and not (self.scope=='gameplay' and self.usage_store): raise AIError('Studio has reached its 60-request hourly limit. Try again later.')
+            # Large authoring jobs are finite, user-requested batches. Gameplay
+            # keeps its configured persistent limits (or the legacy fallback).
+            if self.scope=='gameplay' and not self.usage_store and len(self.calls)>=60:
+                raise AIError('Gameplay AI has reached its 60-request hourly limit. Try again later.')
             self.calls.append(now)
         if provider=='gemini':
             parts=[{'text':json.dumps(context,ensure_ascii=False)}]

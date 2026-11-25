@@ -91,7 +91,8 @@ class Application:
             result['build']=result['builds'][-1] if result['builds'] else None
             return result
         if route=='/api/analyser/conversion-save':return self.analyser.save_conversion(b.get('id'),b.get('project'),self.config,b.get('dependency_folder',''))
-        if route=='/api/analyser/profiles':return self.analyser.generate_profiles(b.get('id'),b.get('project'),self.authoring_provider,self.config,b.get('dependency_folder',''))
+        if route=='/api/analyser/profiles':return self.analyser.generate_profiles(b.get('id'),b.get('project'),self.authoring_provider,self.config,b.get('dependency_folder',''),b.get('restart',False))
+        if route=='/api/analyser/profiles-pause':return self.analyser.pause_profiles(b.get('id'))
         if route=='/api/analyser/convert':return self.analyser.convert(b.get('id'),b.get('project'),self.store,self.config,b.get('dependency_folder',''))
         if route=='/api/example/load':
             if b.get('confirm') is not True:raise ValueError('Confirm loading the included example. Any existing Emberseal draft will be backed up first.')

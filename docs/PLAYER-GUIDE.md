@@ -18,7 +18,24 @@ A native NWN module cannot directly launch the desktop service. Start Studio you
 
 You can also address a nearby NPC directly with `!talk <alias> <message>`. For a character whose alias is `bram`, use `!talk bram what swords do you sell?`. `!ai <message>` sends a message to your selected AI conversation partner. Names/aliases depend on the adventure; Bram is only an example.
 
+In modules rebuilt with the updated converter, **`!npcs`** opens a nearby-NPC list. Use it when there is no AI choice in the character's original menu, or when several characters share a name. Close any current dialogue, type `!npcs` in Talk, select the character, then speak normally. Characters must have AI enabled, be visible within 12 metres, and be available outside combat and cutscenes. Use `!companions` for familiars and summons.
+
 The normal dialogue menu remains available for quest choices and other authored actions. AI conversation availability, creature speech/nonverbal behavior and what each character knows are controlled by the module creator. An AI promise alone does not complete a quest or transfer an item: check the journal, inventory and game's actual result.
+
+### Adjust AI replies while playing
+
+In newly built or rebuilt adventures, type **`!aisettings`** in Talk to open **AI response settings**. Converted adventures also offer this button in `!npcs`, and companion controls include it too. Click each setting to cycle its options:
+
+- **Reply length:** Brief, Natural or Detailed. Brief is the default: 1–2 short sentences, up to 240 characters.
+- **Speaking style:** Plain, Characterful or Dramatic. Plain is the default; personalities and knowledge still come from the NPC's profile.
+- **Action descriptions:** Off, Occasional or Expressive. Off is the default for speaking characters; animals still communicate through physical behavior.
+- **Follow-up questions:** Only when needed, or Conversational. The default avoids habitual follow-up questions while allowing necessary clarification.
+
+Changes apply to new requests and persist when you save the game. A reply already being generated keeps its earlier settings. **Restore short, plain defaults** resets these four options. The settings affect NPCs, merchants and companion dialogue, including replies to companion visits; they do not change quests, permissions, the AI DM's narration or ambient NPC exchanges.
+
+New companions inherit these settings. To override one companion's length, use its **Reply** control under `!companions`; choose **Use AI response settings** to return to the shared default. Existing explicit companion preferences are retained. Companion tone remains a separate per-character choice.
+
+The service now encourages concise, natural speech in existing adventures too. Adding the in-game panel to an older module requires rebuilding and starting a new game; an old save keeps its embedded scripts. No additional API request is made when you change a setting.
 
 For a converted mission under Studio control, choose **Discuss our tasks.** at its quest character, or type `!missions <name or alias>` while nearby. These menus offer acceptance, the current conversation objective and final hand-in when the game confirms their requirements. They do not need an AI response. Missions left under original control still use the adventure's original quest menus and scripts. General-import missions require Studio 1.2.0 or later and the matching adventure profile.
 

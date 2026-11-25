@@ -5,6 +5,7 @@ import sqlite3
 import time
 import tempfile
 import unittest
+import zipfile
 from collections import OrderedDict
 from contextlib import closing
 from pathlib import Path
@@ -62,6 +63,7 @@ class ConversionTests(unittest.TestCase):
         self.assertNotIn('RWRemember',scripts['rwc_s00001']) # Selecting AI never overwrites the transcript.
 
     def test_roundtrip_copy_preserves_original_resources_and_registration(self):
+        self.p['module_name']='converted_adventure_with_a_long_filename'.ljust(64,'_')
         game=self.root/'game';(game/'data').mkdir(parents=True);compiler=self.root/'compiler';compiler.touch()
         cfg=dict(game_root=str(game),compiler=str(compiler))
         def runtime(p,digest,game,hooks):
@@ -75,6 +77,7 @@ class ConversionTests(unittest.TestCase):
         with patch('rwstudio.module_conversion.runtime',side_effect=runtime),patch('rwstudio.module_conversion.subprocess.run',side_effect=compile),patch('rwstudio.player_package.export_keys',return_value=[]):
             manifest=build(self.path,self.report,self.p,store,cfg)
         folder=store.root/'builds'/manifest['build_id'];output=folder/manifest['module'];converted=Archive(output);old=Archive(self.path)
+        self.assertEqual(output.name,self.p['module_name']+'.mod')
         self.assertEqual(self.path.read_bytes(),before)
         for key in old.index:
             if key not in [('module',2014),('mara_talk',2029)]:self.assertEqual(old.get(*key),converted.get(*key),key)
@@ -82,9 +85,28 @@ class ConversionTests(unittest.TestCase):
         self.assertEqual(adventure_document(output)['project'],self.p)
         self.assertEqual(store.built_project(manifest['build_id']),self.p)
         self.assertTrue((folder/(self.p['module_name']+'-aurora.zip')).is_file())
+        with zipfile.ZipFile(folder/(self.p['module_name']+'-aurora.zip')) as z:
+            self.assertIn(self.p['module_name']+'.mod',z.namelist())
+            self.assertIn(self.p['module_name']+'.rwproject.json',z.namelist())
         self.assertTrue(json.loads((folder/'preservation.json').read_text())['original_scripts_byte_identical'])
         self.path.write_bytes(before+b'x')
         with self.assertRaisesRegex(ValueError,'snapshot changed'):build(self.path,self.report,self.p,store,cfg)
+
+    def test_ai_exit_uses_structure_not_farewell_words_or_language(self):
+        dlg=conversation([('Spare a coin?',[0]),('Need a room?',[1]),('Payment due',[2]),
+                          ('Quest hand-in',[3]),('Conditional refusal',[4])],
+                         [('No, I cannot.',[]),('Non, merci.',[]),('Thank you.',[],'take_gold'),
+                          ('Done.',[]),('No, thank you.',[])])
+        dlg[1]['ReplyList'][1][3][1]['Quest']=(10,b'native_quest')
+        dlg[1]['EntryList'][1][4][1]['RepliesList'][1][0][1]['Active']=(11,b'can_leave')
+        entries=OrderedDict({('mara_talk',2029):write(b'DLG V3.2',dlg)});scripts={}
+        changed=patch_dialogues(entries,self.report,Resources(self.path,{}),scripts)
+        self.assertEqual(changed['mara_talk']['entries'],[0,1])
+        after=read(entries['mara_talk',2029])[1]
+        for i in (2,3,4):
+            self.assertEqual(after[1]['EntryList'][1][i][1]['RepliesList'],dlg[1]['EntryList'][1][i][1]['RepliesList'])
+        self.assertEqual(after[1]['ReplyList'][1][3][1]['Quest'],(10,b'native_quest'))
+        self.assertEqual(sum(s.count('ExecuteScript("take_gold",OBJECT_SELF);') for s in scripts.values()),1)
 
     def test_npc_reply_never_authorizes_quest_or_recruitment_changes(self):
         provider=Mock();provider.request.return_value=dict(reply='Hello.',action='turn_in',story_action='award',merchant_action='buy',companion_action='dismiss',task_target='',task_question='',task_item='',task_quantity='')
@@ -115,6 +137,21 @@ class ConversionTests(unittest.TestCase):
         self.assertIn('if(count!=1)return OBJECT_INVALID',scripts['aw_config']);self.assertIn('"SP_HIST_"+GetObjectUUID(npc)',scripts['sp_inc'])
         self.assertIn('RWFindActor(pc,tag)',scripts['sp_chat']);self.assertNotIn('GetObjectByTag(tag)',scripts['sp_chat'])
         self.assertIn('!IsInConversation(npc)',scripts['sp_inc']);self.assertIn('!GetIsInCombat(npc)',scripts['sp_inc'])
+        self.assertIn('if(lower=="!npcs")',scripts['sp_chat'])
+        self.assertIn('RWNPCEvent()',scripts['rwc_npc_evt'])
+        self.assertIn('!aisettings',scripts['sp_chat'])
+        self.assertIn('AWDEvent()',scripts['aw_dlg_evt'])
+        self.assertIn('"dialogue_settings",AWDSettings(pc)',scripts['sp_inc'])
+        self.assertNotIn('AWDSettings',scripts['rwc_beat'])
+        selector=scripts['rwc_npcs']
+        self.assertIn('GetObjectByUUID(GetLocalString(pc,"RWNPC_ROW_"',selector)
+        self.assertIn('!RWNPCReady(pc,body)',selector)
+        self.assertIn('SPIsNPC(RWProfile(body)) && AWCAIReady(pc,body)',selector)
+        self.assertIn('GetCutsceneMode(pc)',selector)
+        self.assertIn('NuiGetEventWindow()!=token',selector)
+        self.assertNotIn('GetObjectByTag',selector)
+        self.assertNotIn('ExecuteScript(',selector)
+        self.assertNotIn('RWNPC',scripts['rwc_beat'])
 
     def test_native_named_dependencies_and_tlk_install_without_overwrite(self):
         from rwstudio.custom_assets import install_dependencies

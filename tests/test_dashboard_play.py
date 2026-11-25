@@ -44,6 +44,18 @@ class DashboardPlayTests(unittest.TestCase):
         with patch('rwstudio.dashboard_launch.launcher.game_running',return_value=True),self.assertRaisesRegex(ValueError,'already running'):play.launch_build(self.app,BUILD)
         self.spawn.assert_not_called();self.assertFalse((self.user/'modules').exists())
 
+    def test_long_filename_installs_registers_and_launches_without_truncation(self):
+        name='adventure_with_a_long_descriptive_filename'.ljust(64,'_')
+        self.project['module_name']=name
+        write_json(self.folder/'project.json',self.project)
+        (self.folder/(name+'.mod')).write_bytes(self.raw)
+        write_json(self.folder/(name+'.rwproject.json'),dict(build_id=BUILD,project=self.project))
+        write_json(self.folder/'manifest.json',dict(module=name+'.mod',sha256=hashlib.sha256(self.raw).hexdigest()))
+        result=play.launch_build(self.app,BUILD)
+        self.assertEqual(result['module'],name)
+        self.assertEqual(self.spawn.call_args.args[0][-1],name)
+        self.assertEqual((self.user/'modules'/(name+'.mod')).read_bytes(),self.raw)
+
     def test_rejects_missing_credentials_and_mismatched_sidecar(self):
         self.app.credentials.get.return_value = None
         with self.assertRaisesRegex(ValueError,'API key'):play.launch_build(self.app,BUILD)

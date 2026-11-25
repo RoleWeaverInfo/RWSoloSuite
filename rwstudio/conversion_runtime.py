@@ -2,7 +2,7 @@
 import copy
 import re
 from .builder import ROOT,literal,conversation,string
-from .adventure_builder import json_function
+from .conversion_performance import configuration,adapt as optimize_runtime
 from .nwn.gff import read,write,text
 from .nwn.area_tools import set_value as put
 
@@ -33,8 +33,7 @@ def runtime(p,build,game,hooks):
             'AWShops':[dict(n['merchant'],id=n['id'],conversation=n.get('native_store',{}).get('conversation',''),store_variables=n.get('native_store',{}).get('variables',[]),store_tags=n.get('native_store',{}).get('tags',[])) for n in p['npcs'] if n['merchant']['enabled'] and n['ai_enabled']],
             'AWCompanionConfig':[cfg],'AWCompanionTemplates':p['companions']['templates'],
             'AWCompanionNPCs':[dict(n['companion'],id=n['id'],name=n['name'],alias=n['alias'],ai_enabled=n['ai_enabled']) for n in p['npcs']]}
-    profiles='string RWProfile(object body){string tag=GetTag(body);string ref=GetResRef(body);'+''.join('if(tag=='+literal(n['native_tag'])+' && ref=='+literal(n['native_resref'])+')return '+literal(n['id'])+';' for n in p['npcs'])+'return "";}'
-    scripts['aw_config']='\n'.join([*(json_function(k,v) for k,v in arrays.items()),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return "";}','int AWLevelMax(){return 40;}',profiles,
+    scripts['aw_config']='\n'.join([configuration(p,arrays),'string AWCWorld(){return '+literal(p['id'])+';}','string AWEnding(){return "";}','int AWLevelMax(){return 40;}',
         'object RWFindActor(object pc,string id){object match=OBJECT_INVALID;object body=GetFirstObjectInArea(GetArea(pc));int count=0;while(GetIsObjectValid(body)){if(GetObjectType(body)==OBJECT_TYPE_CREATURE && !GetIsPC(body) && !GetIsDead(body) && RWProfile(body)==id && GetDistanceBetween(pc,body)<=12.0 && GetObjectSeen(body,pc) && LineOfSightObject(pc,body)){match=body;count++;}body=GetNextObjectInArea(GetArea(pc));}if(count!=1)return OBJECT_INVALID;return match;}'])
     from .conversion_merchants import adapt_runtime
     adapt_runtime(scripts,p,literal,replace)
@@ -51,7 +50,7 @@ def runtime(p,build,game,hooks):
     src=replace(src,'void AWCOrder(object pc,object body,string command){','void AWCOrder(object pc,object body,string command){if(command=="recruit" || command=="dismiss"){SendMessageToPC(pc,"Use this character\'s original dialogue to recruit or dismiss them.");return;}')
     scripts['aw_companion']=src
     scripts['aw_cp_ui']=replace(scripts['aw_cp_ui'],'AWCButton(pc,"Leave my party","dismiss")','AWCLabel("Use original dialogue to recruit or dismiss this character.")')
-    for name in ('aw_cp_tasks','aw_ct_request','aw_ambient'):
+    for name in ('aw_cp_tasks','aw_ct_request','aw_ct_poll','aw_ambient'):
         scripts[name]=scripts[name].replace('GetTag(target)','RWProfile(target)').replace('GetTag(body)','RWProfile(body)').replace('GetResRef(target)==AWText(p,"id")','RWProfile(target)==AWText(p,"id")').replace('GetResRef(body)==AWText(AWAPolicy(body),"id")','RWProfile(body)==AWText(AWAPolicy(body),"id")')
     scripts['aw_story']='#include "aw_ambient"\nvoid AWAIAction(object pc,string tag,string verb){}'
     inc=(ROOT/'scripts/sp_inc.nss').read_text(encoding='utf-8').replace('#include "mc_inc"','#include "aw_story"').replace('MCState()','AQProgress()').replace('GetIsObjectValid(MCSatchel(pc))','FALSE')
@@ -71,8 +70,8 @@ def runtime(p,build,game,hooks):
     chat=replace(chat,'SPAsk(pc,"dm",GetSubString(s,4,1200));','SendMessageToPC(pc,"This adventure uses its original quest dialogue and journal. AI does not direct its quests.");')
     scripts.update(sp_inc=inc,sp_chat=chat,sp_select=select.replace('NPC menu choices share the same story progress.','Use original dialogue choices for quests, trading, recruitment and dismissal.'))
     scripts['sp_config']='\n'.join(['string SPProject(){return '+literal(p['id'])+';}','string SPBuild(){return '+literal(build)+';}','json SPEncounters(){return JsonArray();}',
-        'int SPIsNPC(string tag){return '+(' || '.join('tag=='+literal(n['id']) for n in p['npcs'] if n['ai_enabled']) or 'FALSE')+';}',
-        'string SPAlias(string alias){'+''.join('if(alias=='+literal(n['alias'])+')return '+literal(n['id'])+';' for n in p['npcs'] if n['ai_enabled'])+'return "";}',
+        'int SPIsNPC(string tag){return RWIsNPC(tag);}',
+        'string SPAlias(string alias){return RWAlias(alias);}',
         'string SPAliases(){return '+literal(', '.join(n['alias'] for n in p['npcs'] if n['ai_enabled']))+';}'])
     def native(event):return 'ExecuteScript('+literal(hooks[event])+',OBJECT_SELF);' if hooks.get(event) else ''
     scripts['rwc_load']='#include "sp_inc"\nvoid main(){'+native('Mod_OnModLoad')+'SetLocalString(GetModule(),"AWM_SESSION",GetRandomUUID());AWCInit();SPInit();}'
@@ -82,10 +81,16 @@ def runtime(p,build,game,hooks):
     # the optional chat layer. No mutation of native event hooks on creatures.
     scripts['rwc_chat']='#include "sp_inc"\nvoid main(){'+native('Mod_OnPlrChat')+'if(GetPCChatMessage()!="")ExecuteScript("sp_chat",OBJECT_SELF);}'
     scripts['rwc_can_chat']='#include "sp_inc"\nint StartingConditional(){return GetObjectType(OBJECT_SELF)==OBJECT_TYPE_CREATURE && SPIsNPC(RWProfile(OBJECT_SELF));}'
+    optimize_runtime(scripts,replace)
+    scripts['rwc_npcs']=(ROOT/'scripts/rwc_npcs.nss').read_text(encoding='utf-8')
+    scripts['rwc_npc_evt']='#include "rwc_npcs"\nvoid main(){RWNPCEvent();}'
+    scripts['sp_chat']=replace(scripts['sp_chat'],'#include "sp_inc"','#include "rwc_npcs"')
+    scripts['sp_chat']=replace(scripts['sp_chat'],'string lower=GetStringLowerCase(s);','string lower=GetStringLowerCase(s);if(lower=="!npcs"){SetPCChatMessage("");SetLocalInt(pc,"RWNPC_PAGE",0);RWNPCOpen(pc);return;}')
+    scripts['rwc_enter']=replace(scripts['rwc_enter'],'Use !companions for recruited allies, familiars and summons.','Use !npcs to select any available nearby AI character, and !companions for recruited allies, familiars and summons.')
     # Retain includes plus actual companion/merchant UI event handlers. Do not
     # ship the authoring builder\'s module/area/quest startup entry points.
-    keep={'sp_inc','sp_chat','sp_select','sp_config','aw_story','aw_config','nw_inc_nui','aw_g_icons','rwc_load','rwc_enter','rwc_beat','rwc_chat','rwc_can_chat','rwc_memory'}
-    keep.update(k for k in scripts if k.startswith(('aw_cp_','aw_ct_','aw_g_','aw_m_')))
+    keep={'sp_inc','sp_chat','sp_select','sp_config','aw_story','aw_config','nw_inc_nui','aw_g_icons','rwc_load','rwc_enter','rwc_beat','rwc_chat','rwc_can_chat','rwc_memory','rwc_npcs','rwc_npc_evt'}
+    keep.update(k for k in scripts if k.startswith(('aw_cp_','aw_ct_','aw_g_','aw_m_','aw_dlg_')))
     keep.update(('aw_companion','aw_merchant','aw_ambient','aw_quest','aw_encounter','aw_items','aw_ui','aw_shop_evt'))
     # Walk include dependencies rather than assuming a particular file layout.
     todo=list(keep)

@@ -3,12 +3,13 @@ import copy
 import re
 from . import companions
 from .content import schema_check, _obj, S, enum
+from .module_names import MAX_MODULE_NAME, validate_module_name
 
 def plan(report):
     from .authoring import npc
     digest=report['module']['sha256']
     stem=re.sub('[^a-z0-9]+','_',report['module']['name'].lower()).strip('_')
-    p=dict(schema_version=3,id='import_'+digest[:20],module_name=('rw_'+stem)[:16],
+    p=dict(schema_version=3,id='import_'+digest[:20],module_name=('rw_'+stem)[:MAX_MODULE_NAME],
            title=report['module']['name']+' - AI edition',source_sha256=digest,
            summary='An adventure governed by its original conversations and quest rules.',
            ai_conversations=True,companions=companions.defaults(True),npcs=[])
@@ -49,7 +50,8 @@ def validate(value):
             expected=SNOW_SHA if mission['adapter']==ADAPTER else mission['source_sha256']
             if p.get('source_sha256')!=expected:raise ValueError('The mission adapter belongs to a different source module')
     if p.get('schema_version')!=3 or p.get('ai_conversations') is not True:raise ValueError('Unsupported converted adventure profile')
-    for field,pattern in [('id',r'[a-z][a-z0-9_]{0,39}'),('module_name',r'[a-z][a-z0-9_]{0,15}'),('source_sha256',r'[0-9a-f]{64}')]:
+    validate_module_name(p.get('module_name'))
+    for field,pattern in [('id',r'[a-z][a-z0-9_]{0,39}'),('source_sha256',r'[0-9a-f]{64}')]:
         if not isinstance(p.get(field),str) or not re.fullmatch(pattern,p[field]):raise ValueError('Invalid conversion '+field)
     for field,limit in [('title',160),('summary',3000)]:
         if not isinstance(p.get(field),str) or not p[field].strip() or len(p[field])>limit:raise ValueError('Invalid conversion '+field)
@@ -100,6 +102,8 @@ def npc_reply(provider,p,ident,message,snapshot,history=''):
     n=next((n for n in p['npcs'] if n['id']==ident and n['ai_enabled']),None)
     if n is None:raise AIError('This creature has not been enabled for AI conversations.')
     ctx=companions.context(p,snapshot,ident)
+    from .response_style import settings,instructions,finish as finish_style
+    prefs=settings(snapshot,ctx)
     allowed=[x for x in (ctx or {}).get('allowed_actions',[]) if x not in ('recruit','dismiss')]
     if ctx:ctx['allowed_actions']=allowed
     profile={k:n.get(k,'') for k in ('name','role','personality','background','knowledge','motivation')}
@@ -126,13 +130,13 @@ def npc_reply(provider,p,ident,message,snapshot,history=''):
         'Only an explicit request such as "Show me your wares", "Open your store" or "Let us trade" may use merchant_action browse. It opens the native store when its original dialogue permits; any required introduction or condition still applies. A negotiation request may use haggle; native pricing and Appraise apply, and no extra discount is promised. Use only an offered action. If stock is unavailable, invite the player to trade once before discussing the shelves; do not open anything on your own. '
         'For native actions not offered here, suggest continuing your ordinary conversation in an in-world way. Never claim a mechanical action has succeeded. '
         'An owned companion can request only an offered action or task; native ownership, combat and container protections take priority. '
-        'Nonverbal communication means gestures and sounds without spoken or telepathic words. Keep the reply under 850 characters.'+INSTRUCTIONS,
+        'Nonverbal communication means gestures and sounds without spoken or telepathic words.'+instructions(prefs)+INSTRUCTIONS,
         dict(npc=profile,setting=p['summary'],communication=mode,heard_dialogue=heard[-12000:] if isinstance(heard,str) else '',
              player_name=str(snapshot.get('player_name',''))[:100],
              remembered_dialogue=learned(n,snapshot,message),
              is_merchant=merchant,merchant_stock=shop,managed_mission=managed,
              shared_conversations=str(snapshot.get('native_shared',''))[-9000:] if ctx and ctx.get('kind')=='party' else '',
-             companion=ctx,area=str(snapshot.get('area',''))[:100],message=message[:1200],history=history[-6000:]),
+             companion=ctx,response_preferences=prefs,area=str(snapshot.get('area',''))[:100],message=message[:1200],history=history[-6000:]),
         _obj({'reply':S,'action':enum('none'),'story_action':enum('',*mission_actions),'merchant_action':enum(*merchant_actions),'companion_action':enum('',*allowed),**fields(ctx or {})}))
     result['action']='none'
     if result.get('story_action') not in mission_actions:result['story_action']=''
@@ -144,8 +148,7 @@ def npc_reply(provider,p,ident,message,snapshot,history=''):
             if stock_question:result['reply']=ground_quote(result['reply'],'stock '+message,shop)
             elif re.search(r'\d+\s*(gold|gp|coins?)',result['reply'],re.I):result['reply']=ground_quote(result['reply'],message,shop)
     if result.get('companion_action') not in allowed:result['companion_action']=''
-    result['reply']=result['reply'][:850]
     if mode=='nonverbal':
         from .ambient import clean
         result['reply']=clean(result['reply'],mode)
-    return finish(result,ctx or {})
+    return finish_style(finish(result,ctx or {}),prefs,mode=='nonverbal')

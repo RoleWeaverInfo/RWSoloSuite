@@ -11,6 +11,7 @@ import tempfile
 import threading
 import zipfile
 from .content import validate_project, canonical, CREATURES, DECOR, APPEARANCES
+from .module_names import module_tag
 from .storage import write_json
 from .nwn.gff import read, write, text
 from .nwn.module_copy import resources
@@ -80,7 +81,7 @@ def _build(p,store,game_root,compiler):
     entries=OrderedDict(((n,k),b) for n,k,b in resources(base));game=GameAssets(game_root)
     module=read(entries['module',2014])[1]
     put(module,'Mod_Name',text(p['title']));put(module,'Mod_Description',text(p['summary']+' Local adventure with optional Role Weaver Solo AI.'))
-    string(module,'Mod_Tag',p['module_name']);put(module,'Mod_ID',hashlib.sha256(ident.encode()).digest()[:16],13)
+    string(module,'Mod_Tag',module_tag(p['module_name']));put(module,'Mod_ID',hashlib.sha256(ident.encode()).digest()[:16],13)
     put(module,'Mod_Area_list',[node(6,Area_Name=(11,a['id'].encode())) for a in p['areas']],15)
     for field,script in [('Mod_OnModLoad','sp_load'),('Mod_OnClientEntr','sp_enter'),('Mod_OnHeartbeat','sp_beat'),('Mod_OnPlrChat','sp_chat')]:string(module,field,script,11)
     entries['module',2014]=write(b'IFO V3.2',module)

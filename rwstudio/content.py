@@ -3,6 +3,7 @@ import copy
 import json
 import math
 import re
+from .module_names import validate_module_name
 
 CREATURES = {'goblin': 'nw_goblina', 'rat': 'nw_rat001'}
 DECOR = {'table': 97, 'chair': 179, 'barrel': 49, 'bookshelf': 1,
@@ -112,8 +113,8 @@ def validate_project(value):
     schema_check(value, PROJECT_SCHEMA)
     p=copy.deepcopy(value)
     if p['schema_version']!=1: raise ValueError('Unsupported project version')
-    for key,limit in [('id',40),('module_name',16)]:
-        if not re.fullmatch(r'[a-z][a-z0-9_]{0,'+str(limit-1)+'}',p[key]): raise ValueError(f'Invalid {key}')
+    validate_module_name(p['module_name'])
+    if not re.fullmatch(r'[a-z][a-z0-9_]{0,39}',p['id']): raise ValueError('Invalid id')
     if not 1<=p['level_min']<=p['level_max']<=20: raise ValueError('Levels must be between 1 and 20')
     if not 2<=len(p['areas'])<=8 or not 3<=len(p['npcs'])<=24 or len(p['encounters'])>24 or len(p['furnishings'])>64:
         raise ValueError('Use 2–8 areas, 3–24 NPCs, at most 24 encounters and 64 extra furnishings')

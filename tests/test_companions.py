@@ -93,13 +93,21 @@ class NativeCompanionTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):cls.temp.cleanup()
     def test_native_companion_scripts_and_original_ai_are_preserved(self):
-        for n in ('aw_cp_order','aw_cp_probe','aw_cp_dead','aw_cp_dialog','aw_cp_ui_evt'):
+        for n in ('aw_cp_order','aw_cp_probe','aw_cp_dead','aw_cp_dialog','aw_cp_ui_evt','aw_dlg_evt'):
             self.assertIn((n,2010),self.res)
         recruit=read(self.res['seren',2027])[1][1]
         self.assertTrue(recruit['Plot'][1]);self.assertTrue(recruit['IsImmortal'][1]);self.assertTrue(recruit['Equip_ItemList'][1]);self.assertTrue(recruit['ScriptHeartbeat'][1])
         self.assertIn(b'SetMaxHenchmen(4)',self.res['aw_load',2009])
         self.assertIn(b'Join my party',self.res['seren',2029]);self.assertIn(b'Companion controls',self.res['seren',2029])
         self.assertIn(b'AWCTravel',self.res['aw_exit',2009])
+        self.assertIn(b'!aisettings',self.res['sp_chat',2009])
+        self.assertIn(b'"dialogue_settings",AWDSettings(pc)',self.res['sp_inc',2009])
+        self.assertIn(b'"dialogue_settings",AWDSettings(pc)',self.res['aw_ct_request',2009])
+        self.assertIn(b'Use AI response settings',self.res['aw_cp_ui',2009])
+        self.assertIn(b'if(field=="reply")maximum=3',self.res['aw_companion',2009])
+        self.assertIn(b'NuiGetEventWindow()!=token',self.res['aw_dlg_ui',2009])
+        self.assertIn(b'SetLocalInt(pc,"AWD_"+field',self.res['aw_dlg_ui',2009])
+        self.assertNotIn(b'AWDSettings',self.res['aw_beat',2009])
 
     def test_module_checks_service_at_entry_during_play_and_by_chat_command(self):
         self.assertIn(b'SPServiceBegin(pc)',self.res['aw_enter',2009])

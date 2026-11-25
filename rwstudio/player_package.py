@@ -1,15 +1,15 @@
 """Service-only launchers and source fallback inside exported adventure ZIPs."""
 from pathlib import Path
-import re
 import os
 import shutil
 import zipfile
+from .module_names import validate_module_name
 
 ROOT=Path(__file__).resolve().parents[1]
 
 def write_player_bundle(folder,module):
     folder=Path(folder);name=Path(module).stem
-    if not re.fullmatch('[a-z][a-z0-9_]{0,15}',name):raise ValueError('Invalid module launcher filename')
+    validate_module_name(name)
     player=folder/'AI Player';player.mkdir(exist_ok=True);copied=[]
     for filename in ('studio.py','service.py','ROLE-WEAVER-LICENSE.txt','requirements-guardrails.txt','requirements-platform.txt','GUARDRAILS-AND-USAGE.md'):
         shutil.copy2(ROOT/filename,player/filename);copied.append(player/filename)

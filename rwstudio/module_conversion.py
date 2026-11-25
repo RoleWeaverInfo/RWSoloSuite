@@ -38,9 +38,10 @@ def patch_dialogues(entries,report,res,scripts):
                 ri=link[1].get('Index',(4,-1))[1]
                 if not 0<=ri<original_reply_count or link[1].get('Active',(11,b''))[1]:continue
                 reply=replies[ri][1]
-                label=res.text(plain['ReplyList'][ri].get('Text',''))
+                # Safety comes from the dialogue graph, not its language or
+                # phrasing. "No, I cannot" and localized refusals are exits too.
                 if (not reply.get('EntriesList',(15,[]))[1] and not reply.get('Script',(11,b''))[1]
-                    and not reply.get('Quest',(10,b''))[1] and re.search(r'\b(farewell|goodbye|good bye|leave|bye|never mind|nothing else|see you later|perhaps later|right now|for now|on our way|thank(?:s| you) for your time)\b',label,re.I)):
+                    and not reply.get('Quest',(10,b''))[1]):
                     safe=True;break
             # Ordinary one-line greetings previously closed without any AI option.
             terminal=not links and not any(entry[1].get(k,(11,b''))[1] for k in ('Script','Quest','Speaker'))
@@ -248,6 +249,7 @@ Requires NWN: Enhanced Edition and a Role Weaver Module Studio build with module
 1. Keep the .mod and matching .rwproject.json together. Start the updated Role Weaver service, import the sidecar on AI service status, and configure your own OpenAI or Gemini key.
 2. With NWN closed, install the module using Module Conversion > AI profiles & build > Install copy locally. For a downloaded copy, copy the .mod to Neverwinter Nights/modules, hak files to hak, and tlk files to tlk; preserve their original names. Do not overwrite different existing packs.
 3. Start NWN separately and choose a NEW GAME with {p['module_name']}. Existing saves of the original module do not contain these additions. Keep Role Weaver running.
+   If a character has no AI dialogue option, close the dialogue and type !npcs in Talk. Select the exact nearby NPC and speak normally. Original quest/payment choices and all original creature scripts remain available. Visibility, distance, combat, cutscene and creator AI settings still apply. Use !companions for familiars and summons.
 4. Original NPC menus remain available. Maps, creature blueprints and encounters are retained byte-for-byte. Unconverted quests retain their native rules. If Studio control was selected above, only its audited quest scripts, journal category and dialogue fields are changed; preservation.json lists those changes and original-scripts contains backups. Otherwise all original scripts remain byte-identical. Native review arrows and private storyline notes are annotations; Studio objective arrows define executable order. Stores, recruitment and dismissal remain native.
 5. At safe farewell choices and ordinary one-line greetings, eligible conversations include Talk freely with AI ({len(changes)} dialogue files enhanced). Close the menu and speak in Talk. Else use !talk <alias> <message> nearby, or address a unique nearby NPC by name followed by a colon. Use !end to finish. Duplicate nearby creatures must be selected individually through dialogue; aliases never guess between them.
 6. Recruit allies through the module's original dialogue. Type !companions for AI chat, follow/stay/guard, inventory and errands with recruited allies, familiars or summons. Native recruitment, party limits, XP rules and dismissal remain unchanged. Locked/trapped containers, protected items, possession and combat restrictions still apply. Animals use nonverbal responses.

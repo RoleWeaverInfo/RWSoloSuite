@@ -11,6 +11,7 @@ import tempfile
 import zipfile
 from .authoring import validate, review, CREATURES, DECOR, APPEARANCES, ITEM_BASES
 from .content import canonical
+from .module_names import module_tag
 from .layout import plan, native_tiles, center, exit_point, access_points
 from .storage import write_json
 from .nwn.gff import read,write,text
@@ -241,7 +242,7 @@ def _build(p,store,game_root,compiler):
     module=read(original['module',2014])[1]
     for key in list(module[1]):
         if key.startswith('Mod_On'):put(module,key,b'')
-    for key,value in [('Mod_Name',text(p['title'])),('Mod_Description',text(p['summary']+f" A standalone single-player adventure for levels {p['level_min']}-{p['level_max']}.")),('Mod_Tag',p['module_name'].encode()),('Mod_Entry_Area',start_area['id'].encode())]:put(module,key,value)
+    for key,value in [('Mod_Name',text(p['title'])),('Mod_Description',text(p['summary']+f" A standalone single-player adventure for levels {p['level_min']}-{p['level_max']}.")),('Mod_Tag',module_tag(p['module_name']).encode()),('Mod_Entry_Area',start_area['id'].encode())]:put(module,key,value)
     put(module,'Mod_ID',hashlib.sha256(digest.encode()).digest()[:16],13);put(module,'Mod_HakList',[node(0,Mod_Hak=(10,dep['pack'].encode())) for dep in [*([generated_pack[0]] if generated_pack else []),*[d for d,path in dependencies]]],15);put(module,'Mod_Area_list',[node(6,Area_Name=(11,a['id'].encode())) for a in p['areas']],15)
     for k,v in [('Mod_Entry_X',sx),('Mod_Entry_Y',sy),('Mod_Entry_Z',ground(start_room,sx-start_room['x']*10,sy-start_room['y']*10)),('Mod_Entry_Dir_X',0.),('Mod_Entry_Dir_Y',1.)]:put(module,k,float(v),8)
     for k,s in [('Mod_OnModLoad','aw_load'),('Mod_OnClientEntr','aw_enter'),('Mod_OnHeartbeat','aw_beat'),('Mod_OnAcquirItem','aw_acquire'),('Mod_OnPlrDeath','aw_death'),('Mod_OnSpawnBtnDn','aw_respawn')]:string(module,k,s,11)

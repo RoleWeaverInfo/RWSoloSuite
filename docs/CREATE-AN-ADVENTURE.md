@@ -65,6 +65,8 @@ Targets come from the existing characters, rooms, encounters and items in your d
 
 ## 7. Build, inspect and playtest
 
+The **Module filename** supports up to 64 characters before `.mod`: lowercase letters, digits and underscores, starting with a letter. Omit the extension, for example `the_emberseal_of_briarwatch_ai`. This is separate from the adventure title displayed in NWN. Internal resource IDs (scripts, areas and blueprints) still have NWN's 16-character limit.
+
 Use **Build & share** to generate the `.mod`, matching `.rwproject.json`, dependencies and shareable ZIP. Resolve validation errors before publishing. On Windows, use **Open in Aurora** to inspect an editable module copy. On Mac/Linux, transfer the exported module and required HAKs to a Windows computer with Aurora. Keep a separate copy of hand-edited Aurora work; a new Studio build does not merge arbitrary toolset edits back into the project.
 
 Install with NWN closed, start Role Weaver, register the matching adventure profile, and start a **new game** in NWN. Test:

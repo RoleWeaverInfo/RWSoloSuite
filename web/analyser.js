@@ -5,6 +5,8 @@ window.ModuleAnalyser=(()=>{
   const state={id:'',report:null,tab:'overview',search:'',page:0};
   const tabs=['overview','areas','characters','encounters','quests','dialogue','scripts','dependencies'];
   const title=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const jobTitle=j=>({'profile_paused':'Profiles paused','profile_failed':'Profiles stopped','profiling':'Generating profiles'}[j?.status]||title(j?.status||''));
+  const duration=s=>{s=Math.max(0,Math.floor(s));return s<60?`${s}s`:`${Math.floor(s/60)}m ${s%60}s`;};
   const source=s=>`<small class="analysis-source">${esc(s)}</small>`;
   const json=v=>`<pre>${esc(JSON.stringify(v,null,2))}</pre>`;
   const scriptLink=n=>`<button class="quiet" data-script="${esc(n)}">Inspect ${esc(n)}</button>`;
@@ -34,12 +36,18 @@ window.ModuleAnalyser=(()=>{
     host.innerHTML=`<div class="module-analyser"><div class="analysis-intro"><span class="eyebrow">MODULE IMPORT AND AI CONVERSION</span><h2>Explore an existing adventure</h2><p>Import a normal NWN 1 / Enhanced Edition .mod to review its story, characters, encounters, quests and compiled scripts. Analysis is read-only. After reviewing it, create a separate AI-enabled copy below.</p><p><a href="https://github.com/RoleWeaverInfo/RWSoloSuite/blob/v1.2.0/docs/CONVERT-A-MODULE.md" target="_blank" rel="noopener noreferrer">How to convert an existing module — step-by-step guide</a></p></div>
       <section class="analysis-import"><h3>Import a module</h3><label>Module file <input type="file" accept=".mod" id="analysisFile"></label><button id="analysisUpload" class="primary">Import and analyse</button>
       <details><summary>Or use a path on this computer</summary><label>Full path to .mod <input id="analysisPath" placeholder="C:\\…\\modules\\adventure.mod"></label><button id="analysisStart">Analyse local file</button></details><label>Dependency folder (optional) <input id="analysisDependencies" placeholder="Folder containing the required HAK and TLK files"></label><p class="muted">Subfolders are searched. Local-path imports also search beside the module. Local analysis needs no API key. Installed NWN resources, declared HAKs and talk tables are read using Local settings. Reports may contain story spoilers.</p></section>
-      <div id="analysisError" role="alert" hidden></div><div id="analysisStatus" role="status"></div>
+      <div id="analysisError" role="alert" hidden></div><div id="analysisStatus"><p id="analysisPhase" role="status"></p>
+        <section id="analysisProgress" class="analysis-progress" hidden aria-label="Character profile generation progress">
+          <strong id="analysisProgressCount" role="status"></strong><progress id="analysisProgressBar" max="1" value="0" aria-label="Character profiles saved"></progress>
+          <p id="analysisProgressBatch"></p><p id="analysisProgressTime" class="muted"></p>
+          <p class="muted">Every completed batch is saved. You can leave this page while Studio keeps working.</p>
+          <button id="analysisPauseProfiles">Pause after current batch</button>
+        </section></div>
       <div class="analysis-controls"><label>Saved analyses <select id="analysisSelect"><option value="">Select a report</option></select></label><button id="analysisRefresh">Refresh</button><button id="analysisDelete" class="danger" disabled>Delete analysis</button></div>
       <section id="analysisReport"></section><section id="analysisScript" hidden></section></div>`;
     const root=host.querySelector('.module-analyser'),q=s=>root.querySelector(s);
-    let job=null,timer=null,pending=false,selection=0,conversionController=null;
-    const alive=()=>root.isConnected;
+    let job=null,timer=null,pending=false,selection=0,conversionController=null,disposed=false,renderedId='';
+    const alive=()=>!disposed&&root.isConnected;
     const error=e=>{if(alive()){q('#analysisError').hidden=!e;q('#analysisError').textContent=e?.message||String(e||'');}};
     function controls(){
       const busy=pending||active(job);
@@ -48,7 +56,32 @@ window.ModuleAnalyser=(()=>{
       const explain=q('#analysisExplain');if(explain)explain.disabled=busy;
     }
     async function safely(fn){error(null);pending=true;controls();try{await fn();}catch(e){error(e);}finally{pending=false;if(alive())controls();}}
-    function status(){q('#analysisStatus').textContent=job?`${title(job.status)} · ${job.message}`:'';const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${job.status}`;controls();if(job?.profile_error||job?.ai_error||job?.conversion_error)error(job.profile_error||job.conversion_error||job.ai_error);}
+    function progressTime(){
+      if(!alive())return;
+      const p=job?.profile_progress;if(!p?.started_at)return;
+      const now=Date.now()/1000,end=p.finished_at||now;
+      const wait=job.status==='profiling'&&p.batch_started_at?` · Waiting for model response: ${duration(now-p.batch_started_at)}`:'';
+      const saved=p.saved_at?` · Last batch saved at ${new Date(p.saved_at*1000).toLocaleTimeString()}`:'';
+      q('#analysisProgressTime').textContent=`This run: ${duration(end-p.started_at)}${wait}${saved}`;
+    }
+    const clock=setInterval(progressTime,1000);
+    function status(){
+      q('#analysisPhase').textContent=job?`${jobTitle(job)} · ${job.message}`:'';
+      const option=q('#analysisSelect').selectedOptions[0];if(job&&option?.value===job.id)option.textContent=`${job.name||job.filename} · ${jobTitle(job)}`;
+      const p=job?.profile_progress,visible=p&&['profiling','profile_paused','profile_failed','complete'].includes(job.status);
+      q('#analysisProgress').hidden=!visible;
+      if(visible){
+        const done=p.completed||0,total=p.total||0;
+        q('#analysisProgressCount').textContent=`${done} of ${total} profiles saved${total?' · '+Math.floor(done/total*100)+'%':''}`;
+        q('#analysisProgressBar').max=total||1;q('#analysisProgressBar').value=done;
+        q('#analysisProgressBatch').textContent=job.status==='profiling'&&p.current_names?.length?`Batch ${p.batch} of ${p.batches}: ${p.current_names.join(', ')}. The model may take several minutes per batch.`:done<total?`${total-done} profiles remaining. Resume from AI profiles & build.`:'All character profiles are ready to review.';
+        q('#analysisPauseProfiles').hidden=job.status!=='profiling';
+        q('#analysisPauseProfiles').disabled=!!job.pause_requested;
+        q('#analysisPauseProfiles').textContent=job.pause_requested?'Pausing after this batch…':'Pause after current batch';
+        progressTime();
+      }
+      controls();if(job?.profile_error||job?.ai_error||job?.conversion_error)error(job.profile_error||job.conversion_error||job.ai_error);
+    }
     async function list(){
       const data=await api('/api/analyser/list',{});if(!alive())return;
       q('#analysisSelect').innerHTML='<option value="">Select a report</option>'+data.analyses.map(j=>`<option value="${esc(j.id)}">${esc(j.name||j.filename)} · ${esc(j.status)}</option>`).join('');
@@ -57,31 +90,36 @@ window.ModuleAnalyser=(()=>{
       q('#analysisSelect').value=state.id;
       return data;
     }
-    async function watch(){
+    async function watch(force=false){
+      clearTimeout(timer);
       const id=state.id,seq=++selection;
       if(!id){job=null;status();show();return;}
       const next=await api('/api/analyser/status',{id});if(!alive()||state.id!==id||seq!==selection)return;
-      job=next;status();
-      if(['complete','explaining','converting','profiling'].includes(job.status)){
+      const previous=job;job=next;status();
+      const ended=active(previous)&&!active(job)&&previous?.id===id;
+      const reloadConversion=ended&&['profiling','converting'].includes(previous.status);
+      conversionController?.setBusy(active(job)||reloadConversion);
+      if(['complete','explaining','converting','profiling','profile_paused','profile_failed'].includes(job.status)&&(force||renderedId!==id||state.report?.analysis_id!==id||(ended&&previous.status==='explaining'))){
         const report=await api('/api/analyser/report',{id});if(!alive()||state.id!==id||seq!==selection)return;
         state.report=report;show();
       }else if(state.report?.analysis_id!==id){state.report=null;show();}
-      clearTimeout(timer);
+      else if(reloadConversion){await conversionController?.refresh();if(alive()&&state.id===id&&seq===selection)conversionController?.setBusy(active(job));}
       if(active(job))timer=setTimeout(()=>{if(alive())watch().catch(error);},1800);
     }
     function show(){
       conversionController?.destroy();conversionController=null;
       const r=state.report,box=q('#analysisReport');q('#analysisScript').hidden=true;
-      if(!r||r.analysis_id!==state.id){box.innerHTML='';return;}
+      if(!r||r.analysis_id!==state.id){box.innerHTML='';renderedId='';return;}
+      renderedId=state.id;
       const provider=getApp().settings.provider,model=provider==='gemini'?getApp().settings.authoring_gemini_model:getApp().settings.authoring_model;
       box.innerHTML=`<div class="analysis-report-heading"><div><h2>${esc(r.module.name)}</h2><p>${esc(r.module.filename)} · Read-only snapshot</p></div><a href="/api/analyser/download?id=${encodeURIComponent(state.id)}" download>Download JSON report</a></div>
         <section id="analysisConversion"></section><details class="analysis-ai"><summary>Optional AI explanation</summary><p>Send selected recovered excerpts to ${esc(provider)} using ${esc(model)} for an interpretation with evidence references. This uses your saved key and counts as module-creation usage; provider charges or limits apply. The local report already works without AI.</p><button id="analysisExplain">Explain with AI</button></details>
         <div class="analysis-tabs" role="tablist" aria-label="Module analysis">${tabs.map(t=>`<button role="tab" aria-selected="${state.tab===t}" data-analysis-tab="${t}">${title(t)}</button>`).join('')}</div>
         <div id="analysisFilter" ${state.tab==='overview'?'hidden':''}><label>Search this section <input id="analysisSearch" type="search" value="${esc(state.search)}" placeholder="Name, tag, text or function…"></label></div><div id="analysisResults" role="tabpanel"></div>`;
-      box.querySelectorAll('[data-analysis-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.analysisTab;state.search='';state.page=0;show();});
+      box.querySelectorAll('[data-analysis-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.analysisTab;state.search='';state.page=0;box.querySelectorAll('[data-analysis-tab]').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.analysisTab===state.tab)));q('#analysisFilter').hidden=state.tab==='overview';q('#analysisSearch').value='';rows();});
       q('#analysisSearch').oninput=e=>{state.search=e.target.value;state.page=0;rows();};
       q('#analysisExplain').onclick=()=>safely(async()=>{job=await api('/api/analyser/explain',{id:state.id});status();await watch();});
-      conversionController=window.ModuleConversion?.mount(q('#analysisConversion'),api,state.id,active(job),async next=>{job=next;status();await watch();},name=>safely(()=>inspect(name)));
+      conversionController=window.ModuleConversion?.mount(q('#analysisConversion'),api,state.id,active(job),async next=>{job=next;status();await watch();if(!active(next)&&!active(job))await conversionController?.refresh();},name=>safely(()=>inspect(name)));
       rows();controls();
     }
     function rows(){
@@ -109,18 +147,19 @@ window.ModuleAnalyser=(()=>{
     q('#analysisStart').onclick=()=>safely(async()=>imported(await api('/api/analyser/start',{path:q('#analysisPath').value,dependency_folder:q('#analysisDependencies').value})));
     q('#analysisUpload').onclick=()=>safely(async()=>{
       const file=q('#analysisFile').files[0];if(!file)throw Error('Choose a .mod file first.');
-      q('#analysisStatus').textContent='Uploading a private analysis snapshot…';
+      q('#analysisPhase').textContent='Uploading a private analysis snapshot…';
       const response=await fetch('/api/analyser/upload?filename='+encodeURIComponent(file.name)+'&dependencies='+encodeURIComponent(q('#analysisDependencies').value),{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Studio-Token':getApp().csrf},body:file});
       const result=await response.json();if(!response.ok)throw Error(result.error||'Module upload failed');if(alive())await imported(result);
     });
     q('#analysisSelect').onchange=()=>safely(async()=>{state.id=q('#analysisSelect').value;state.report=null;state.page=0;await watch();});
-    q('#analysisRefresh').onclick=()=>safely(async()=>{await list();await watch();});
+    q('#analysisRefresh').onclick=()=>safely(async()=>{await list();await watch(true);});
+    q('#analysisPauseProfiles').onclick=()=>safely(async()=>{await api('/api/analyser/profiles-pause',{id:state.id});await watch();});
     q('#analysisDelete').onclick=()=>safely(async()=>{
       if(!confirm('Delete this analysis report and its private imported snapshot? Your original module and Studio projects will remain unchanged.'))return;
       await api('/api/analyser/delete',{id:state.id,confirm:true});state.id='';state.report=null;await list();await watch();
     });
     safely(async()=>{await list();await watch();});
-    return {destroy(){clearTimeout(timer);conversionController?.destroy();}};
+    return {destroy(){disposed=true;selection++;clearTimeout(timer);clearInterval(clock);conversionController?.destroy();}};
   }
   return {mount};
 })();

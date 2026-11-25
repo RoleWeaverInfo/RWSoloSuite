@@ -30,6 +30,16 @@ class LauncherTests(unittest.TestCase):
     def test_single_launcher_choice_supports_new_and_saved_games(self):
         self.assertFalse(launcher.saved_game_choice(''));self.assertFalse(launcher.saved_game_choice('1'));self.assertTrue(launcher.saved_game_choice('2'))
         with self.assertRaises(launcher.LaunchError):launcher.saved_game_choice('unrecognized')
+    def test_long_filename_keeps_full_name_in_launch_and_sidecar(self):
+        name='pools_of_radiance_ai_edition'.ljust(64,'_')
+        project=copy.deepcopy(self.project);project['module_name']=name
+        module=self.user/'modules'/(name+'.mod');module.write_bytes(self.module.read_bytes())
+        write_json(module.with_suffix('.rwproject.json'),dict(build_id=BUILD,project=project))
+        for argument in (name,name+'.mod'):
+            p=launcher.plan(module=argument,game_root=self.game,user_dir=self.user,root=self.runtime)
+            self.assertEqual(p['game_arguments'][-1],name)
+            self.assertEqual(Path(p['source']),module)
+            self.assertEqual(p['document']['project']['module_name'],name)
     def test_resume_opens_game_menu_without_forcing_new_module(self):
         self.assertEqual(self.plan(resume=True)['game_arguments'],['-userdirectory',str(self.user.resolve())])
     def test_rejects_mismatched_or_missing_sidecar_before_startup(self):

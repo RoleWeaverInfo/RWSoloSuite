@@ -64,7 +64,7 @@ class CompanionTaskTests(unittest.TestCase):
     def test_answers_are_bounded_and_do_not_share_private_history(self):
         provider=Provider('unused');data=payload();data.update(history='PRIVATE_PLAYER_TRANSCRIPT',full_story='HIDDEN_FULL_PLOT')
         with patch.object(provider,'request',return_value=dict(reply='x'*900,action='none')) as request:result=reply(provider,example(),data)
-        self.assertEqual(len(result['reply']),600);self.assertNotIn('PRIVATE_PLAYER_TRANSCRIPT',json.dumps(request.call_args.args[1]));self.assertNotIn('HIDDEN_FULL_PLOT',json.dumps(request.call_args.args[1]))
+        self.assertEqual(len(result['reply']),240);self.assertNotIn('PRIVATE_PLAYER_TRANSCRIPT',json.dumps(request.call_args.args[1]));self.assertNotIn('HIDDEN_FULL_PLOT',json.dumps(request.call_args.args[1]))
 
 @unittest.skipUnless(GAME.is_dir() and COMPILER.is_file(),'NWN/compiler required')
 class NativeCompanionTaskTests(unittest.TestCase):

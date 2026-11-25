@@ -18,7 +18,8 @@ function field(label,path,type='text',options=[]){const v=value(path);let html;
  if(type==='textarea')html=`<textarea data-field="${path}">${E(v)}</textarea>`;
  else if(type==='select')html=`<select data-field="${path}">${options.map(o=>{const [id,name]=Array.isArray(o)?o:[o,o];return `<option value="${E(id)}" ${String(v)===String(id)?'selected':''}>${E(name)}</option>`;}).join('')}</select>`;
  else if(type==='checkbox')return `<label class="check"><input type="checkbox" data-field="${path}" ${v?'checked':''}>${E(label)}</label>`;
- else html=`<input data-field="${path}" type="${type}" value="${E(v)}" ${type==='number'?'step="1"':''}>`;
+ else html=`<input data-field="${path}" type="${type}" value="${E(v)}" ${type==='number'?'step="1"':''} ${path==='module_name'?'maxlength="64" pattern="[a-z][a-z0-9_]{0,63}"':''}>`;
+ if(path==='module_name')html+='<small class="hint">Up to 64 lowercase letters, digits or underscores, starting with a letter; omit .mod.</small>';
  return `<label class="field"><span>${E(label)}</span>${html}</label>`;
 }
 function change(){if(project.asset_geometry){const assets=new Set((project.custom_assets||[]).map(a=>a.id));project.asset_geometry=Object.fromEntries(Object.entries(project.asset_geometry).filter(([k])=>assets.has(k)));}if(project.object_positions){const ids=new Set([...(project.furnishings||[]),...(project.custom_placements||[])].map(f=>f.id));project.object_positions=project.object_positions.filter(p=>ids.has(p.id));}dirty=true;report=null;$('#saveState').textContent='Unsaved draft';}

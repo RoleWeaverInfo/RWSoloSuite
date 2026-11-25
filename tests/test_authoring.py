@@ -138,7 +138,14 @@ class NativeAdventureTests(unittest.TestCase):
             for name in ('rw_silent_bell.mod','rw_silent_bell.rwproject.json','PLAY.txt','layout.json','validation.json','source/aw_quest.nss'):self.assertIn(name,z.namelist())
             self.assertFalse(any(n.endswith('.env') or n.endswith('settings.json') for n in z.namelist()))
     def test_optional_ai_variant_retains_native_quest_engine(self):
-        p=copy.deepcopy(self.p);p['ai_conversations']=True;m=build_project(p,self.store,GAME,COMPILER);r={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
+        p=copy.deepcopy(self.p);p['ai_conversations']=True;p['module_name']='authored_adventure_with_a_long_filename'.ljust(64,'_');m=build_project(p,self.store,GAME,COMPILER);r={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
+        self.assertEqual(m['module'],p['module_name']+'.mod')
+        self.assertLessEqual(len(read(r['module',2014])[1][1]['Mod_Tag'][1]),32)
+        self.assertTrue(all(len(name)<=16 for name,kind in r))
+        with zipfile.ZipFile(Path(m['path']).with_name(p['module_name']+'-aurora.zip')) as z:
+            self.assertIn(p['module_name']+'.mod',z.namelist());self.assertIn(p['module_name']+'.rwproject.json',z.namelist())
+            for launcher in ('Start Role Weaver.cmd','Start Role Weaver.sh','Start Role Weaver.command'):
+                self.assertIn((p['module_name']+'.mod').encode(),z.read(launcher))
         self.assertIn(('sp_chat',2010),r);self.assertIn(('aw_beat',2010),r);self.assertIn(b'AQTick(pc)',r['aw_beat',2009]);self.assertIn(b'AQStates()',r['sp_inc',2009]);self.assertNotIn(b'MCReward',r['sp_inc',2009])
         self.assertIn(b'AWAIAction(pc,tag,SPText(result,"story_action"))',r['sp_inc',2009])
         self.assertIn(b'AQAdvance(pc,"bell_fate",3,"seal_bell")',r['aw_story',2009])

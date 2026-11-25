@@ -2,6 +2,7 @@
 import copy
 import re
 from .content import _obj, array, enum, S, I, B, schema_check
+from .module_names import MAX_MODULE_NAME, MODULE_NAME_PATTERN, validate_module_name
 from .merchants import SCHEMA as MERCHANT_SCHEMA, defaults as merchant_defaults, validate as validate_merchant
 from .companions import SCHEMA as COMPANION_SCHEMA, NPC_SCHEMA as NPC_COMPANION_SCHEMA, defaults as companion_defaults, npc_defaults as npc_companion_defaults, validate as validate_companions
 
@@ -33,7 +34,7 @@ def _constrain(schema,root=False):
     if schema.get('type')=='object':
         for key,spec in list(schema['properties'].items()):
             if key=='id':schema['properties'][key]=dict(spec,pattern='^[a-z][a-z0-9_]{0,'+('39' if root else '15')+'}$')
-            elif key=='module_name':schema['properties'][key]=dict(spec,pattern='^[a-z][a-z0-9_]{0,15}$')
+            elif key=='module_name':schema['properties'][key]=dict(spec,pattern='^'+MODULE_NAME_PATTERN+'$')
             elif key=='alias':schema['properties'][key]=dict(spec,pattern='^[a-z][a-z0-9_]{0,23}$')
             elif key in ('start_room','room','from_room','to_room','requires_quest','after_quest','reveal_after','start_npc','container','target','next'):
                 schema['properties'][key]=dict(spec,pattern='^([a-z][a-z0-9_]{0,15})?$')
@@ -59,7 +60,7 @@ def quest(ident,name,steps=None):
     return dict(id=ident,name=name,description='',start_npc='',completion='The task is complete.',optional=False,requires=[],gold=0,xp=100,steps=steps or [])
 
 def blank(ident='my_adventure',title='My adventure'):
-    return dict(schema_version=2,id=ident,module_name=ident[:16],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=True,companions=companion_defaults(True),ambient=ambient_defaults(),
+    return dict(schema_version=2,id=ident,module_name=ident[:MAX_MODULE_NAME],title=title,summary='',story='',tone='Adventurous fantasy',opening='',ending='',start_room='arrival',level_min=1,level_max=3,party_size=1,ai_conversations=True,companions=companion_defaults(True),ambient=ambient_defaults(),
                 areas=[dict(id='starting_area',name='Starting area',type='castle',width=12,height=12,room_count=1,description='',lighting='warm',rooms=[room('arrival','Arrival')])],connections=[],npcs=[],encounters=[],items=[],furnishings=[],quests=[])
 
 def seed():
@@ -118,8 +119,8 @@ def validate(p,complete=False):
         b=n['behavior']
         if not 6<=b['wait_seconds']<=300 or not 60<=b['cooldown']<=3600 or len(b['route'])>16 or len(b['partners'])>16:raise ValueError('Use up to 16 patrol stops/partners, 6–300 second waits and 60–3600 second social cooldowns.')
     if p['schema_version']!=2:raise ValueError('Expected adventure project format 2')
-    for k,limit in [('id',40),('module_name',16)]:
-        if not re.fullmatch('[a-z][a-z0-9_]{0,'+str(limit-1)+'}',p[k]):raise ValueError('Invalid '+k)
+    validate_module_name(p['module_name'])
+    if not re.fullmatch('[a-z][a-z0-9_]{0,39}',p['id']):raise ValueError('Invalid id')
     if not p['title'].strip() or len(p['title'])>100:raise ValueError('Give the adventure a title of 1–100 characters')
     if not 1<=p['level_min']<=p['level_max']<=40 or not 1<=p['party_size']<=8:raise ValueError('Use levels 1–40 and an intended party size of 1–8')
     for k,maximum in [('areas',16),('npcs',48),('encounters',64),('quests',16),('items',64),('furnishings',100),('connections',64)]:
