@@ -1,0 +1,54 @@
+newmodel re0ade0820007
+setsupermodel re0ade0820007 NULL
+classification TILE
+setanimationscale 1
+beginmodelgeom re0ade0820007
+node dummy re0ade0820007
+ parent NULL
+endnode
+node trimesh floor3
+ parent re0ade0820007
+ position 0 0 0
+ orientation 0 0 0 0
+ wirecolor 0.6 0.6 0.6
+ ambient 1 1 1
+ diffuse 1 1 1
+ specular 0 0 0
+ shininess 0
+ shadow 0
+ render 1
+ bitmap re0ade082b
+ tilefade 0
+ verts 4
+  -5.000000 -5.000000 3.990000
+  5.000000 -5.000000 3.990000
+  5.000000 5.000000 3.990000
+  -5.000000 5.000000 3.990000
+ tverts 4
+  -2.500000 -2.500000 0.000000
+  2.500000 -2.500000 0.000000
+  2.500000 2.500000 0.000000
+  -2.500000 2.500000 0.000000
+ faces 2
+  0 1 2 1 0 1 2 0
+  0 2 3 1 0 2 3 0
+endnode
+node aabb walk
+ parent re0ade0820007
+ position 0 0 0
+ orientation 0 0 0 0
+ wirecolor 0.6 0.6 0.6
+ verts 4
+  -5.000000 -5.000000 0.000000
+  5.000000 -5.000000 0.000000
+  5.000000 5.000000 0.000000
+  -5.000000 5.000000 0.000000
+ faces 2
+  0 1 2 1 0 0 0 7
+  0 2 3 1 0 0 0 7
+ aabb -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 -1
+ -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 1
+ -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 0
+endnode
+endmodelgeom re0ade0820007
+donemodel re0ade0820007

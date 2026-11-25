@@ -38,7 +38,7 @@ class LauncherTests(unittest.TestCase):
         for argument in (name,name+'.mod'):
             p=launcher.plan(module=argument,game_root=self.game,user_dir=self.user,root=self.runtime)
             self.assertEqual(p['game_arguments'][-1],name)
-            self.assertEqual(Path(p['source']),module)
+            self.assertEqual(Path(p['source']),module.resolve())
             self.assertEqual(p['document']['project']['module_name'],name)
     def test_resume_opens_game_menu_without_forcing_new_module(self):
         self.assertEqual(self.plan(resume=True)['game_arguments'],['-userdirectory',str(self.user.resolve())])

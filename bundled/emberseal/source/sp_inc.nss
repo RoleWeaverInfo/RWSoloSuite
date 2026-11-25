@@ -121,7 +121,7 @@ void SPAsk(object pc,string kind,string message)
     if(kind=="npc" || kind=="companion"){AWATouch(npc);}if(kind=="npc" || kind=="companion")SetLocalInt(pc,"SP_FOCUS_AT",SPNow());
     SetLocalString(pc,"AWM_REQUEST",AWMVersion(pc,npc));SetLocalString(pc,"AWC_PENDING_VERSION",AWCEnabled() && AWText(AWCPolicy(npc),"id")!=""?AWCVersion(pc,npc):"");SetLocalObject(pc,"SP_PENDING_ACTOR",npc);
     json p=JsonObject(); p=JsonObjectSet(p,"message",JsonString(GetStringLeft(message,1200)));
-    json taskOptions=AWTCandidates(pc,npc);SetLocalString(pc,"AWT_PENDING_OPTIONS",JsonDump(taskOptions));json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"task_targets",taskOptions);p=JsonObjectSet(p,"game",observed);
+    json taskOptions=AWTCandidates(pc,npc);SetLocalString(pc,"AWT_PENDING_OPTIONS",JsonDump(taskOptions));json observed=SPSnapshot(pc);observed=JsonObjectSet(observed,"dialogue_settings",AWDSettings(pc));observed=JsonObjectSet(observed,"task_targets",taskOptions);p=JsonObjectSet(p,"game",observed);
     p=JsonObjectSet(p,"history",JsonString(GetLocalString(pc,"AWC_PENDING_VERSION")!=""?AWText(AWCRecord(pc,AWCIdentity(pc,npc)),"history"):GetLocalString(pc,"SP_HIST_"+tag)));
     string id=GetRandomUUID(); SPPublish(pc);
     sqlquery q=SqlPrepareQueryCampaign(SPDB,"INSERT INTO sp_requests(request_id,session_id,kind,npc_tag,payload,created,updated) VALUES(@i,@s,@k,@n,@p,CAST(strftime('%s','now') AS INTEGER),CAST(strftime('%s','now') AS INTEGER))");

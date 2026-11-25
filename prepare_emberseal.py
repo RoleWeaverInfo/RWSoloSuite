@@ -10,7 +10,9 @@ from rwstudio.storage import Store,write_json
 from rwstudio.content import validate_project
 
 
-def prepare(source, game_root, compiler):
+def prepare(source, game_root, compiler, destination=None):
+    destination=Path(destination) if destination is not None else ROOT/'bundled/emberseal'
+    if destination.exists():raise ValueError('The bundle already exists. Review it before replacing the pinned example.')
     project=validate_project(json.loads(Path(source).read_text(encoding='utf-8')))
     if project['id']!='emberseal_demo' or project['module_name']!='rw_ember_v3':raise ValueError('Use the latest rw_ember_v3 Emberseal project.')
     if any(a['pack']!='builtin' for a in project.get('custom_assets',[])):raise ValueError('The distributable example must use stock assets and its generated geometry only.')
@@ -23,8 +25,7 @@ def prepare(source, game_root, compiler):
         n['companion'].update(movement=True,inventory=True,inspect_containers=True,social_visits=True)
     for t in project['companions']['templates']:t.update(ai_enabled=True,movement=True,inventory=True,inspect_containers=True,social_visits=True)
     store=Store(ROOT/'data/example-build');manifest=build_project(project,store,game_root,compiler)
-    source=Path(manifest['path']).parent;destination=ROOT/'bundled/emberseal'
-    if destination.exists():raise ValueError('The bundle already exists. Review it before replacing the pinned example.')
+    source=Path(manifest['path']).parent
     destination.mkdir(parents=True)
     names=['project.json','manifest.json','layout.json','validation.json','PLAY.txt','ROLE-WEAVER-LICENSE.txt','dependencies.json',manifest['module'],'rw_ember_v3.rwproject.json']
     names += [f.relative_to(source).as_posix() for d in ('source','geometry-source','hak') for f in (source/d).glob('*') if f.is_file()]
@@ -38,4 +39,5 @@ def prepare(source, game_root, compiler):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('project',type=Path);p.add_argument('--game-root',type=Path,required=True);p.add_argument('--compiler',type=Path,default=ROOT/'vendor/nwnsc/nwnsc.exe')
-    args=p.parse_args();print(json.dumps(prepare(args.project,args.game_root,args.compiler),indent=2))
+    p.add_argument('--output',type=Path,help='New staging folder for review before replacing the pinned bundle')
+    args=p.parse_args();print(json.dumps(prepare(args.project,args.game_root,args.compiler,args.output),indent=2))

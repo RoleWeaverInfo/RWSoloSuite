@@ -20,7 +20,8 @@ void main(){object pc=NuiGetEventPlayer();if(!GetIsPC(pc) || NuiGetEventWindow()
  if(id=="toggle_ai"+suffix)AWCSet(pc,identity,"ai",!AWInt(record,"ai"));
  else if(id=="toggle_move"+suffix)AWCSet(pc,identity,"movement",!AWInt(record,"movement"));
  else if(id=="toggle_pack"+suffix)AWCSet(pc,identity,"inventory",!AWInt(record,"inventory"));
- else if(id=="reply"+suffix)AWCSet(pc,identity,"reply",(AWInt(record,"reply")+1)%3);
+ else if(id=="reply"+suffix)AWCSet(pc,identity,"reply",(AWInt(record,"reply")+1)%4);
+ else if(id=="response_settings"+suffix){AWCUIClose(pc);AWDOpen(pc);return;}
  else if(id=="tone"+suffix)AWCSet(pc,identity,"tone",(AWInt(record,"tone")+1)%5);
  else if(id=="satchel"+suffix){AWCSatchelGrid(pc,body);return;}
  else if(id=="inventory_list"+suffix){AWCInventoryList(pc,body);return;}

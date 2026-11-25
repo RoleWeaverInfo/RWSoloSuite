@@ -1,6 +1,6 @@
 # How to convert an existing NWN module
 
-Role Weaver Module Studio 1.2.0 can analyse an existing Neverwinter Nights 1 / Enhanced Edition module and create a separate copy with AI conversations, native merchant support and companion capabilities. It preserves the original maps and placements. Original quests remain in control unless you explicitly enable a supported experimental mission conversion.
+Role Weaver Module Studio 1.3.0 can analyse an existing Neverwinter Nights 1 / Enhanced Edition module and create a separate copy with AI conversations, native merchant support and companion capabilities. It preserves the original maps and placements. Original quests remain in control unless you explicitly enable a supported experimental mission conversion.
 
 **The Emberseal of Briarwatch is the only included example.** Supply your own legally obtained community modules and required content packs. Snow Hunt and its generated copies are not included or hosted by this project. Permission to play a module does not automatically grant permission to redistribute a converted copy.
 

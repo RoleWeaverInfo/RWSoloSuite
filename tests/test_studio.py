@@ -254,6 +254,8 @@ class ExportTests(unittest.TestCase):
             m=build_project(p,store,game,compiler)
             entries={(n,k):b for n,k,b in resources(Path(m['path']).read_bytes())}
             self.assertEqual(m['areas'],3);self.assertEqual(m['compiled_scripts'],18)
+            self.assertNotIn(('rwc_npcs',2009),entries)
+            self.assertNotIn(('rwc_memory',2009),entries)
             for script in ['sp_load','sp_enter','sp_chat','sp_beat','sp_select','sp_travel','mc_reward']:self.assertIn((script,2010),entries)
             self.assertIn(b'GiveGoldToCreature(pc, 77)',entries['mc_inc',2009]);self.assertIn(b'GiveXPToCreature(pc, 222)',entries['mc_inc',2009])
             tags=[];links=[]

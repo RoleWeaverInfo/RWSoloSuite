@@ -67,7 +67,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       },
       {
         "room": "vestibule",
@@ -83,7 +83,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       },
       {
         "room": "vestibule",
@@ -99,7 +99,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       },
       {
         "room": "throne_hall",
@@ -115,7 +115,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       },
       {
         "room": "throne_hall",
@@ -131,7 +131,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       },
       {
         "room": "council_study",
@@ -147,7 +147,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5200,
-        "model": "rdc5a8c0a41f"
+        "model": "rd0ab5eb7486"
       }
     ],
     "openings": [
@@ -303,7 +303,7 @@
         "width": 2
       }
     ],
-    "tileset": "rb5bc835f",
+    "tileset": "r23e35cfa",
     "measured_tiles": [
       179,
       185,
@@ -355,16 +355,16 @@
     ],
     "paving": [
       [
-        40,
-        80,
-        60,
-        100
-      ],
-      [
         20,
         120,
         70,
         160
+      ],
+      [
+        40,
+        80,
+        60,
+        100
       ],
       [
         43.0,
@@ -771,7 +771,7 @@
         "measured": true,
         "wood": "#80542f",
         "appearance": 5201,
-        "model": "rdc91fd39261"
+        "model": "rd87e9a0fb89"
       }
     ],
     "openings": [
@@ -1180,7 +1180,7 @@
         "width": 4
       }
     ],
-    "tileset": "rf78460ec",
+    "tileset": "rdc483d55",
     "measured_tiles": [
       168,
       185,
@@ -1684,7 +1684,7 @@
         "measured": true,
         "wood": "#71523c",
         "appearance": 5202,
-        "model": "rdd6134fe9df"
+        "model": "rdabaf2b7982"
       },
       {
         "room": "ember_vault",
@@ -1700,7 +1700,7 @@
         "measured": true,
         "wood": "#71523c",
         "appearance": 5202,
-        "model": "rdd6134fe9df"
+        "model": "rdabaf2b7982"
       }
     ],
     "openings": [
@@ -1910,7 +1910,7 @@
         "width": 4.0
       }
     ],
-    "tileset": "r55c57cf2",
+    "tileset": "re0ade082",
     "measured_tiles": [
       248,
       258,

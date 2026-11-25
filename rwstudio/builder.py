@@ -74,7 +74,10 @@ def build_project(project,store,game_root,compiler):
 
 def _build(p,store,game_root,compiler):
     base=(ROOT/'assets/authoring-template.erf').read_bytes()
-    runtime=b''.join(f.read_bytes() for f in sorted((ROOT/'scripts').glob('*.nss')))+Path(__file__).read_bytes()+base
+    # Schema-1 exports use only their sp_* runtime. Conversion helpers depend
+    # on authoring includes and must not be compiled into legacy projects.
+    runtime_files=sorted((ROOT/'scripts').glob('sp_*.nss'))
+    runtime=b''.join(f.read_bytes() for f in runtime_files)+Path(__file__).read_bytes()+base
     ident=hashlib.sha256(canonical(p).encode()+runtime).hexdigest()[:20]
     destination=store.root/'builds'/ident
     if (destination/'manifest.json').is_file(): return json.loads((destination/'manifest.json').read_text(encoding='utf-8'))
@@ -182,7 +185,7 @@ def _build(p,store,game_root,compiler):
         for (name,kind),data in list(entries.items()):
             if kind==2009:(source/(name+'.nss')).write_bytes(data)
             if kind==2010:entries.pop((name,kind))
-        for f in (ROOT/'scripts').glob('*.nss'):shutil.copy2(f,source/f.name)
+        for f in runtime_files:shutil.copy2(f,source/f.name)
         (source/'sp_config.nss').write_text(config_script(p,ident),encoding='utf-8')
         inc=(source/'mc_inc.nss').read_text(encoding='utf-8')
         inc=inc.replace('GiveGoldToCreature(pc, 150);',f"GiveGoldToCreature(pc, {q['gold']});").replace('GiveXPToCreature(pc, 300);',f"GiveXPToCreature(pc, {q['xp']});")

@@ -1,14 +1,14 @@
 {
-  "build_id": "11b6a6549ebb36e7b5d1",
+  "build_id": "06e2cc02d237c49cf755",
   "project_id": "emberseal_demo",
   "title": "The Emberseal of Briarwatch",
   "module": "rw_ember_v3.mod",
-  "sha256": "5a36c034eccec582194607f34d43b11ce27f16c7a98dfc5bff4521c27de8d961",
-  "resources": 257,
+  "sha256": "686213ab210ea1adddac43579b007fe3f436cf76439262f6843e8a9a989840f4",
+  "resources": 261,
   "areas": 3,
   "rooms": 14,
   "quests": 2,
-  "compiled_scripts": 49,
+  "compiled_scripts": 50,
   "standalone": true,
   "optional_live_ai": true,
   "gameplay_tested": false

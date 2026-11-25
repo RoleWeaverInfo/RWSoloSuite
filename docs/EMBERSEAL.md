@@ -1,6 +1,6 @@
 # The Emberseal of Briarwatch
 
-The sole example included with Role Weaver Module Studio 1.2.0. It uses the latest revised Briarwatch maps, rebuilt with current service checks, companion permissions and NPC conversation defaults. The module filename is **rw_ember_v3.mod**. The project is **emberseal_demo**.
+The sole example included with Role Weaver Module Studio 1.3.0. It uses the latest revised Briarwatch maps, rebuilt with current service checks, companion permissions, NPC conversation defaults and the `!aisettings` panel. The module filename is **rw_ember_v3.mod**. The project is **emberseal_demo**.
 
 ## Story and setting
 
@@ -23,11 +23,15 @@ There are **three areas, fourteen rooms, fifteen named characters, five combat e
 3. With NWN closed, open **Build & share** and choose **Play in NWN** on the included build. It installs the module and required HAK and opens character selection. No AI generation or module compilation is needed.
 4. Start a new game. Talk to Queen Elowen in the throne room, then use the journal and NPC directions. Native dialogue menus also advance the quests without AI.
 
-For a separate download, get **The-Emberseal-of-Briarwatch-1.2.0.zip** from the [release page](https://github.com/RoleWeaverInfo/RWSoloSuite/releases). Extract all files. The service launcher registers the matching `.rwproject.json` and installs the module/HAK when supported. Otherwise copy the `.mod` into your NWN `modules` folder and every included `.hak` into `hak`, then import the matching profile on the AI service page. Start NWN yourself. See [installation instructions](INSTALLATION.md).
+For a separate download, get **The-Emberseal-of-Briarwatch-1.3.0.zip** from the [release page](https://github.com/RoleWeaverInfo/RWSoloSuite/releases). Extract all files. The service launcher registers the matching `.rwproject.json` and installs the module/HAK when supported. Otherwise copy the `.mod` into your NWN `modules` folder and every included `.hak` into `hak`, then import the matching profile on the AI service page. Start NWN yourself. See [installation instructions](INSTALLATION.md).
 
 The `.mod` alone is insufficient: its generated geometry HAK is required. No CEP or other downloaded content pack is required. You still need your own NWN:EE installation. Older saved games keep their old resources; use a new game for this build.
 
 ## Talk, trade and use companions
+
+Type **`!aisettings`** in Talk with the dialogue closed and game unpaused to choose reply length, speaking style, action descriptions and follow-up questions. Defaults are **Brief**, **Plain**, actions **Off**, and questions **Only when needed**. Settings apply to new replies and persist when you save the game. The refreshed 1.3.0 module includes this panel; start a new game, since old saves retain old scripts.
+
+The **`!npcs`** selector is for adventures imported through Module Conversion. Emberseal is a Studio-created adventure: select **Talk freely with AI** or use the aliases below. See the [command reference](PLAYER-GUIDE.md#quick-command-reference) for both workflows.
 
 Choose **Talk freely with AI**, close the dialogue and speak in Talk. Direct examples include `!talk elowen how can I help?` and `!talk bram what swords do you sell?`. The market merchants are Mara Reed (baker), Bram Ironstock (armorer), Tavin Quill (wizard) and Sister Alia Dawn (cleric). Native merchant menus remain available.
 

@@ -18,13 +18,22 @@ A native NWN module cannot directly launch the desktop service. Start Studio you
 
 You can also address a nearby NPC directly with `!talk <alias> <message>`. For a character whose alias is `bram`, use `!talk bram what swords do you sell?`. `!ai <message>` sends a message to your selected AI conversation partner. Names/aliases depend on the adventure; Bram is only an example.
 
-In modules rebuilt with the updated converter, **`!npcs`** opens a nearby-NPC list. Use it when there is no AI choice in the character's original menu, or when several characters share a name. Close any current dialogue, type `!npcs` in Talk, select the character, then speak normally. Characters must have AI enabled, be visible within 12 metres, and be available outside combat and cutscenes. Use `!companions` for familiars and summons.
+### Find a nearby character with `!npcs`
+
+In modules converted or rebuilt with **Studio 1.3.0 or later**, **`!npcs`** opens a nearby-NPC list. It is useful when the original dialogue has no AI option or several characters share a name:
+
+1. Finish any required quest choice and close the dialogue menu.
+2. Type `!npcs` in the game's **Talk** channel with the game unpaused.
+3. Select the character by name and distance. Type an ordinary question in Talk when the selection menu closes.
+4. Type `!end` to finish. Open `!npcs` again to choose someone else, or use its refresh control after moving.
+
+Characters must have AI enabled, be visible within 12 metres, and be available outside combat, cutscenes and active dialogue. The list does not bypass quest restrictions or a creator's AI opt-out. Use `!companions` for familiars and summons. This list is currently specific to converted modules; Studio-created adventures such as Emberseal use **Talk freely with AI** or `!talk <alias> <message>` instead.
 
 The normal dialogue menu remains available for quest choices and other authored actions. AI conversation availability, creature speech/nonverbal behavior and what each character knows are controlled by the module creator. An AI promise alone does not complete a quest or transfer an item: check the journal, inventory and game's actual result.
 
 ### Adjust AI replies while playing
 
-In newly built or rebuilt adventures, type **`!aisettings`** in Talk to open **AI response settings**. Converted adventures also offer this button in `!npcs`, and companion controls include it too. Click each setting to cycle its options:
+In adventures built or rebuilt with **Studio 1.3.0 or later**, including the refreshed Emberseal example, type **`!aisettings`** in Talk to open **AI response settings**. Close the current dialogue first and leave the game unpaused. Converted adventures also offer this button in `!npcs`, and companion controls include it too. Click each setting to cycle its options:
 
 - **Reply length:** Brief, Natural or Detailed. Brief is the default: 1–2 short sentences, up to 240 characters.
 - **Speaking style:** Plain, Characterful or Dramatic. Plain is the default; personalities and knowledge still come from the NPC's profile.
@@ -36,6 +45,23 @@ Changes apply to new requests and persist when you save the game. A reply alread
 New companions inherit these settings. To override one companion's length, use its **Reply** control under `!companions`; choose **Use AI response settings** to return to the shared default. Existing explicit companion preferences are retained. Companion tone remains a separate per-character choice.
 
 The service now encourages concise, natural speech in existing adventures too. Adding the in-game panel to an older module requires rebuilding and starting a new game; an old save keeps its embedded scripts. No additional API request is made when you change a setting.
+
+### Quick command reference
+
+Enter these commands in **Talk**, with NWN unpaused and the dialogue menu closed. Keep Studio running and the matching adventure profile registered.
+
+| Command | Use |
+| --- | --- |
+| `!npcs` | Choose an available nearby AI NPC in modules converted with 1.3.0 or later |
+| `!aisettings` | Adjust future AI replies in adventures built or rebuilt with 1.3.0 or later |
+| `!companions` | Select and control recruited party companions, familiars and summons |
+| `!talk bram what swords do you sell?` | Address a nearby NPC by its adventure-specific alias; Bram is an Emberseal example |
+| `!ai Tell me more.` | Speak to your selected AI conversation partner |
+| `!end` | End the current AI conversation |
+| `!studio` | Check the connection to the local service without an AI request |
+| `!missions <name or alias>` | Open available Studio-controlled mission actions in supported converted adventures |
+
+If a new command is unavailable, verify the module was rebuilt with 1.3.0 and start a new game. Updating the service alone does not replace scripts inside installed modules or saved games.
 
 For a converted mission under Studio control, choose **Discuss our tasks.** at its quest character, or type `!missions <name or alias>` while nearby. These menus offer acceptance, the current conversation objective and final hand-in when the game confirms their requirements. They do not need an AI response. Missions left under original control still use the adventure's original quest menus and scripts. General-import missions require Studio 1.2.0 or later and the matching adventure profile.
 
@@ -74,6 +100,8 @@ Talk to a merchant and choose the goods/trade option. Native merchant trading sh
 - Open the AI service dashboard and confirm it shows a connected adventure and an available API key.
 - Keep the game unpaused. Exit conversation menus before typing free conversation.
 - Check that the creature was selected in `!companions`, or that the target NPC is nearby and AI-enabled.
+- In a newly converted adventure, use `!npcs` if the original dialogue has no AI option. In Emberseal, use **Talk freely with AI** or `!talk` instead.
+- For shorter or less theatrical replies, open `!aisettings` and choose **Brief**, **Plain**, actions **Off**, and questions **Only when needed**.
 - After installing a rebuilt module, test it with a **new game**. Existing saves can retain old companion menus/scripts.
 - If the AI service reports a quota/rate limit, check the provider's billing and limits. A successful model metadata check does not guarantee generation credit.
 - For a bug report, include Studio version, module/build name, the action you tried and the displayed error. Never include an API key.

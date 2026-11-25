@@ -130,4 +130,4 @@ jobs:
           if [[ "$version" == *-* ]]; then
             flags=(--prerelease --latest=false)
           fi
-          gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag "${flags[@]}" --title "Role Weaver Module Studio $GITHUB_REF_NAME — General mission importer" --notes-file "$notes"
+          gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag "${flags[@]}" --title "Role Weaver Module Studio $GITHUB_REF_NAME — AI dialogue controls and faster conversions" --notes-file "$notes"

@@ -1,0 +1,54 @@
+newmodel rdc483d55100f
+setsupermodel rdc483d55100f NULL
+classification TILE
+setanimationscale 1
+beginmodelgeom rdc483d55100f
+node dummy rdc483d55100f
+ parent NULL
+endnode
+node trimesh floor1
+ parent rdc483d55100f
+ position 0 0 0
+ orientation 0 0 0 0
+ wirecolor 0.6 0.6 0.6
+ ambient 1 1 1
+ diffuse 1 1 1
+ specular 0 0 0
+ shininess 0
+ shadow 1
+ render 1
+ bitmap ttf01_grass01
+ tilefade 0
+ verts 4
+  -5.000000 -5.000000 0.000000
+  5.000000 -5.000000 0.000000
+  5.000000 5.000000 0.000000
+  -5.000000 5.000000 0.000000
+ tverts 4
+  80.000000 75.000000 0.000000
+  85.000000 75.000000 0.000000
+  85.000000 80.000000 0.000000
+  80.000000 80.000000 0.000000
+ faces 2
+  0 1 2 1 0 1 2 0
+  0 2 3 1 0 2 3 0
+endnode
+node aabb walk
+ parent rdc483d55100f
+ position 0 0 0
+ orientation 0 0 0 0
+ wirecolor 0.6 0.6 0.6
+ verts 4
+  -5.000000 -5.000000 0.000000
+  5.000000 -5.000000 0.000000
+  5.000000 5.000000 0.000000
+  -5.000000 5.000000 0.000000
+ faces 2
+  0 1 2 1 0 0 0 4
+  0 2 3 1 0 0 0 4
+ aabb -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 -1
+ -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 1
+ -5.000000 -5.000000 0.000000 5.000000 5.000000 0.000000 0
+endnode
+endmodelgeom rdc483d55100f
+donemodel rdc483d55100f

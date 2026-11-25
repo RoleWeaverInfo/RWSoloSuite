@@ -10,6 +10,8 @@ All native packages and the source ZIP include only **The Emberseal of Briarwatc
 
 Fresh dashboards copy the curated example into the per-user workspace. Existing workspaces use **Load Emberseal example**, with a draft backup before replacement. The packaged runtime smoke test verifies the example, build, HAK and download; no model request or local game install is needed to load it. Updating the example is a maintainer operation: build it from the latest reviewed Emberseal project using `prepare_emberseal.py`, review the pinned resources and hashes, and run tests before committing. Do not replace published release assets in place; publish a new version.
 
+Use `prepare_emberseal.py <reviewed-project.json> --game-root <NWN-folder> --output <new-staging-folder>` to build for review without changing the existing bundle. Compare the project, area resources and geometry, then replace only the pinned Emberseal files and checksum index after review. The 1.3.0 bundle must include compiled `aw_dlg_evt` and the `!aisettings` chat handler.
+
 ## Linux and macOS
 
 Use the target OS/architecture (Ubuntu 24.04 or macOS 15 release baseline) with Python 3.13, CMake, Bison 3+ and a C++ compiler. On Mac, put Homebrew Bison on PATH; Apple's older system Bison is insufficient.

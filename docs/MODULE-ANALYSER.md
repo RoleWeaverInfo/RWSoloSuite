@@ -1,6 +1,6 @@
 # Module Conversion
 
-Included in Role Weaver Module Studio 1.2.0. For a first conversion, follow [Convert an existing module](CONVERT-A-MODULE.md). This page provides the detailed reference and limits.
+Included in Role Weaver Module Studio 1.3.0. For a first conversion, follow [Convert an existing module](CONVERT-A-MODULE.md). This page provides the detailed reference and limits.
 
 Open **Module Conversion** in the dashboard sidebar. The main workspace has its own scrollbar; scroll over the report to reach its lower sections. Choose an existing Neverwinter Nights 1 / Enhanced Edition `.mod` file and click **Import and analyse**. Alternatively, expand **Or use a path on this computer**, enter its full path, and click **Analyse local file**. A `.rwproject.json` file is not required.
 

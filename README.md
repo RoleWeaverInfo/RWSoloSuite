@@ -4,14 +4,14 @@ Build single-player Neverwinter Nights: Enhanced Edition adventures with AI-assi
 
 ## Get started
 
-Download **version 1.2.0** from [GitHub Releases](https://github.com/RoleWeaverInfo/RWSoloSuite/releases/latest). Application packages include Python: Windows x64 installer, Linux x64/ARM64 archives, and macOS Intel/Apple Silicon apps. See the release notes for supported OS versions and known limitations. The repository and release downloads are public; no GitHub sign-in is required.
+Download **version 1.3.0** from [GitHub Releases](https://github.com/RoleWeaverInfo/RWSoloSuite/releases/latest). Application packages include Python: Windows x64 installer, Linux x64/ARM64 archives, and macOS Intel/Apple Silicon apps. See the release notes for supported OS versions and known limitations. The repository and release downloads are public; no GitHub sign-in is required.
 
 - [Installation, API keys and updates](docs/INSTALLATION.md)
 - [Talk to AI NPCs and use companions](docs/PLAYER-GUIDE.md)
 - [Create an adventure with ChatGPT and Studio](docs/CREATE-AN-ADVENTURE.md)
 - [Convert an existing module: step-by-step guide](docs/CONVERT-A-MODULE.md)
 - [Included Emberseal adventure](docs/EMBERSEAL.md)
-- [Release notes](docs/RELEASE-1.2.0.md)
+- [Release notes](docs/RELEASE-1.3.0.md)
 - [Guardrails and token usage](GUARDRAILS-AND-USAGE.md)
 
 Start Role Weaver before opening NWN. The service opens a local dashboard at `http://127.0.0.1:8766`. Normal startup starts only the service. Install and register the adventure's matching `.mod` and `.rwproject.json`, then open NWN. You can also use **Build & share → Play in NWN** to install and launch an exported build directly. Closing the browser leaves the service running; use **AI service → Stop Role Weaver** when finished.
@@ -24,12 +24,14 @@ You need your own NWN:EE installation for its game resources. Aurora editing req
 
 Third-party conversion inputs, including Snow Hunt, are not included in the repository or release downloads. Import your own legally obtained modules. Conversion compatibility support does not include the original adventure, extracted profiles, maps, dialogue or content packs.
 
-Use **Build & share → Play in NWN** to install and start the included build, or download **Share / Aurora ZIP** there. The release page also provides **The-Emberseal-of-Briarwatch-1.2.0.zip**, ready for play and Aurora editing. Extract the complete ZIP; its HAK is required. No regeneration or AI generation credit is needed to play the supplied build.
+Use **Build & share → Play in NWN** to install and start the included build, or download **Share / Aurora ZIP** there. The release page also provides **The-Emberseal-of-Briarwatch-1.3.0.zip**, ready for play and Aurora editing. Extract the complete ZIP; its HAK is required. No regeneration or AI generation credit is needed to play the supplied build. This release refreshes Emberseal's AI scripts for `!aisettings` while retaining its reviewed story and maps; start a new game to use them.
 
 On an existing installation, choose **Load Emberseal example** in the sidebar. An existing Emberseal draft is backed up before replacement; other projects, modules and saves are preserved. Silent Bell, the Courier and their trial modules are not included as examples. The internal `authoring-template.erf` is a build resource, not a selectable adventure.
 
 ## Launch, update and play
 
+- **Find a nearby NPC:** in modules converted with 1.3.0, close any dialogue and type `!npcs` in **Talk**. Select a visible, available character within 12 metres, then type your question normally. Use `!companions` for familiars and summons. Created adventures such as Emberseal use **Talk freely with AI** or `!talk <alias> <message>`.
+- **Tune AI replies during play:** type `!aisettings` in **Talk** in newly built or rebuilt adventures. Choose reply length, speaking style, action descriptions and follow-up questions. Replies default to brief, plain speech. Settings persist when you save the game; changing them makes no API request. See the [command guide](docs/PLAYER-GUIDE.md#quick-command-reference).
 - **Play in NWN:** install a selected exported build and its packaged dependencies, register its matching AI profile, and open character selection. Exit an existing NWN session first; use NWN's own Load Game menu for saves.
 - **Update software:** check public GitHub releases, download the correct platform package, verify its checksum, then install and restart the service and dashboard together. Projects and saved keys are preserved. Automatic installation applies to native packages; source checkouts are never overwritten.
 - **In-game service checks:** newly built AI modules report when Role Weaver is unavailable or paused and announce reconnection. Type `!studio` to check without using AI tokens. A module cannot directly start desktop software.
@@ -45,7 +47,9 @@ Saved keys use Windows DPAPI, macOS Keychain or Linux Secret Service and are exc
 
 ## Source development and packaging
 
-Version 1.2.0 includes a **shared visual mission editor**. In **Quests & endings**, AI-generated missions appear as editable mission and objective maps: edit story text, targets, choices, prerequisites and rewards, then check, save and rebuild. These are the generated module's executable quest definitions. In **Module Conversion → Missions & storyline**, review native journal stages with dialogue and compiled-script evidence, edit journal names/text for a new copy, and record private plot notes and reviewed connections. By default, native quest triggers and rewards remain controlled by the original scripts; review arrows do not rewrite them. Both editors support pan/zoom and undo/redo. See the [creation walkthrough](docs/CREATE-AN-ADVENTURE.md#6-edit-the-story-and-missions-visually) and [native mission review guide](docs/MODULE-ANALYSER.md#review-and-edit-native-missions).
+**New in 1.3.0:** large converted adventures use cached NPC configuration and lighter heartbeat work. Profile generation shows saved counts, current characters and elapsed time, saves each completed batch, and supports pause/resume without repeating completed work. Studio's former 60-request authoring cap is removed; gameplay guardrails and provider limits still apply. Module filenames now support up to 64 lowercase letters, digits and underscores before `.mod`. Existing converted modules need a rebuild and a new game for script changes; saved AI profiles can be reused.
+
+Version 1.3.0 includes a **shared visual mission editor**. In **Quests & endings**, AI-generated missions appear as editable mission and objective maps: edit story text, targets, choices, prerequisites and rewards, then check, save and rebuild. These are the generated module's executable quest definitions. In **Module Conversion → Missions & storyline**, review native journal stages with dialogue and compiled-script evidence, edit journal names/text for a new copy, and record private plot notes and reviewed connections. By default, native quest triggers and rewards remain controlled by the original scripts; review arrows do not rewrite them. Both editors support pan/zoom and undo/redo. See the [creation walkthrough](docs/CREATE-AN-ADVENTURE.md#6-edit-the-story-and-missions-visually) and [native mission review guide](docs/MODULE-ANALYSER.md#review-and-edit-native-missions).
 
 **General mission importer, new in 1.2.0:** copy native journal missions into editable drafts, review suggested objectives and recovered gold/XP evidence, and choose **original scripts or Studio control separately for each mission**. Bind a quest giver, native characters/items/areas and an ordered objective sequence. Compatible missions use checked in-game menus and AI actions; missing evidence, shared rewards and unsupported script effects explain why control must stay native. Only identified journal/reward calls are patched; maps and placements remain identical. See the [general mission import guide](docs/GENERAL-MISSION-IMPORT.md) for steps, preservation details and limitations.
 

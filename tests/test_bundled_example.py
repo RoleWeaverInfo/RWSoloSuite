@@ -11,6 +11,7 @@ from rwstudio import bundled_example as example
 from rwstudio.storage import Store
 from rwstudio.server import Application
 from rwstudio.launcher import native_context
+from rwstudio.nwn.analysis_formats import Archive
 
 
 class BundledExampleTests(unittest.TestCase):
@@ -18,6 +19,11 @@ class BundledExampleTests(unittest.TestCase):
         files=dict(example.checked_files());info=example.information()
         self.assertEqual([name for name in files if name.endswith('.mod')],['rw_ember_v3.mod'])
         self.assertEqual(native_context(files['rw_ember_v3.mod']),dict(build_id=info['build_id'],project_id='emberseal_demo'))
+        module=Archive(files['rw_ember_v3.mod'])
+        self.assertIn(b'!aisettings',module.get('sp_chat',2009))
+        for name in ('aw_dlg_ui','aw_dlg_pref'):
+            self.assertIn((name,2009),module.index)
+        self.assertIn(('aw_dlg_evt',2010),module.index)
         p=json.loads(files['project.json'].read_text(encoding='utf-8'))
         sidecar=json.loads(files['rw_ember_v3.rwproject.json'].read_text(encoding='utf-8'))
         self.assertEqual(sidecar['project'],p);self.assertEqual(sidecar['build_id'],info['build_id'])
