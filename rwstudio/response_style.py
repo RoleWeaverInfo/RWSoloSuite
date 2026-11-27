@@ -1,7 +1,7 @@
 """Player dialogue preferences shared by created and converted adventures."""
 import re
 
-DEFAULTS=dict(length=0,voice=0,emotes=0,questions=0)
+DEFAULTS=dict(length=1,voice=1,emotes=1,questions=1)
 LIMITS=(240,600,850)
 WORDS=(40,90,140)
 

@@ -35,16 +35,16 @@ The normal dialogue menu remains available for quest choices and other authored 
 
 In adventures built or rebuilt with **Studio 1.3.0 or later**, including the refreshed Emberseal example, type **`!aisettings`** in Talk to open **AI response settings**. Close the current dialogue first and leave the game unpaused. Converted adventures also offer this button in `!npcs`, and companion controls include it too. Click each setting to cycle its options:
 
-- **Reply length:** Brief, Natural or Detailed. Brief is the default: 1–2 short sentences, up to 240 characters.
-- **Speaking style:** Plain, Characterful or Dramatic. Plain is the default; personalities and knowledge still come from the NPC's profile.
-- **Action descriptions:** Off, Occasional or Expressive. Off is the default for speaking characters; animals still communicate through physical behavior.
-- **Follow-up questions:** Only when needed, or Conversational. The default avoids habitual follow-up questions while allowing necessary clarification.
+- **Reply length:** Brief, Normal or Detailed. Normal is the default: 2–4 short sentences, up to 90 words and 600 characters.
+- **Speaking style:** Plain, Characterful or Dramatic. Characterful is the default; vocabulary and manner reflect the NPC's profile.
+- **Action descriptions:** Off, Occasional or Expressive. Occasional is the default: at most one short gesture when useful. Animals still communicate through physical behavior.
+- **Follow-up questions:** Only when needed, or Conversational. Conversational is the default: a relevant follow-up is allowed when it fits the character, without requiring a question in every reply.
 
-Changes apply to new requests and persist when you save the game. A reply already being generated keeps its earlier settings. **Restore short, plain defaults** resets these four options. The settings affect NPCs, merchants and companion dialogue, including replies to companion visits; they do not change quests, permissions, the AI DM's narration or ambient NPC exchanges.
+Changes apply to new requests and persist when you save the game. A reply already being generated keeps its earlier settings. **Restore defaults** selects Normal, Characterful, Occasional and Conversational. The settings affect NPCs, merchants and companion dialogue, including replies to companion visits; they do not change quests, permissions, the AI DM's narration or ambient NPC exchanges.
 
 New companions inherit these settings. To override one companion's length, use its **Reply** control under `!companions`; choose **Use AI response settings** to return to the shared default. Existing explicit companion preferences are retained. Companion tone remains a separate per-character choice.
 
-The service now encourages concise, natural speech in existing adventures too. Adding the in-game panel to an older module requires rebuilding and starting a new game; an old save keeps its embedded scripts. No additional API request is made when you change a setting.
+The service encourages natural speech in existing adventures too. Adding the in-game panel or updated defaults to an older module requires rebuilding and starting a new game; an old save keeps its embedded scripts and preferences. For an existing game with `!aisettings`, select the four choices manually (older panels call Normal length **Natural**). No additional API request is made when you change a setting.
 
 ### Quick command reference
 

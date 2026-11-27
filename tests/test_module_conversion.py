@@ -127,6 +127,8 @@ class ConversionTests(unittest.TestCase):
         game=GameAssets(cfg['game_root'])
         hooks={'Mod_OnModLoad':'old_load','Mod_OnClientEntr':'old_enter','Mod_OnHeartbeat':'old_beat','Mod_OnPlrChat':'old_chat'}
         scripts,_=runtime(self.p,'a'*20,game,hooks)
+        shared=Path(__file__).resolve().parents[1]/'authoring_scripts/aw_cp_dialog.nss'
+        self.assertEqual(scripts['aw_cp_dialog'],shared.read_text(encoding='utf-8'))
         for event,name in [('rwc_load','old_load'),('rwc_enter','old_enter'),('rwc_beat','old_beat'),('rwc_chat','old_chat')]:
             self.assertEqual(scripts[event].count('ExecuteScript("'+name+'",OBJECT_SELF);'),1)
         self.assertNotIn('SetMaxHenchmen',scripts['rwc_load']);self.assertNotIn('AQStart',scripts['rwc_enter']);self.assertNotIn('AWATick()',scripts['rwc_beat'])

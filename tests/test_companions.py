@@ -93,6 +93,8 @@ class NativeCompanionTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):cls.temp.cleanup()
     def test_native_companion_scripts_and_original_ai_are_preserved(self):
+        shared=(ROOT/'authoring_scripts/aw_cp_dialog.nss').read_text(encoding='utf-8').strip()
+        self.assertEqual(self.res['aw_cp_dialog',2009].decode('utf-8').replace('\r\n','\n').strip(),shared)
         for n in ('aw_cp_order','aw_cp_probe','aw_cp_dead','aw_cp_dialog','aw_cp_ui_evt','aw_dlg_evt'):
             self.assertIn((n,2010),self.res)
         recruit=read(self.res['seren',2027])[1][1]
@@ -106,7 +108,7 @@ class NativeCompanionTests(unittest.TestCase):
         self.assertIn(b'Use AI response settings',self.res['aw_cp_ui',2009])
         self.assertIn(b'if(field=="reply")maximum=3',self.res['aw_companion',2009])
         self.assertIn(b'NuiGetEventWindow()!=token',self.res['aw_dlg_ui',2009])
-        self.assertIn(b'SetLocalInt(pc,"AWD_"+field',self.res['aw_dlg_ui',2009])
+        self.assertIn(b'AWDSet(pc,field',self.res['aw_dlg_ui',2009])
         self.assertNotIn(b'AWDSettings',self.res['aw_beat',2009])
 
     def test_module_checks_service_at_entry_during_play_and_by_chat_command(self):
